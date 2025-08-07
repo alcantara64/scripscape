@@ -10,6 +10,7 @@ import {
   View,
   ViewStyle,
 } from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
 import { useScrollToTop } from "@react-navigation/native"
 import { SystemBars, SystemBarsProps, SystemBarStyle } from "react-native-edge-to-edge"
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
@@ -255,10 +256,14 @@ export function Screen(props: ScreenProps) {
   const $containerInsets = useSafeAreaInsetsStyle(safeAreaEdges)
 
   return (
-    <View
+    <LinearGradient
+      colors={["#b68ef2", "#4b276b", "#0e1636"]}
+      start={{ x: 1, y: 0 }}
+      end={{ x: 0.1, y: 1 }}
+      locations={[0, 0.4, 1]}
       style={[
         $containerStyle,
-        { backgroundColor: backgroundColor || colors.background },
+        // { backgroundColor: backgroundColor || colors.background },
         $containerInsets,
       ]}
     >
@@ -279,7 +284,7 @@ export function Screen(props: ScreenProps) {
           <ScreenWithScrolling {...props} />
         )}
       </KeyboardAvoidingView>
-    </View>
+    </LinearGradient>
   )
 }
 

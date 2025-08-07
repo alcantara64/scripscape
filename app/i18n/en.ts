@@ -1,6 +1,12 @@
 import demoEn from "./demo-en"
 
 const en = {
+  bottomTab: {
+    home: "Home",
+    myScript: "My Scripts",
+    activity: "Activity",
+    setting: "Settings",
+  },
   common: {
     ok: "OK!",
     cancel: "Cancel",

@@ -1216,6 +1216,16 @@
     "@eslint/core" "^0.15.1"
     levn "^0.4.1"
 
+"@expo-google-fonts/dm-sans@^0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@expo-google-fonts/dm-sans/-/dm-sans-0.4.1.tgz#e6930e5d9338bf18a0b1283cdb5eb58bea77e2e5"
+  integrity sha512-LfjAZKsXJp9K6BdjD1Q1dHJp7BUk69JwsGiyRWSOm/QN2AzDrDcyy7Vdqb7Ua9MVw9e9YFiOmZ9hh0M7aH+o/w==
+
+"@expo-google-fonts/montserrat@^0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@expo-google-fonts/montserrat/-/montserrat-0.4.1.tgz#2fc09674023112435c7daf1d7d8e757a0789564c"
+  integrity sha512-jc1d17tadLK3Nc/qIKYyOM2pnxmdZrlPFOJtmNT0qzFdUe4Pzq1Y1eQwvCMSProRbQqsosASRZ/N3mzl6pmC+g==
+
 "@expo-google-fonts/space-grotesk@^0.4.0":
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/@expo-google-fonts/space-grotesk/-/space-grotesk-0.4.0.tgz#0d9340f0c7c5d3a12e36ba324e6f5bd22c22f6e7"
@@ -4290,7 +4300,7 @@ expo-file-system@~18.1.11:
   resolved "https://registry.yarnpkg.com/expo-file-system/-/expo-file-system-18.1.11.tgz#a563c715c4bb5c18729d6d104e8c6cdfbd383e69"
   integrity sha512-HJw/m0nVOKeqeRjPjGdvm+zBi5/NxcdPf8M8P3G2JFvH5Z8vBWqVDic2O58jnT1OFEy0XXzoH9UqFu7cHg9DTQ==
 
-expo-font@~13.3.0, expo-font@~13.3.2:
+expo-font@~13.3.2:
   version "13.3.2"
   resolved "https://registry.yarnpkg.com/expo-font/-/expo-font-13.3.2.tgz#1b5a1a14d6827a48a3f003577d5f7dc6b344a1d3"
   integrity sha512-wUlMdpqURmQ/CNKK/+BIHkDA5nGjMqNlYmW0pJFXY/KE/OG80Qcavdu2sHsL4efAIiNGvYdBS10WztuQYU4X0A==
@@ -4306,6 +4316,11 @@ expo-keep-awake@~14.1.4:
   version "14.1.4"
   resolved "https://registry.yarnpkg.com/expo-keep-awake/-/expo-keep-awake-14.1.4.tgz#80197728563e0e17523e5a606fbd6fbed9639503"
   integrity sha512-wU9qOnosy4+U4z/o4h8W9PjPvcFMfZXrlUoKTMBW7F4pLqhkkP/5G4EviPZixv4XWFMjn1ExQ5rV6BX8GwJsWA==
+
+expo-linear-gradient@~14.1.5:
+  version "14.1.5"
+  resolved "https://registry.yarnpkg.com/expo-linear-gradient/-/expo-linear-gradient-14.1.5.tgz#414bf0c8145089087198d4dd5a419eb324af2a02"
+  integrity sha512-BSN3MkSGLZoHMduEnAgfhoj3xqcDWaoICgIr4cIYEx1GcHfKMhzA/O4mpZJ/WC27BP1rnAqoKfbclk1eA70ndQ==
 
 expo-linking@~7.1.4:
   version "7.1.7"

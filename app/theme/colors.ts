@@ -1,7 +1,7 @@
 const palette = {
   neutral100: "#FFFFFF",
-  neutral200: "#F4F2F1",
-  neutral300: "#D7CEC9",
+  neutral200: "#EDFAFE",
+  neutral300: "#ECEFFD",
   neutral400: "#B6ACA6",
   neutral500: "#978F8A",
   neutral600: "#564E4A",
@@ -12,21 +12,22 @@ const palette = {
   primary100: "#F4E0D9",
   primary200: "#E8C1B4",
   primary300: "#DDA28E",
-  primary400: "#D28468",
-  primary500: "#C76542",
-  primary600: "#A54F31",
+  primary400: "#406FCB;",
+  primary500: "#2D126C",
+  primary600: "#343e9c",
+  primaryPurpleNormalActive: "#240E56",
 
   secondary100: "#DCDDE9",
   secondary200: "#BCC0D6",
-  secondary300: "#9196B9",
-  secondary400: "#626894",
-  secondary500: "#41476E",
+  secondary300: "#BEB6D1",
+  secondary400: "#473D85",
+  secondary500: "#5f2a72",
 
   accent100: "#FFEED4",
   accent200: "#FFE1B2",
   accent300: "#FDD495",
   accent400: "#FBC878",
-  accent500: "#FFBB50",
+  accent500: "#F6BD4A",
 
   angry100: "#F2D6CD",
   angry500: "#C03403",
@@ -49,7 +50,7 @@ export const colors = {
   /**
    * The default text color in many components.
    */
-  text: palette.neutral800,
+  text: palette.neutral100,
   /**
    * Secondary text information.
    */
@@ -57,11 +58,11 @@ export const colors = {
   /**
    * The default color of the screen background.
    */
-  background: palette.neutral200,
+  background: palette.primaryPurpleNormalActive,
   /**
    * The default border color.
    */
-  border: palette.neutral400,
+  border: palette.primary600,
   /**
    * The main tinting color.
    */
@@ -69,7 +70,7 @@ export const colors = {
   /**
    * The inactive tinting color.
    */
-  tintInactive: palette.neutral300,
+  tintInactive: palette.secondary300,
   /**
    * A subtle color used for lines.
    */

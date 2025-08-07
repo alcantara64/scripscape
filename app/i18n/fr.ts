@@ -2,6 +2,12 @@ import demoFr from "./demo-fr"
 import { Translations } from "./en"
 
 const fr: Translations = {
+  bottomTab: {
+    home: "Home",
+    myScript: "Myscript",
+    activity: "Activity",
+    setting: "Settings",
+  },
   common: {
     ok: "OK !",
     cancel: "Annuler",

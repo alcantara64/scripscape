@@ -2,6 +2,12 @@ import demoJa from "./demo-ja"
 import { Translations } from "./en"
 
 const ja: Translations = {
+  bottomTab: {
+    home: "Home",
+    myScript: "Myscript",
+    activity: "Activity",
+    setting: "Settings",
+  },
   common: {
     ok: "OK",
     cancel: "キャンセル",

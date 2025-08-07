@@ -17,6 +17,7 @@ import { useAppTheme } from "@/theme/context"
 
 import { DemoNavigator, DemoTabParamList } from "./DemoNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
+import { HomeScreen } from "@/screens/HomeScreen"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -32,7 +33,10 @@ export type AppStackParamList = {
   Login: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
   // 🔥 Your screens go here
-  // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
+  Home: undefined
+  AddScript: undefined
+  Home: undefined
+	// IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
 /**
@@ -81,6 +85,8 @@ const AppStack = () => {
 
       {/** 🔥 Your screens go here */}
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
+      {/* <Stack.Screen name="Demo" component={DemoNavigator} /> */}
+      {/* <Stack.Screen name="Home" component={HomeScreen} /> */}
     </Stack.Navigator>
   )
 }

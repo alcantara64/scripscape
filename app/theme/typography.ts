@@ -3,6 +3,16 @@
 
 import { Platform } from "react-native"
 import {
+  DMSans_400Regular as dmSansRegular,
+  DMSans_700Bold as DmSansBold,
+  DMSans_600SemiBold as DmSansSemiBold,
+  DMSans_500Medium as DmSansMedium,
+} from "@expo-google-fonts/dm-sans"
+import {
+  Montserrat_400Regular as MontserratRegular,
+  Montserrat_700Bold as MontserratBold,
+} from "@expo-google-fonts/montserrat"
+import {
   SpaceGrotesk_300Light as spaceGroteskLight,
   SpaceGrotesk_400Regular as spaceGroteskRegular,
   SpaceGrotesk_500Medium as spaceGroteskMedium,
@@ -16,6 +26,12 @@ export const customFontsToLoad = {
   spaceGroteskMedium,
   spaceGroteskSemiBold,
   spaceGroteskBold,
+  MontserratRegular,
+  MontserratBold,
+  dmSansRegular,
+  DmSansBold,
+  DmSansSemiBold,
+  DmSansMedium,
 }
 
 const fonts = {
@@ -49,6 +65,16 @@ const fonts = {
     // Android only font.
     normal: "monospace",
   },
+  Montserrat: {
+    normal: "Montserrat",
+    bold: "MontserratBold",
+  },
+  dmSans: {
+    normal: "DMSans_400Regular",
+    medium: "DMSans_500Medium",
+    semiBold: "DMSans_600SemiBold",
+    bold: "DMSans_700Bold",
+  },
 }
 
 export const typography = {
@@ -59,7 +85,7 @@ export const typography = {
   /**
    * The primary font. Used in most places.
    */
-  primary: fonts.spaceGrotesk,
+  primary: fonts.dmSans,
   /**
    * An alternate font used for perhaps titles and stuff.
    */

@@ -2,6 +2,12 @@ import demoKo from "./demo-ko"
 import { Translations } from "./en"
 
 const ko: Translations = {
+  bottomTab: {
+    home: "Home",
+    myScript: "Myscript",
+    activity: "Activity",
+    setting: "Settings",
+  },
   common: {
     ok: "확인!",
     cancel: "취소",

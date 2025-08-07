@@ -2,6 +2,12 @@ import demoAr from "./demo-ar"
 import { Translations } from "./en"
 
 const ar: Translations = {
+  bottomTab: {
+    home: "",
+    myScript: "Myscript",
+    activity: "Activity",
+    setting: "setting",
+  },
   common: {
     ok: "نعم",
     cancel: "حذف",

@@ -2,6 +2,12 @@ import demoHi from "./demo-hi"
 import { Translations } from "./en"
 
 const hi: Translations = {
+  bottomTab: {
+    home: "Home",
+    myScript: "Myscript",
+    activity: "Activity",
+    setting: "Settings",
+  },
   common: {
     ok: "ठीक है!",
     cancel: "रद्द करें",
