@@ -11,8 +11,8 @@ const palette = {
 
   primary100: "#F4E0D9",
   primary200: "#E8C1B4",
-  primary300: "#DDA28E",
-  primary400: "#406FCB;",
+  primary300: "#4361EE",
+  primary400: "#406FCB",
   primary500: "#2D126C",
   primary600: "#343e9c",
   primaryPurpleNormalActive: "#240E56",
@@ -83,4 +83,9 @@ export const colors = {
    * Error Background.
    */
   errorBackground: palette.angry100,
+
+  highlighter: palette.primary300,
+
+  success: "#4CF08B",
+  border2: palette.accent500,
 } as const
