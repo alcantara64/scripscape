@@ -140,6 +140,12 @@ export const iconRegistry = {
   logo: require("@assets/icons/logo.png"),
   profileAvatar: require("@assets/icons/profile-avatar.png"),
   search: require("@assets/icons/search.png"),
+  comment: require("@assets/icons/uil_comment.png"),
+  like: require("@assets/icons/iconamoon_like.png"),
+  eye: require("@assets/icons/eye.png"),
+  help: require("@assets/icons/help.png"),
+  person: require("@assets/icons/person.png"),
+  logout: require("@assets/icons/logout.png"),
 }
 
 const $imageStyleBase: ImageStyle = {
