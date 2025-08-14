@@ -48,4 +48,5 @@ export const colors = {
   error: palette.angry500,
   errorBackground: palette.angry100,
   border2: palette.accent500,
+  profileBorder: palette.neutral100,
 } as const

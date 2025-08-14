@@ -88,4 +88,5 @@ export const colors = {
 
   success: "#4CF08B",
   border2: palette.accent500,
+  profileBorder: palette.neutral100,
 } as const
