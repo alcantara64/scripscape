@@ -133,7 +133,7 @@ const $statusText: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
 const $statsRow: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
-  gap: spacing.sm,
+  gap: spacing.xxs,
   marginTop: spacing.xxs,
 }
 

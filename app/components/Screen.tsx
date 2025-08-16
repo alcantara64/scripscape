@@ -62,6 +62,8 @@ interface BaseScreenProps {
    * Pass any additional props directly to the KeyboardAvoidingView component.
    */
   KeyboardAvoidingViewProps?: KeyboardAvoidingViewProps
+
+  extraContainerStyle?: ViewStyle
 }
 
 interface FixedScreenProps extends BaseScreenProps {
@@ -251,6 +253,7 @@ export function Screen(props: ScreenProps) {
     safeAreaEdges,
     SystemBarsProps,
     systemBarStyle,
+    extraContainerStyle,
   } = props
 
   const $containerInsets = useSafeAreaInsetsStyle(safeAreaEdges)
@@ -265,6 +268,7 @@ export function Screen(props: ScreenProps) {
         $containerStyle,
         // { backgroundColor: backgroundColor || colors.background },
         $containerInsets,
+        extraContainerStyle,
       ]}
     >
       <SystemBars
