@@ -149,6 +149,7 @@ export const iconRegistry = {
   arrowLeft: require("@assets/icons/arrow-left.png"),
   flag: require("@assets/icons/flag.png"),
   upload: require("@assets/icons/upload.png"),
+  edit: require("@assets/icons/edit.png"),
 }
 
 const $imageStyleBase: ImageStyle = {

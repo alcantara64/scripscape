@@ -10,17 +10,18 @@ const palette = {
   neutral900: "#000000",
 
   primary100: "#F4E0D9",
-  primary200: "#E8C1B4",
+  primary200: "#4CC9F0",
   primary300: "#DDA28E",
   primary400: "#D28468",
   primary500: "#2D126C",
   primary600: "#343e9c",
 
-  secondary100: "#DCDDE9",
+  secondary100: "#C8D0FF",
   secondary200: "#BCC0D6",
   secondary300: "#BEB6D1",
   secondary400: "#473D85",
   secondary500: "#5f2a72",
+  secondary700: "#57367B80",
 
   accent100: "#FFEED4",
   accent200: "#FFE1B2",
@@ -33,6 +34,8 @@ const palette = {
 
   overlay20: "rgba(25, 16, 21, 0.2)",
   overlay50: "rgba(25, 16, 21, 0.5)",
+
+  green100: "#4CF08B",
 } as const
 
 export const colors = {
@@ -49,4 +52,8 @@ export const colors = {
   errorBackground: palette.angry100,
   border2: palette.accent500,
   profileBorder: palette.neutral100,
+  highlighter: palette.primary300,
+  success: palette.green100,
+  descriptionText: palette.primary200,
+  tabBackground: palette.secondary700,
 } as const
