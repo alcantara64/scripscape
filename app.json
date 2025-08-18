@@ -62,5 +62,40 @@
     "ignite": {
       "version": "11.0.1"
     }
+  },
+  "expo": {
+    "scheme": "scripscape",
+    "slug": "Scripscape",
+    "name": "Scripscape",
+    "android": {
+      "splash": {
+        "backgroundColor": "#240E56"
+      },
+      "package": "com.anonymous.Scripscape"
+    },
+    "ios": {
+      "splash": {
+        "backgroundColor": "#240E56"
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          }
+        ]
+      },
+      "bundleIdentifier": "com.anonymous.Scripscape"
+    },
+    "web": {
+      "splash": {
+        "backgroundColor": "#240E56"
+      }
+    },
+    "splash": {
+      "backgroundColor": "#240E56"
+    }
   }
 }
