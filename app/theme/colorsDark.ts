@@ -1,7 +1,7 @@
 const palette = {
   neutral100: "#FFFFFF",
   neutral200: "#F4F2F1",
-  neutral300: "#D7CEC9",
+  neutral300: "#ECEFFD",
   neutral400: "#B6ACA6",
   neutral500: "#978F8A",
   neutral600: "#564E4A",
@@ -56,4 +56,5 @@ export const colors = {
   success: palette.green100,
   descriptionText: palette.primary200,
   tabBackground: palette.secondary700,
+  fadedTint: palette.neutral300,
 } as const

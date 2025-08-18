@@ -2,6 +2,7 @@ import { FC, useState } from "react"
 import { ImageStyle, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 
 import { AnnouncementBox } from "@/components/AnnouncementBox"
+import { AutoImage } from "@/components/AutoImage"
 import { Icon } from "@/components/Icon"
 import { ListView } from "@/components/ListView"
 import { Screen } from "@/components/Screen"
@@ -9,12 +10,11 @@ import { ScriptCard } from "@/components/ScriptCard"
 import { Text } from "@/components/Text"
 import { ScriptStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { drawerRef } from "@/navigators/Drawer"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
-import { AutoImage } from "@/components/AutoImage"
-import { drawerRef } from "@/navigators/Drawer"
 
 // import { useNavigation } from "@react-navigation/native"
 const BannerPlaceHolder = require("../../assets/images/cover.png")
@@ -28,30 +28,6 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
   // Pull in navigation via hook
   // const navigation = useNavigation()
   const CATEGORIES = ["All", "Action", "Adventure", "Comedy", "Drama", "Drama"]
-  const SCRIPTS = [
-    {
-      id: 1,
-      title: "Love Knows No Boundaries",
-      description:
-        "We’ve been on the lookout for hidden gems — scripts that haven’t gotten many views (yet). Here are a few we ...",
-      status: "completed" as ScriptStatus,
-      commentsCount: 12,
-      viewsCount: 1500000,
-      likedCount: 55800,
-      numberOfParts: 25,
-    },
-    {
-      id: 2,
-      title: "Love Knows No Boundaries",
-      description:
-        "We’ve been on the lookout for hidden gems — scripts that haven’t gotten many views (yet). Here are a few we ...",
-      status: "completed" as ScriptStatus,
-      commentsCount: 12,
-      viewsCount: 1500000,
-      likedCount: 55800,
-      numberOfParts: 25,
-    },
-  ]
   const [selectedCategory, setSelectedCategory] = useState("All")
 
   const openDraw = () => {

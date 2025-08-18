@@ -108,6 +108,8 @@ const $baseStyle: ThemedStyle<TextStyle> = (theme) => ({
 })
 const $descriptionStyle: ThemedStyle<TextStyle> = (theme) => ({
   color: theme.colors.descriptionText,
+  lineHeight: theme.spacing.md,
+  fontWeight: 300,
 })
 
 const $presets: Record<Presets, ThemedStyleArray<TextStyle>> = {

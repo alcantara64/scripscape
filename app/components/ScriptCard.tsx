@@ -18,6 +18,7 @@ import { formatNumber } from "@/utils/formatDate"
 import { spacing } from "@/theme/spacing"
 import { colors } from "@/theme/colors"
 import { Icon } from "./Icon"
+import { useState } from "react"
 
 export interface ScriptCardProps {
   /**
@@ -53,10 +54,30 @@ export const ScriptCard = (props: ScriptCardProps) => {
   } = props
   const $styles = [$container, style, { flexDirection: isVertical ? "column" : "row" } as ViewStyle]
   const { themed } = useAppTheme()
+  const [currentImageSource, setCurrentImageSource] = useState(imageSource)
+  const [hasError, setHasError] = useState(false)
+
+  const defaultImage = require("../../assets/images/sad-face.png")
+
+  const handleImageError = () => {
+    // Only set the default image once
+    console.log("error")
+    if (!hasError) {
+      setCurrentImageSource(defaultImage)
+      setHasError(true)
+    }
+  }
 
   return (
     <TouchableOpacity style={$styles}>
-      <AutoImage style={$imageContainer} source={imageSource} maxWidth={184} />
+      <View>
+        <AutoImage
+          style={$imageContainer}
+          source={currentImageSource}
+          maxWidth={184}
+          onError={handleImageError}
+        />
+      </View>
 
       <View style={$contentContainer}>
         <Text style={themed($titleText)} numberOfLines={1} text={title} />
@@ -64,25 +85,25 @@ export const ScriptCard = (props: ScriptCardProps) => {
           <View style={$statusContainer(status)}>
             <Text text={status} style={themed($statusText)} />
           </View>
-          <View>
-            <View />
-            <Text text={`${numberOfParts} Parts`} />
+          <View style={{ flexDirection: "row", gap: 4, alignItems: "center", marginBottom: 4 }}>
+            <Icon icon="part" color="#C8D0FF" />
+            <Text text={`${numberOfParts} Parts`} preset="description" style={$partsTextStyle} />
           </View>
         </View>
-        <Text text={description} numberOfLines={2} />
+        <Text text={description} numberOfLines={1} preset="description" />
 
         <View style={$statsRow}>
           <View style={$statItem}>
-            <Icon icon="eye" size={24} />
-            <Text text={`${formatNumber(viewsCount)}`} />
+            <Icon icon="eye" size={15} />
+            <Text text={`${formatNumber(viewsCount)}`} size="sm" preset="description" />
           </View>
           <View style={$statItem}>
-            <Icon icon="like" size={16} />
-            <Text text={`${formatNumber(likedCount)}`} />
+            <Icon icon="like" size={15} />
+            <Text text={`${formatNumber(likedCount)}`} size="sm" preset="description" />
           </View>
           <View style={$statItem}>
-            <Icon icon="comment" size={16} />
-            <Text text={`${formatNumber(commentsCount)}`} />
+            <Icon icon="comment" size={15} />
+            <Text text={`${formatNumber(commentsCount)}`} size="sm" preset="description" />
           </View>
         </View>
       </View>
@@ -95,16 +116,14 @@ const $container: ViewStyle = {
   gap: spacing.xs,
   flex: 1,
 }
-const $imageContainer: ImageStyle = {
-  height: "100%",
-}
+const $imageContainer: ImageStyle = { height: 92 }
 const $contentContainer: ViewStyle = {
   flex: 1,
 }
 
 const $titleText: ThemedStyle<TextStyle> = ({ colors, spacing, typography }) => ({
   fontFamily: typography.primary.semiBold,
-  fontSize: spacing.md,
+  fontSize: spacing.md - 1,
   color: colors.palette.neutral100,
   fontWeight: 700,
   lineHeight: 20,
@@ -114,21 +133,27 @@ const $titleText: ThemedStyle<TextStyle> = ({ colors, spacing, typography }) => 
 const $partContainer: ViewStyle = {
   flexDirection: "row",
   gap: spacing.xs,
+  alignItems: "center",
 }
 const $statusContainer = (status: ScriptStatus): ViewStyle => ({
   backgroundColor: status === ScriptStatus.completed ? colors.success : colors.tint,
   gap: spacing.xs,
   borderRadius: 8,
   marginBottom: spacing.xxs,
+  paddingVertical: 4,
+  paddingHorizontal: 8,
+  alignItems: "center",
 })
 
-const $statusText: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
+const $statusText: ThemedStyle<TextStyle> = ({ colors, typography, spacing }) => ({
   fontFamily: typography.primary.normal,
-  fontSize: 14,
+  fontSize: spacing.xs + 2,
   color: colors.palette.secondary400,
   paddingHorizontal: 8,
   fontWeight: 700,
+  lineHeight: 10,
 })
+const $partsTextStyle: TextStyle = { fontSize: 10, fontWeight: 700, lineHeight: 16 }
 
 const $statsRow: ViewStyle = {
   flexDirection: "row",

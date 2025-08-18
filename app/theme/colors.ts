@@ -94,4 +94,5 @@ export const colors = {
   profileBorder: palette.neutral100,
   descriptionText: palette.secondary100,
   tabBackground: palette.secondary700,
+  fadedTint: palette.neutral300,
 } as const

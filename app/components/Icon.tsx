@@ -150,6 +150,8 @@ export const iconRegistry = {
   flag: require("@assets/icons/flag.png"),
   upload: require("@assets/icons/upload.png"),
   edit: require("@assets/icons/edit.png"),
+  script: require("@assets/icons/open-book.png"),
+  part: require("@assets/icons/parts.png"),
 }
 
 const $imageStyleBase: ImageStyle = {

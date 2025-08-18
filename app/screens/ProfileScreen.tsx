@@ -19,11 +19,72 @@ import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
+import { FollowerCard } from "@/components/FollowerCard"
+import { FollowersList } from "@/components/FollowersList"
+import { ScriptList } from "@/components/ScriptList"
+import { mock_scripts } from "@/mockups/script"
 
 // import { useNavigation } from "@react-navigation/native"
 
 const DEFAULT_PROFILE_IMAGE = require("../../assets/images/default-profile.png")
 const DEFAULT_BACKGROUND_IMAGE = require("../../assets/images/profile-banner.png")
+
+const followers = [
+  {
+    id: "1",
+    name: "John Beacon",
+    avatar: "https://randomuser.me/api/portraits/men/31.jpg",
+    isPro: true,
+    followers: 333,
+    scripts: 200,
+    isFollowing: true,
+  },
+  {
+    id: "2",
+    name: "Johnny Argyle",
+    avatar: "https://randomuser.me/api/portraits/men/46.jpg",
+    isPro: false,
+    followers: 200,
+    scripts: 266,
+    isFollowing: true,
+  },
+  {
+    id: "3",
+    name: "John Tyrone",
+    avatar: "https://randomuser.me/api/portraits/men/52.jpg",
+    isPro: false,
+    followers: 189,
+    scripts: 344,
+    isFollowing: true,
+  },
+  {
+    id: "4",
+    name: "Sarah Vega",
+    avatar: "https://randomuser.me/api/portraits/women/21.jpg",
+    isPro: true,
+    followers: 420,
+    scripts: 180,
+    isFollowing: false,
+  },
+  {
+    id: "5",
+    name: "Michael Chen",
+    avatar: "https://randomuser.me/api/portraits/men/18.jpg",
+    isPro: false,
+    followers: 276,
+    scripts: 143,
+    isFollowing: true,
+  },
+  {
+    id: "6",
+    name: "Lena Alvarez",
+    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+    isPro: false,
+    followers: 310,
+    scripts: 215,
+    isFollowing: false,
+  },
+]
 
 interface ProfileScreenProps extends AppStackScreenProps<"Profile"> {}
 
@@ -76,14 +137,14 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
         <View style={$statsContainer}>
           <View style={$startFirstItem}>
             <View style={$iconsDescriptionContainer}>
-              <Icon icon="community" size={15} />
+              <Icon icon="person" size={15} />
               <Text text="Followers" weight="normal" size="xxs" />
             </View>
             <Text text="456K" preset="titleHeading" />
           </View>
           <View>
             <View style={$iconsDescriptionContainer}>
-              <Icon icon="community" size={15} />
+              <Icon icon="script" size={15} />
               <Text text="Script" weight="normal" size="xxs" />
             </View>
             <Text preset="titleHeading" text="56" />
@@ -139,6 +200,13 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Script and FollowerList List */}
+        {currentTab === "followers" ? (
+          <FollowersList data={followers}></FollowersList>
+        ) : (
+          <ScriptList data={mock_scripts} />
+        )}
       </Screen>
     </>
   )
@@ -148,7 +216,7 @@ const $root: ViewStyle = {
   flex: 1,
 }
 const $coverImage: ImageStyle = {
-  minHeight: 230,
+  minHeight: 140,
 }
 const $profileHeaderContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
@@ -166,20 +234,21 @@ const $headTextContainer: ViewStyle = {
   gap: spacing.xs,
 }
 const $backgroundImageContainer: ViewStyle = {
-  paddingVertical: spacing.lg,
-  marginHorizontal: spacing.lg,
+  paddingVertical: spacing.sm,
+  marginHorizontal: spacing.sm,
 }
-const $uploadButtonContainer: ThemedStyle<ViewStyle> = ({ colors }) => ({
+const $uploadButtonContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   borderWidth: 2,
   borderColor: colors.profileBorder,
   alignSelf: "flex-end",
-  paddingHorizontal: 16,
+  paddingHorizontal: spacing.md,
   paddingVertical: 8,
-  borderRadius: 12,
-  marginTop: 68,
+  borderRadius: spacing.sm,
+  marginTop: spacing.xxl,
+  marginBottom: spacing.sm,
 })
 
-const $uploadButtonItem: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+const $uploadButtonItem: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
   gap: spacing.sm + 2,
   alignItems: "center",
@@ -207,6 +276,7 @@ const $startFirstItem: ViewStyle = { marginRight: 140 }
 const $iconsDescriptionContainer: ViewStyle = {
   flexDirection: "row",
   gap: 4,
+  alignItems: "center",
 }
 const $bioBtn: ViewStyle = {
   borderWidth: 1,
@@ -237,4 +307,5 @@ const $tabRow: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   backgroundColor: colors.tabBackground,
   marginTop: 10,
   borderRadius: spacing.sm,
+  marginBottom: 20,
 })
