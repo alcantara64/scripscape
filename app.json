@@ -11,9 +11,7 @@
   },
   "newArchEnabled": true,
   "jsEngine": "hermes",
-  "assetBundlePatterns": [
-    "**/*"
-  ],
+  "assetBundlePatterns": ["**/*"],
   "android": {
     "icon": "./assets/images/app-icon-android-legacy.png",
     "package": "com.scripscape",
@@ -22,16 +20,33 @@
       "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
     },
     "allowBackup": false,
-    "edgeToEdgeEnabled": true
+    "edgeToEdgeEnabled": true,
+    "splash": {
+      "backgroundColor": "#240E56"
+    }
   },
   "ios": {
     "icon": "./assets/images/app-icon-ios.png",
     "supportsTablet": true,
-    "bundleIdentifier": "com.scripscape"
+    "bundleIdentifier": "com.scripscape",
+    "splash": {
+      "backgroundColor": "#240E56"
+    },
+    "privacyManifests": {
+      "NSPrivacyAccessedAPITypes": [
+        {
+          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+          "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+        }
+      ]
+    }
   },
   "web": {
     "favicon": "./assets/images/app-icon-web-favicon.png",
-    "bundler": "metro"
+    "bundler": "metro",
+    "splash": {
+      "backgroundColor": "#240E56"
+    }
   },
   "plugins": [
     "expo-localization",
@@ -63,39 +78,40 @@
       "version": "11.0.1"
     }
   },
-  "expo": {
-    "scheme": "scripscape",
-    "slug": "Scripscape",
-    "name": "Scripscape",
-    "android": {
-      "splash": {
-        "backgroundColor": "#240E56"
-      },
-      "package": "com.anonymous.Scripscape"
-    },
-    "ios": {
-      "splash": {
-        "backgroundColor": "#240E56"
-      },
-      "privacyManifests": {
-        "NSPrivacyAccessedAPITypes": [
-          {
-            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "CA92.1"
-            ]
-          }
-        ]
-      },
-      "bundleIdentifier": "com.anonymous.Scripscape"
-    },
-    "web": {
-      "splash": {
-        "backgroundColor": "#240E56"
-      }
-    },
-    "splash": {
-      "backgroundColor": "#240E56"
-    }
+  // "expo": {
+  //   "scheme": "scripscape",
+  //   "slug": "Scripscape",
+  //   "name": "Scripscape",
+  // "android": {
+  //   "splash": {
+  //     "backgroundColor": "#240E56"
+  //   },
+  //   "package": "com.anonymous.Scripscape"
+  // },
+  // "ios": {
+  //   "splash": {
+  //     "backgroundColor": "#240E56"
+  //   },
+  //   "privacyManifests": {
+  //     "NSPrivacyAccessedAPITypes": [
+  //       {
+  //         "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+  //         "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+  //       }
+  //     ]
+  //   },
+  //   "bundleIdentifier": "com.scripscape"
+  // },
+  // "web": {
+  //   "splash": {
+  //     "backgroundColor": "#240E56"
+  //   }
+  // },
+  //   "splash": {
+  //     "backgroundColor": "#240E56"
+  //   }
+  // }
+  "splash": {
+    "backgroundColor": "#240E56"
   }
 }
