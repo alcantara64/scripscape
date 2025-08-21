@@ -1,4 +1,4 @@
-import { FC, useState } from "react"
+import { FC, useRef, useState } from "react"
 import {
   ImageBackground,
   ImageStyle,
@@ -10,19 +10,20 @@ import {
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 
+import { FollowerCard } from "@/components/FollowerCard"
+import { FollowersList } from "@/components/FollowersList"
 import { Icon } from "@/components/Icon"
+import { ImagePickerWithCropping } from "@/components/ImagePickerWithCroping"
 import { Line } from "@/components/Line"
 import { ProfileCard } from "@/components/ProfileCard"
 import { Screen } from "@/components/Screen"
+import { ScriptList } from "@/components/ScriptList"
 import { Text } from "@/components/Text"
+import { mock_scripts } from "@/mockups/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
-import { FollowerCard } from "@/components/FollowerCard"
-import { FollowersList } from "@/components/FollowersList"
-import { ScriptList } from "@/components/ScriptList"
-import { mock_scripts } from "@/mockups/script"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -93,13 +94,39 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
   const navigation = useNavigation()
   const { themed } = useAppTheme()
   const [currentTab, setCurrentTab] = useState<"followers" | "script">("script")
+  const bgPickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
+  const profilePickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
+  const [profileImage, setProfileImage] = useState<string | null>(null)
 
   const toggleScriptFollowerTab = (type: "followers" | "script") => {
     setCurrentTab(type)
   }
+
+  const defaultProfileImage = { uri: "https://i.pravatar.cc/150?img=4" }
+
+  const handleBgImageSelected = (uri: string) => {
+    setBackgroundImage(uri)
+  }
+  const handleProfileImageSelected = (uri: string) => {
+    setProfileImage(uri)
+  }
   return (
     <>
-      <ImageBackground source={DEFAULT_BACKGROUND_IMAGE} style={$coverImage}>
+      <ImagePickerWithCropping
+        ref={bgPickerRef}
+        onImageSelected={handleBgImageSelected}
+        aspect={[16, 9]} // wide ratio for background
+      />
+      <ImagePickerWithCropping
+        ref={profilePickerRef}
+        onImageSelected={handleProfileImageSelected}
+        aspect={[1, 1]} // square for profile
+      />
+      <ImageBackground
+        source={backgroundImage ? { uri: backgroundImage } : DEFAULT_BACKGROUND_IMAGE}
+        style={$coverImage}
+      >
         <SafeAreaView style={$backgroundImageContainer}>
           <View style={themed($profileHeaderContainer)}>
             <View style={$headTextContainer}>
@@ -113,7 +140,12 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={themed($uploadButtonContainer)}>
+          <TouchableOpacity
+            style={themed($uploadButtonContainer)}
+            onPress={() => {
+              bgPickerRef.current?.pickImage()
+            }}
+          >
             <View style={themed($uploadButtonItem)}>
               <Icon icon="upload" size={16} color="#fff" />
               <Text text="Edit" />
@@ -124,10 +156,11 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
       <Screen style={$root} extraContainerStyle={$screenStyle} preset="scroll">
         <View style={$profileCardContainer}>
           <ProfileCard
-            picture={{ uri: "https://i.pravatar.cc/150?img=4" }}
+            picture={profileImage ? { uri: profileImage } : defaultProfileImage}
             name="W_Matterhorn"
             showUpdateButton
             isPro={true}
+            onUpload={() => profilePickerRef.current?.pickImage()}
           />
           <TouchableOpacity style={$editContainer}>
             <Icon containerStyle={$editContentItems as ImageStyle} icon="edit" />

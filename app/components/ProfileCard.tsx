@@ -15,7 +15,7 @@ import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
-import { Icon } from "./Icon"
+import { Icon, PressableIcon } from "./Icon"
 
 export interface ProfileCardProps {
   /**
@@ -27,13 +27,14 @@ export interface ProfileCardProps {
   isPro?: boolean
   picture: ImageSourcePropType | undefined
   showUpdateButton?: boolean
+  onUpload?: () => void
 }
 
 /**
  * Describe your component here
  */
 export const ProfileCard = (props: ProfileCardProps) => {
-  const { style, name, email, isPro, picture, showUpdateButton } = props
+  const { style, name, email, isPro, picture, showUpdateButton, onUpload } = props
   const $styles = [$container, style]
   const { themed } = useAppTheme()
 
@@ -42,7 +43,8 @@ export const ProfileCard = (props: ProfileCardProps) => {
       <View style={$profileSection}>
         <Pressable style={$imageContainer}>
           {showUpdateButton && (
-            <Icon
+            <PressableIcon
+              onPress={onUpload}
               icon="upload"
               size={24}
               color={colors.text}
