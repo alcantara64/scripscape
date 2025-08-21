@@ -1,5 +1,6 @@
 import { ReactNode, useRef, useState } from "react"
 import {
+  ColorValue,
   KeyboardAvoidingView,
   KeyboardAvoidingViewProps,
   LayoutChangeEvent,
@@ -10,7 +11,7 @@ import {
   View,
   ViewStyle,
 } from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
+import { LinearGradient, LinearGradientPoint } from "expo-linear-gradient"
 import { useScrollToTop } from "@react-navigation/native"
 import { SystemBars, SystemBarsProps, SystemBarStyle } from "react-native-edge-to-edge"
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
@@ -64,6 +65,11 @@ interface BaseScreenProps {
   KeyboardAvoidingViewProps?: KeyboardAvoidingViewProps
 
   extraContainerStyle?: ViewStyle
+
+  gradientLocation?: readonly [number, number, ...number[]]
+  gradientColors?: readonly [ColorValue, ColorValue, ...ColorValue[]]
+  gradientStart?: LinearGradientPoint
+  gradientEnd?: LinearGradientPoint
 }
 
 interface FixedScreenProps extends BaseScreenProps {
@@ -254,16 +260,20 @@ export function Screen(props: ScreenProps) {
     SystemBarsProps,
     systemBarStyle,
     extraContainerStyle,
+    gradientColors = ["#b68ef2", "#4b276b", "#0e1636"],
+    gradientStart = { x: 1, y: 0 },
+    gradientEnd = { x: 0.1, y: 1 },
+    gradientLocation = [0, 0.4, 1],
   } = props
 
   const $containerInsets = useSafeAreaInsetsStyle(safeAreaEdges)
 
   return (
     <LinearGradient
-      colors={["#b68ef2", "#4b276b", "#0e1636"]}
-      start={{ x: 1, y: 0 }}
-      end={{ x: 0.1, y: 1 }}
-      locations={[0, 0.4, 1]}
+      colors={gradientColors}
+      start={gradientStart}
+      end={gradientEnd}
+      locations={gradientLocation}
       style={[
         $containerStyle,
         // { backgroundColor: backgroundColor || colors.background },
