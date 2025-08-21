@@ -28,7 +28,9 @@ export const AnnouncementBox = (props: AnnouncementBoxProps) => {
 
   return (
     <View style={$styles}>
-      <AutoImage style={$imageStyle} source={imageSource} maxHeight={204} />
+      <View>
+        <AutoImage style={$imageStyle} source={imageSource} maxHeight={204} />
+      </View>
       <View style={$textContainer}>
         <Text style={themed($title)}>{title}</Text>
         <Text style={themed($text)}>{description}</Text>
@@ -48,7 +50,8 @@ const $container: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   borderColor: colors.palette.primary400,
   borderWidth: 1,
   backgroundColor: colors.palette.primary500,
-  padding: spacing.sm,
+  padding: spacing.xs,
+
   ...Platform.select({
     ios: {
       shadowColor: "#000",

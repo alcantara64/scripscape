@@ -11,7 +11,9 @@
   },
   "newArchEnabled": true,
   "jsEngine": "hermes",
-  "assetBundlePatterns": ["**/*"],
+  "assetBundlePatterns": [
+    "**/*"
+  ],
   "android": {
     "icon": "./assets/images/app-icon-android-legacy.png",
     "package": "com.scripscape",
@@ -36,9 +38,20 @@
       "NSPrivacyAccessedAPITypes": [
         {
           "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-          "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          "NSPrivacyAccessedAPITypeReasons": [
+            "CA92.1"
+          ]
+        },
+        {
+          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+          "NSPrivacyAccessedAPITypeReasons": [
+            "CA92.1"
+          ]
         }
       ]
+    },
+    "infoPlist": {
+      "ITSAppUsesNonExemptEncryption": false
     }
   },
   "web": {
@@ -76,41 +89,11 @@
   "extra": {
     "ignite": {
       "version": "11.0.1"
+    },
+    "eas": {
+      "projectId": "81d22c6f-a120-4706-a6af-c40e66ffc6d2"
     }
   },
-  // "expo": {
-  //   "scheme": "scripscape",
-  //   "slug": "Scripscape",
-  //   "name": "Scripscape",
-  // "android": {
-  //   "splash": {
-  //     "backgroundColor": "#240E56"
-  //   },
-  //   "package": "com.anonymous.Scripscape"
-  // },
-  // "ios": {
-  //   "splash": {
-  //     "backgroundColor": "#240E56"
-  //   },
-  //   "privacyManifests": {
-  //     "NSPrivacyAccessedAPITypes": [
-  //       {
-  //         "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-  //         "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
-  //       }
-  //     ]
-  //   },
-  //   "bundleIdentifier": "com.scripscape"
-  // },
-  // "web": {
-  //   "splash": {
-  //     "backgroundColor": "#240E56"
-  //   }
-  // },
-  //   "splash": {
-  //     "backgroundColor": "#240E56"
-  //   }
-  // }
   "splash": {
     "backgroundColor": "#240E56"
   }
