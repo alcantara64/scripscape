@@ -90,20 +90,35 @@ export const ScriptCard = (props: ScriptCardProps) => {
             <Text text={`${numberOfParts} Parts`} preset="description" style={$partsTextStyle} />
           </View>
         </View>
-        <Text text={description} numberOfLines={1} preset="description" />
+        <Text text={description} numberOfLines={2} preset="description" />
 
         <View style={$statsRow}>
           <View style={$statItem}>
             <Icon icon="eye" size={15} />
-            <Text text={`${formatNumber(viewsCount)}`} size="sm" preset="description" />
+            <Text
+              text={`${formatNumber(viewsCount)}`}
+              size="sm"
+              preset="description"
+              style={$cardIconText}
+            />
           </View>
           <View style={$statItem}>
             <Icon icon="like" size={15} />
-            <Text text={`${formatNumber(likedCount)}`} size="sm" preset="description" />
+            <Text
+              text={`${formatNumber(likedCount)}`}
+              size="sm"
+              preset="description"
+              style={$cardIconText}
+            />
           </View>
           <View style={$statItem}>
             <Icon icon="comment" size={15} />
-            <Text text={`${formatNumber(commentsCount)}`} size="sm" preset="description" />
+            <Text
+              text={`${formatNumber(commentsCount)}`}
+              size="sm"
+              preset="description"
+              style={$cardIconText}
+            />
           </View>
         </View>
       </View>
@@ -122,12 +137,12 @@ const $contentContainer: ViewStyle = {
 }
 
 const $titleText: ThemedStyle<TextStyle> = ({ colors, spacing, typography }) => ({
-  fontFamily: typography.primary.semiBold,
+  fontFamily: typography.primary.normal,
   fontSize: spacing.md - 1,
   color: colors.palette.neutral100,
-  fontWeight: 700,
+  fontWeight: 500,
   lineHeight: 20,
-  marginBottom: 8,
+  marginBottom: 2,
 })
 
 const $partContainer: ViewStyle = {
@@ -166,4 +181,8 @@ const $statItem: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
   gap: spacing.xxxs,
+}
+const $cardIconText: TextStyle = {
+  fontSize: 10,
+  lineHeight: 16,
 }

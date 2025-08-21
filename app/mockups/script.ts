@@ -62,3 +62,22 @@ export const mock_scripts = [
     views: 3400000,
   },
 ]
+
+export const ANNOUNCEMENTS = [
+  {
+    id: "1",
+    title: "Elevate Your Storytelling",
+    description:
+      "They came from different worlds—different languages, cultures, and expectations. But...",
+    image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+    enable: true,
+  },
+  {
+    id: "1",
+    title: "Elevate Your Storytelling",
+    description:
+      "They came from different worlds—different languages, cultures, and expectations. But...",
+    image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+    enable: true,
+  },
+]
