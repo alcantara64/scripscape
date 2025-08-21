@@ -1,5 +1,5 @@
 import { FC, useState } from "react"
-import { ImageStyle, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
+import { Dimensions, ImageStyle, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 
 import { AnnouncementBox } from "@/components/AnnouncementBox"
 import { AutoImage } from "@/components/AutoImage"
@@ -15,18 +15,19 @@ import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
+import { AppCarousel } from "@/components/AppCarousel"
+import { ANNOUNCEMENTS } from "@/mockups/script"
 
 // import { useNavigation } from "@react-navigation/native"
 const BannerPlaceHolder = require("../../assets/images/cover.png")
 const DEFAULT_IMAGE = require("../../assets/images/default-profile.png")
 
-interface HomeScreenProps extends AppStackScreenProps<"Home"> {
-  onOpenDraw?: (x: boolean) => void
-}
+interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
 
 export const HomeScreen: FC<HomeScreenProps> = () => {
   // Pull in navigation via hook
   // const navigation = useNavigation()
+  const { width } = Dimensions.get("window")
   const CATEGORIES = ["All", "Action", "Adventure", "Comedy", "Drama", "Drama"]
   const [selectedCategory, setSelectedCategory] = useState("All")
 
@@ -58,12 +59,19 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
         <Text text="👋 Welcome back, MollyMoonbeam!" style={themed($welcomeTextStyle)} />
       </View>
       <View>
-        <AnnouncementBox
-          imageSource={{ uri: "https://reactjs.org/logo-og.png" }}
-          // imageSource={BannerPlaceHolder}
-          title="Stories Worth Discovering"
-          description="We’ve been on the lookout for hidden gems — scripts that haven’t gotten many views (yet).
+        <AppCarousel
+          data={ANNOUNCEMENTS}
+          height={331}
+          width={width - 28}
+          renderItem={({ index, item }) => (
+            <AnnouncementBox
+              // imageSource={{ uri: "https://reactjs.org/logo-og.png" }}
+              imageSource={BannerPlaceHolder}
+              title="Stories Worth Discovering"
+              description="We’ve been on the lookout for hidden gems — scripts that haven’t gotten many views (yet).
           Here are a few we ..."
+            />
+          )}
         />
       </View>
       <View style={$sectionContainer}>
@@ -171,7 +179,7 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
 
 const $root: ViewStyle = {
   flex: 1,
-  paddingHorizontal: spacing.xs,
+  paddingHorizontal: spacing.md,
 }
 
 const $headerContainer: ViewStyle = {
@@ -211,6 +219,8 @@ const $welcomeTextStyle: ThemedStyle<TextStyle> = ({ colors, typography, spacing
   color: colors.text,
   fontFamily: typography.primary.normal,
   fontSize: spacing.lg - 2,
+  lineHeight: 22,
+  fontWeight: 400,
 })
 
 const $sectionContainer: ViewStyle = {

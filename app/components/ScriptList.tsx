@@ -1,13 +1,15 @@
-import { ActivityIndicator, StyleProp, TextStyle, View, ViewStyle } from "react-native"
-import { useAppTheme } from "@/theme/context"
-import type { ThemedStyle } from "@/theme/types"
-import { Text } from "@/components/Text"
-import { ListView } from "./ListView"
-import { ContentStyle } from "@shopify/flash-list"
-import { ScriptCard } from "./ScriptCard"
-import { IScript } from "@/interface/script"
-import { spacing } from "@/theme/spacing"
 import { useState } from "react"
+import { ActivityIndicator, StyleProp, TextStyle, View, ViewStyle } from "react-native"
+import { ContentStyle } from "@shopify/flash-list"
+
+import { Text } from "@/components/Text"
+import { IScript } from "@/interface/script"
+import { useAppTheme } from "@/theme/context"
+import { spacing } from "@/theme/spacing"
+import type { ThemedStyle } from "@/theme/types"
+
+import { ListView } from "./ListView"
+import { ScriptCard } from "./ScriptCard"
 
 export interface ScriptListProps {
   /**
@@ -15,7 +17,7 @@ export interface ScriptListProps {
    */
   style?: StyleProp<ViewStyle>
   data: Array<IScript>
-  refresh: () => void
+  refresh?: () => void
 }
 
 /**

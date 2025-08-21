@@ -34,7 +34,10 @@ export type AppStackParamList = {
   Home: undefined
   AddScript: undefined
   Profile: undefined
-  // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
+  Activity: undefined
+  MyScripts: undefined
+  Settings: undefined
+	// IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
 /**
