@@ -5,10 +5,11 @@
  * See the [Backend API Integration](https://docs.infinite.red/ignite-cli/boilerplate/app/services/#backend-api-integration)
  * documentation for more details.
  */
-import { ApiResponse, ApisauceInstance, create } from "apisauce"
+import { ApiResponse, ApisauceConfig, ApisauceInstance, create } from "apisauce"
+import { AxiosRequestConfig } from "axios"
 
 import Config from "@/config"
-import type { EpisodeItem } from "@/services/api/types"
+import type { ApiResult, EpisodeItem } from "@/services/api/types"
 
 import { GeneralApiProblem, getGeneralApiProblem } from "./apiProblem"
 import type { ApiConfig, ApiFeedResponse } from "./types"
@@ -21,6 +22,8 @@ export const DEFAULT_API_CONFIG: ApiConfig = {
   timeout: 10000,
 }
 
+type Params = Record<string, unknown>
+type JsonBody = Record<string, unknown>
 /**
  * Manages all requests to the API. You can use this class to build out
  * various requests that you need to call from your backend API.
@@ -41,6 +44,20 @@ export class Api {
         Accept: "application/json",
       },
     })
+  }
+
+  private normalize<T>(res: ApiResponse<T>): ApiResult<T> {
+    // Not OK? map to problem
+    if (!res.ok) {
+      const problem =
+        getGeneralApiProblem(res) ?? ({ kind: "unknown", temporary: true } as GeneralApiProblem)
+      return { ok: false, problem }
+    }
+    // OK but no data -> bad-data
+    if (res.data === undefined || res.data === null) {
+      return { ok: false, problem: { kind: "bad-data" } }
+    }
+    return { ok: true, data: res.data }
   }
 
   /**
@@ -75,6 +92,38 @@ export class Api {
       }
       return { kind: "bad-data" }
     }
+  }
+  async get<T>(url: string, params?: Params, cfg?: AxiosRequestConfig): Promise<ApiResult<T>> {
+    const res = await this.apisauce.get<T>(url, params, cfg)
+    console.log(res.config)
+    return this.normalize(res)
+  }
+
+  async post<T>(
+    url: string,
+    payload?: JsonBody | FormData,
+    cfg?: AxiosRequestConfig,
+  ): Promise<ApiResult<T>> {
+    const res = await this.apisauce.post<T>(url, payload, cfg)
+    return this.normalize(res)
+  }
+
+  async put<T>(
+    url: string,
+    payload?: JsonBody | FormData,
+    cfg?: AxiosRequestConfig,
+  ): Promise<ApiResult<T>> {
+    const res = await this.apisauce.put<T>(url, payload, cfg)
+    return this.normalize(res)
+  }
+
+  async delete<T>(
+    url: string,
+    payload?: JsonBody,
+    cfg?: AxiosRequestConfig,
+  ): Promise<ApiResult<T>> {
+    const res = await this.apisauce.delete<T>(url, payload, cfg)
+    return this.normalize(res)
   }
 }
 

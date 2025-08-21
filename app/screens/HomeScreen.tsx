@@ -2,6 +2,7 @@ import { FC, useState } from "react"
 import { Dimensions, ImageStyle, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 
 import { AnnouncementBox } from "@/components/AnnouncementBox"
+import { AppCarousel } from "@/components/AppCarousel"
 import { AutoImage } from "@/components/AutoImage"
 import { Icon } from "@/components/Icon"
 import { ListView } from "@/components/ListView"
@@ -11,12 +12,11 @@ import { Text } from "@/components/Text"
 import { ScriptStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { drawerRef } from "@/navigators/Drawer"
+import { useBanners } from "@/querries/banner"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
-import { AppCarousel } from "@/components/AppCarousel"
-import { ANNOUNCEMENTS } from "@/mockups/script"
 
 // import { useNavigation } from "@react-navigation/native"
 const BannerPlaceHolder = require("../../assets/images/cover.png")
@@ -28,6 +28,7 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
   // Pull in navigation via hook
   // const navigation = useNavigation()
   const { width } = Dimensions.get("window")
+  const { data: banners, isLoading, error } = useBanners()
   const CATEGORIES = ["All", "Action", "Adventure", "Comedy", "Drama", "Drama"]
   const [selectedCategory, setSelectedCategory] = useState("All")
 
@@ -60,16 +61,17 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
       </View>
       <View>
         <AppCarousel
-          data={ANNOUNCEMENTS}
+          data={banners?.data || []}
           height={331}
           width={width - 28}
           renderItem={({ index, item }) => (
             <AnnouncementBox
-              // imageSource={{ uri: "https://reactjs.org/logo-og.png" }}
-              imageSource={BannerPlaceHolder}
-              title="Stories Worth Discovering"
-              description="We’ve been on the lookout for hidden gems — scripts that haven’t gotten many views (yet).
-          Here are a few we ..."
+              imageSource={{
+                uri: `https://cms.scripscape.com${item.Image?.formats.large.url}`,
+              }}
+              // imageSource={BannerPlaceHolder}
+              title={item.Title}
+              description={item.Description}
             />
           )}
         />

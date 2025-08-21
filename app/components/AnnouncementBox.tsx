@@ -32,8 +32,12 @@ export const AnnouncementBox = (props: AnnouncementBoxProps) => {
         <AutoImage style={$imageStyle} source={imageSource} maxHeight={204} />
       </View>
       <View style={$textContainer}>
-        <Text style={themed($title)}>{title}</Text>
-        <Text style={themed($text)}>{description}</Text>
+        <Text numberOfLines={1} style={themed($title)}>
+          {title}
+        </Text>
+        <Text numberOfLines={2} style={themed($text)}>
+          {description}
+        </Text>
       </View>
     </View>
   )

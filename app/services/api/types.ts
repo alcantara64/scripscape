@@ -1,3 +1,5 @@
+import { GeneralApiProblem } from "./apiProblem"
+
 /**
  * These types indicate the shape of the data you expect to receive from your
  * API endpoint, assuming it's a JSON object like we have.
@@ -48,3 +50,8 @@ export interface ApiConfig {
    */
   timeout: number
 }
+
+export type Ok<T> = { ok: true; data: T }
+export type Err = { ok: false; problem: GeneralApiProblem }
+
+export type ApiResult<T> = Ok<T> | Err

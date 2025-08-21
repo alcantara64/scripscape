@@ -61,7 +61,6 @@ export const ScriptCard = (props: ScriptCardProps) => {
 
   const handleImageError = () => {
     // Only set the default image once
-    console.log("error")
     if (!hasError) {
       setCurrentImageSource(defaultImage)
       setHasError(true)
