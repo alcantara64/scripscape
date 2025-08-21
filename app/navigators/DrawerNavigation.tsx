@@ -43,7 +43,7 @@ export const DrawerNavigation = (props) => {
       authenticated: false,
     },
     {
-      title: "My profile",
+      title: "My Profile",
       icon: <Icon icon="person" size={24} />,
       screen: "Profile",
       authenticated: true,

@@ -7,23 +7,29 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { Icon } from "@/components/Icon"
 import { translate } from "@/i18n/translate"
+import { ActivityScreen } from "@/screens/ActivityScreen"
 import { AddScriptScreen } from "@/screens/AddScriptScreen"
 import { DemoCommunityScreen } from "@/screens/DemoCommunityScreen"
 import { DemoDebugScreen } from "@/screens/DemoDebugScreen"
 import { DemoPodcastListScreen } from "@/screens/DemoPodcastListScreen"
 import { HomeScreen } from "@/screens/HomeScreen"
+import { MyScriptsScreen, MyscriptsScreen } from "@/screens/MyscriptsScreen"
+import { SettingsScreen } from "@/screens/SettingsScreen"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
 import { AppStackParamList, AppStackScreenProps } from "./AppNavigator"
 import { DrawerNavigation } from "./DrawerNavigation"
+import { ReactComponent as MyIcon } from "../../assets/icons/create-script.svg"
+import { PlusIcon } from "@/components/PlusIcon"
 
 export type DemoTabParamList = {
-  DemoCommunity: undefined
+  MyScripts: undefined
   DemoShowroom: { queryIndex?: string; itemIndex?: string }
-  DemoDebug: undefined
-  DemoPodcastList: undefined
+  Activity: undefined
+  AddScript: undefined
   Home: undefined
+  Settings: undefined
 }
 
 /**
@@ -80,12 +86,12 @@ export function DemoNavigator() {
             ),
           }}
         >
-          {(props) => <HomeScreen onOpenDraw={() => drawerRef.current?.openDrawer()} {...props} />}
+          {(props) => <HomeScreen {...props} />}
         </Tab.Screen>
 
         <Tab.Screen
-          name="DemoCommunity"
-          component={DemoCommunityScreen}
+          name="MyScripts"
+          component={MyScriptsScreen}
           options={{
             tabBarLabel: translate("bottomTab:myScript"),
             tabBarIcon: ({ focused }) => (
@@ -104,13 +110,13 @@ export function DemoNavigator() {
             tabBarItemStyle: themed($addScriptTabLabel),
             tabBarLabelStyle: themed($addScriptBarLabel),
             tabBarLabel: () => null,
-            tabBarIcon: () => <Icon icon="addScript" color={colors.palette.accent500} size={56} />,
+            tabBarIcon: () => <PlusIcon />,
           }}
         />
 
         <Tab.Screen
-          name="DemoPodcastList"
-          component={DemoPodcastListScreen}
+          name="Activity"
+          component={ActivityScreen}
           options={{
             tabBarAccessibilityLabel: translate("bottomTab:activity"),
             tabBarLabel: translate("bottomTab:activity"),
@@ -125,8 +131,8 @@ export function DemoNavigator() {
         />
 
         <Tab.Screen
-          name="DemoDebug"
-          component={DemoDebugScreen}
+          name="Settings"
+          component={SettingsScreen}
           options={{
             tabBarLabel: translate("bottomTab:setting"),
             tabBarIcon: ({ focused }) => (
@@ -154,14 +160,15 @@ const $tabBarItem: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 })
 
 const $tabBarLabel: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
-  fontSize: 12,
-  fontFamily: typography.primary.medium,
+  fontSize: 10,
+  fontFamily: typography.primary.normal,
   lineHeight: 16,
+  fontWeight: 700,
   color: colors.palette.neutral500,
 })
 
 const $addScriptTabLabel: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  marginTop: spacing.lg,
+  paddingTop: spacing.md + 6,
 })
 
 const $addScriptBarLabel: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
