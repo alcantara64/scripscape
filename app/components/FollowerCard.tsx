@@ -15,6 +15,7 @@ import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
 import { Icon } from "./Icon"
+import { ProBadge } from "./ProBadge"
 
 export interface FollowerCardProps {
   /**
@@ -44,29 +45,37 @@ export const FollowerCard = (props: FollowerCardProps) => {
         </Pressable>
         <View>
           <View style={$nameAndBadgeContainer}>
-            <Text text={name} preset="default" weight="semiBold" size="md" />
+            <Text text={name} preset="default" weight="medium" size="sm" style={$titleText} />
 
-            {isPro && (
-              <View style={$proBadge}>
-                <Text style={$proText} text="PRO" weight="bold" size="md" />
-              </View>
-            )}
+            {isPro && <ProBadge />}
           </View>
           <View style={$statsContainer}>
             <View style={$iconsDescriptionContainer}>
               <Icon icon="person" size={15} />
-              <Text text={`${followers}`} weight="normal" size="xxs" />
+              <Text
+                text={`${followers}`}
+                weight="bold"
+                size="xxs"
+                preset="description"
+                style={$statsNumbers}
+              />
             </View>
 
             <View style={$iconsDescriptionContainer}>
               <Icon icon="script" size={15} />
-              <Text text={`${scripts}`} weight="normal" size="xxs" />
+              <Text
+                text={`${scripts}`}
+                weight="normal"
+                size="xxs"
+                preset="description"
+                style={$statsNumbers}
+              />
             </View>
           </View>
         </View>
       </View>
       <TouchableOpacity style={themed($followUnfollowButton)}>
-        <Text text="Unfollow" size="sm" />
+        <Text text="Unfollow" size="sm" style={$followText} />
       </TouchableOpacity>
     </View>
   )
@@ -85,24 +94,21 @@ const $avatar: ThemedStyle<ImageStyle> = ({ colors, spacing }) => ({
   width: spacing.xxl,
   height: spacing.xxl,
   borderRadius: spacing.xxxl / 2,
-  marginRight: spacing.md,
+  marginRight: spacing.xs,
   borderWidth: spacing.xxs - 1,
   borderColor: colors.border2,
 })
 
-const $proBadge: ViewStyle = {}
-
-const $proText: TextStyle = {
-  color: "#fff",
-  fontSize: 10,
-  paddingHorizontal: 16,
-  backgroundColor: "#3997B4",
-  borderRadius: 8,
-  marginLeft: 8,
-}
 const $nameAndBadgeContainer: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
+  gap: 8,
+}
+
+const $titleText: TextStyle = {
+  fontWeight: 500,
+  fontSize: 15,
+  lineHeight: 22,
 }
 
 const $followUnfollowButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
@@ -110,8 +116,7 @@ const $followUnfollowButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => (
   borderRadius: spacing.sm,
   borderColor: colors.fadedTint,
   justifyContent: "center",
-  paddingVertical: spacing.xxxs,
-  paddingHorizontal: spacing.xs,
+  padding: spacing.xs,
 })
 const $iconsDescriptionContainer: ViewStyle = {
   flexDirection: "row",
@@ -121,4 +126,13 @@ const $iconsDescriptionContainer: ViewStyle = {
 const $statsContainer: ViewStyle = {
   flexDirection: "row",
   gap: 8,
+}
+const $statsNumbers: TextStyle = {
+  fontWeight: 700,
+  lineHeight: 22,
+}
+const $followText: TextStyle = {
+  fontWeight: 500,
+  lineHeight: 20,
+  fontSize: 12,
 }

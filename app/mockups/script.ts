@@ -21,6 +21,7 @@ export const mock_scripts = [
     parts: 25,
     likes: 12000000,
     comments: 58000,
+    isPro: true,
     shares: 1900,
     views: 53000000,
     image: "https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d",

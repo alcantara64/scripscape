@@ -73,7 +73,7 @@ export const ScriptCard = (props: ScriptCardProps) => {
         <AutoImage
           style={$imageContainer}
           source={currentImageSource}
-          maxWidth={184}
+          maxWidth={180}
           onError={handleImageError}
         />
       </View>

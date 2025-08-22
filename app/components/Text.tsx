@@ -20,6 +20,7 @@ type Presets =
   | "formHelper"
   | "titleHeading"
   | "description"
+  | "readMore"
 
 export interface TextProps extends RNTextProps {
   /**
@@ -112,6 +113,9 @@ const $descriptionStyle: ThemedStyle<TextStyle> = (theme) => ({
   fontWeight: 300,
   fontSize: theme.spacing.sm,
 })
+const $readMoreStyle: ThemedStyle<TextStyle> = (theme) => ({
+  color: theme.colors.readMoreText,
+})
 
 const $presets: Record<Presets, ThemedStyleArray<TextStyle>> = {
   default: [$baseStyle],
@@ -128,5 +132,6 @@ const $presets: Record<Presets, ThemedStyleArray<TextStyle>> = {
   formHelper: [$baseStyle, { ...$sizeStyles.sm, ...$fontWeightStyles.normal }],
   titleHeading: [$baseStyle, { ...$sizeStyles.xl, ...$fontWeightStyles.normal }],
   description: [$baseStyle, { ...$sizeStyles.xs, ...$fontWeightStyles.normal }, $descriptionStyle],
+  readMore: [$baseStyle, $readMoreStyle],
 }
 const $rtlStyle: TextStyle = isRTL ? { writingDirection: "rtl" } : {}

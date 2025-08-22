@@ -17,10 +17,10 @@ import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
+import { DEFAULT_IMAGE } from "@/utils/app.default"
 
 // import { useNavigation } from "@react-navigation/native"
 const BannerPlaceHolder = require("../../assets/images/cover.png")
-const DEFAULT_IMAGE = require("../../assets/images/default-profile.png")
 
 interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
 
@@ -105,7 +105,7 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
                 style={{
                   ...$itemContainer,
                   backgroundColor:
-                    category.item === selectedCategory ? colors.highlighter : undefined,
+                    category.item === selectedCategory ? colors.buttonBackground : undefined,
                 }}
                 onPress={() => {
                   setSelectedCategory(category.item)

@@ -2,6 +2,7 @@ import { FC, useRef, useState } from "react"
 import {
   ImageBackground,
   ImageStyle,
+  Pressable,
   SafeAreaView,
   TextStyle,
   TouchableOpacity,
@@ -24,10 +25,10 @@ import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
+import { DEFAULT_IMAGE } from "@/utils/app.default"
 
 // import { useNavigation } from "@react-navigation/native"
 
-const DEFAULT_PROFILE_IMAGE = require("../../assets/images/default-profile.png")
 const DEFAULT_BACKGROUND_IMAGE = require("../../assets/images/profile-banner.png")
 
 const followers = [
@@ -93,7 +94,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
   // Pull in navigation via hook
   const navigation = useNavigation()
   const { themed } = useAppTheme()
-  const [currentTab, setCurrentTab] = useState<"followers" | "script">("script")
+  const [currentTab, setCurrentTab] = useState<"followers" | "script">("followers")
   const bgPickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const profilePickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
@@ -103,7 +104,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
     setCurrentTab(type)
   }
 
-  const defaultProfileImage = { uri: "https://i.pravatar.cc/150?img=4" }
+  const defaultProfileImage = DEFAULT_IMAGE
 
   const handleBgImageSelected = (uri: string) => {
     setBackgroundImage(uri)
@@ -153,7 +154,15 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
           </TouchableOpacity>
         </SafeAreaView>
       </ImageBackground>
-      <Screen style={$root} extraContainerStyle={$screenStyle} preset="scroll">
+      <Screen
+        style={$root}
+        extraContainerStyle={$screenStyle}
+        preset="scroll"
+        gradientColors={["#5B418D", "#240E56"]}
+        gradientLocation={[0.079, 0.4045]}
+        // gradientStart={{ x: 0.5, y: 0 }}
+        // gradientEnd={{ x: 0, y: 1 }}
+      >
         <View style={$profileCardContainer}>
           <ProfileCard
             picture={profileImage ? { uri: profileImage } : defaultProfileImage}
@@ -186,14 +195,18 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
         <View>
           <Text text="Bio" preset="subheading" />
           <Text
-            text="Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth.Read more"
+            text="Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth."
             preset="description"
+            style={$profileDescription}
             numberOfLines={4}
           />
+          <Pressable>
+            <Text text="Read more" preset="readMore" />
+          </Pressable>
         </View>
         <TouchableOpacity style={$bioBtn}>
           <Icon icon="edit" />
-          <Text text="Edit Bio" preset="description" />
+          <Text text="Edit Bio" size="xs" />
         </TouchableOpacity>
         <Line style={$line} color="#BEB6D1" />
 
@@ -207,11 +220,10 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
           >
             <Text
               style={[
-                currentTab === "script" && $activeTabText,
-                currentTab === "script" && $activeTab,
-                $tabText,
+                currentTab === "script" && themed($activeTabText),
+                currentTab === "script" && themed($activeTab),
+                themed($tabText),
               ]}
-              preset="description"
             >
               Script
             </Text>
@@ -224,9 +236,9 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
           >
             <Text
               style={[
-                currentTab === "followers" && $activeTabText,
-                currentTab === "followers" && $activeTab,
-                $tabText,
+                currentTab === "followers" && themed($activeTabText),
+                currentTab === "followers" && themed($activeTab),
+                themed($tabText),
               ]}
             >
               Followers
@@ -236,7 +248,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
 
         {/* Script and FollowerList List */}
         {currentTab === "followers" ? (
-          <FollowersList data={followers}></FollowersList>
+          <FollowersList data={followers} />
         ) : (
           <ScriptList data={mock_scripts} />
         )}
@@ -247,6 +259,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
 
 const $root: ViewStyle = {
   flex: 1,
+  paddingHorizontal: spacing.xxs,
 }
 const $coverImage: ImageStyle = {
   minHeight: 140,
@@ -292,7 +305,7 @@ const $profileCardContainer: ViewStyle = {
 }
 const $editContainer: ViewStyle = {
   flexDirection: "row",
-  gap: 2,
+  gap: 4,
   alignItems: "baseline",
   paddingTop: 12,
   marginLeft: 4,
@@ -327,13 +340,21 @@ const $bioBtn: ViewStyle = {
 
 const $line: ViewStyle = { marginVertical: spacing.md }
 const $tab: ViewStyle = { flex: 1, padding: 8, alignItems: "center" }
-const $activeTab: ViewStyle = { borderRadius: 8, backgroundColor: "#6a11cb" }
-const $activeTabText: TextStyle = {
-  flex: 1,
+const $activeTab: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  borderRadius: 8,
+  backgroundColor: colors.buttonBackground,
+})
+const $activeTabText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  // flex: 1,
   width: "100%",
   padding: 4,
-}
-const $tabText: TextStyle = { color: "#ECEFFD", padding: 4, textAlign: "center" }
+  color: colors.descriptionText,
+})
+const $tabText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.text,
+  padding: 4,
+  textAlign: "center",
+})
 
 const $tabRow: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   flexDirection: "row",
@@ -342,3 +363,7 @@ const $tabRow: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   borderRadius: spacing.sm,
   marginBottom: 20,
 })
+const $profileDescription: TextStyle = {
+  fontSize: 14,
+  lineHeight: 20,
+}

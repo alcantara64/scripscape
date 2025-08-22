@@ -12,6 +12,7 @@ import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 
 import { AppStackParamList } from "./AppNavigator"
 import { drawerRef } from "./Drawer"
+import { DEFAULT_IMAGE } from "@/utils/app.default"
 
 interface NavBarListItem {
   title: string
@@ -73,7 +74,7 @@ export const DrawerNavigation = (props) => {
         <View style={themed([$drawer, $drawerInsets])}>
           <ProfileCard
             isPro
-            picture={{ uri: "https://i.pravatar.cc/150?img=4" }}
+            picture={DEFAULT_IMAGE}
             name="W_Matterhorn"
             email="W.Matterhorn@gmail.com"
           />

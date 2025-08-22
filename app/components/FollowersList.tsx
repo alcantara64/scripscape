@@ -86,6 +86,7 @@ export const FollowersList = (props: FollowersListProps) => {
           name={item.name}
           scripts={item.scripts}
           followers={item.followers}
+          isPro={item.isPro}
         />
       )}
     />

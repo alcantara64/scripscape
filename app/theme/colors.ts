@@ -87,7 +87,7 @@ export const colors = {
    */
   errorBackground: palette.angry100,
 
-  highlighter: palette.primary300,
+  buttonBackground: palette.primary300,
 
   success: palette.green100,
   border2: palette.accent500,
@@ -95,4 +95,5 @@ export const colors = {
   descriptionText: palette.secondary100,
   tabBackground: palette.secondary700,
   fadedTint: palette.neutral300,
+  readMoreText: palette.primary200,
 } as const

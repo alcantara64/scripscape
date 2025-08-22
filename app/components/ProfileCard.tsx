@@ -15,7 +15,8 @@ import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
-import { Icon, PressableIcon } from "./Icon"
+import { PressableIcon } from "./Icon"
+import { ProBadge } from "./ProBadge"
 
 export interface ProfileCardProps {
   /**
@@ -55,13 +56,9 @@ export const ProfileCard = (props: ProfileCardProps) => {
           <Image source={picture} style={themed($avatar)} />
         </Pressable>
         <View>
-          <Text text={name} preset="default" weight="semiBold" size="xl" />
+          <Text text={name} style={themed($name)} preset="default" weight="semiBold" size="xl" />
           {email && <Text style={$email}>{email}</Text>}
-          {isPro && (
-            <View style={$proBadge}>
-              <Text style={$proText} text="PRO ⭐" weight="bold" size="md" />
-            </View>
-          )}
+          {isPro && <ProBadge />}
         </View>
       </View>
     </View>
@@ -71,6 +68,9 @@ export const ProfileCard = (props: ProfileCardProps) => {
 const $container: ViewStyle = {
   justifyContent: "center",
 }
+const $name: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.fadedTint,
+})
 
 const $profileSection: ViewStyle = { flexDirection: "row", alignItems: "center", marginBottom: 20 }
 const $avatar: ThemedStyle<ImageStyle> = ({ colors, spacing }) => ({
@@ -82,21 +82,6 @@ const $avatar: ThemedStyle<ImageStyle> = ({ colors, spacing }) => ({
   borderColor: colors.border2,
 })
 const $email: TextStyle = { color: "#ccc", fontSize: 12 }
-const $proBadge: ViewStyle = {
-  backgroundColor: "#3997B4",
-  paddingHorizontal: 8,
-  paddingVertical: 2,
-  borderRadius: 8,
-  marginTop: 5,
-  alignSelf: "flex-start",
-}
-
-const $proText: TextStyle = {
-  color: "#fff",
-  fontSize: 10,
-  textAlign: "center",
-  alignSelf: "center",
-}
 const $imageContainer: ViewStyle = {
   position: "relative",
 }
@@ -108,7 +93,7 @@ const $uploadButtonContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => 
   height: spacing.lg + 2,
   width: spacing.lg,
   borderRadius: spacing.lg / 2,
-  backgroundColor: colors.highlighter,
+  backgroundColor: colors.buttonBackground,
 })
 const $uploadItem: ImageStyle = {
   alignSelf: "center",
