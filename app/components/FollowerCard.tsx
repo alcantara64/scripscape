@@ -16,13 +16,17 @@ import type { ThemedStyle } from "@/theme/types"
 
 import { Icon } from "./Icon"
 import { ProBadge } from "./ProBadge"
+import { SmartImage } from "./SmartImage"
+import { ImageSource } from "expo-image"
+import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
+import { spacing } from "@/theme/spacing"
 
 export interface FollowerCardProps {
   /**
    * An optional style override useful for padding & margin.
    */
   style?: StyleProp<ViewStyle>
-  picture: ImageSourcePropType | undefined
+  picture: ImageSource
   name: string
   isPro?: boolean
   scripts: number
@@ -41,7 +45,11 @@ export const FollowerCard = (props: FollowerCardProps) => {
     <View style={$styles}>
       <View style={$profileSection}>
         <Pressable style={$imageContainer}>
-          <Image source={picture} style={themed($avatar)} />
+          <SmartImage
+            image={picture}
+            fallBackImage={DEFAULT_PROFILE_IMAGE}
+            imageStyle={themed($avatar)}
+          />
         </Pressable>
         <View>
           <View style={$nameAndBadgeContainer}>
@@ -89,12 +97,13 @@ const $container: ViewStyle = {
 const $profileSection: ViewStyle = { flexDirection: "row", alignItems: "flex-start" }
 const $imageContainer: ViewStyle = {
   position: "relative",
+  marginRight: spacing.xs,
 }
+
 const $avatar: ThemedStyle<ImageStyle> = ({ colors, spacing }) => ({
   width: spacing.xxl,
   height: spacing.xxl,
   borderRadius: spacing.xxxl / 2,
-  marginRight: spacing.xs,
   borderWidth: spacing.xxs - 1,
   borderColor: colors.border2,
 })

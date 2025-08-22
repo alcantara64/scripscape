@@ -1,1 +1,1 @@
-export const DEFAULT_IMAGE = require("../../assets/images/default-profile.jpg")
+export const DEFAULT_PROFILE_IMAGE = require("../../assets/images/default-profile.jpg")

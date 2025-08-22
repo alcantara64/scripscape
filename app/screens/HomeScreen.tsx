@@ -17,7 +17,7 @@ import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
-import { DEFAULT_IMAGE } from "@/utils/app.default"
+import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
 import { Loader } from "@/components/Loader"
 
 // import { useNavigation } from "@react-navigation/native"
@@ -67,7 +67,11 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
             <Icon icon="search" size={24} color={colors.palette.neutral100} />
           </View>
           <TouchableOpacity onPress={openDraw}>
-            <AutoImage style={themed($profileSectionImage)} source={DEFAULT_IMAGE} maxWidth={36} />
+            <AutoImage
+              style={themed($profileSectionImage)}
+              source={DEFAULT_PROFILE_IMAGE}
+              maxWidth={36}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -94,8 +98,7 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
       <View style={$sectionContainer}>
         <Text text="Featured" style={themed($sectionHeader)} />
         <ScriptCard
-          imageSource={{ uri: "https://reactjs.org/logo-og.png" }}
-          // imageSource={require("../../assets/images/demo/script-image.png")}
+          imageSource={require("../../assets/images/demo/script-image.png")}
           title="Love Knows No Boundaries"
           description="They came from different worlds—different languages, cultures, ..."
           status={ScriptStatus.completed}
@@ -134,8 +137,7 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
         <View style={$trendingContainers}>
           <View style={$cardWrapper}>
             <ScriptCard
-              imageSource={{ uri: "https://reactjs.org/logo-og.png" }}
-              // imageSource={require("../../assets/images/demo/script-image.png")}
+              imageSource={require("../../assets/images/demo/script-image.png")}
               title="Love Knows No Boundaries"
               description="They came from different worlds—different languages, cultures, ..."
               status={ScriptStatus.completed}
@@ -148,7 +150,7 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
           </View>
           <View style={$cardWrapper}>
             <ScriptCard
-              imageSource={{ uri: "https://reactjs.org/logo-og.png" }}
+              imageSource={{ uri: "https://reactjs.org/logo-ogs.png" }}
               // imageSource={require("../../assets/images/demo/script-image.png")}
               title="Love Knows No Boundaries"
               description="They came from different worlds—different languages, cultures, ..."
@@ -160,34 +162,6 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
               isVertical
             />
           </View>
-          {/* <View style={$cardWrapper}>
-            <ScriptCard
-              imageSource={{ uri: "https://reactjs.org/logo-og.png" }}
-              // imageSource={require("../../assets/images/demo/script-image.png")}
-              title="Love Knows No Boundaries"
-              description="They came from different worlds—different languages, cultures, ..."
-              status={ScriptStatus.completed}
-              commentsCount={2400}
-              viewsCount={1500000}
-              likedCount={55800}
-              numberOfParts={25}
-              isVertical
-            />
-          </View>
-          <View style={$cardWrapper}>
-            <ScriptCard
-              imageSource={{ uri: "https://reactjs.org/logo-og.png" }}
-              // imageSource={require("../../assets/images/demo/script-image.png")}
-              title="Love Knows No Boundaries"
-              description="They came from different worlds—different languages, cultures, ..."
-              status={ScriptStatus.completed}
-              commentsCount={2400}
-              viewsCount={1500000}
-              likedCount={55800}
-              numberOfParts={25}
-              isVertical
-            />
-          </View> */}
         </View>
       </View>
     </Screen>

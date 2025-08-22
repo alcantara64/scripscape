@@ -1,3 +1,4 @@
+import { useState } from "react"
 import {
   ImageSourcePropType,
   ImageStyle,
@@ -10,22 +11,23 @@ import {
 
 import { Text } from "@/components/Text"
 import { ScriptStatus } from "@/interface/script"
+import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
+import { spacing } from "@/theme/spacing"
 import type { ThemedStyle } from "@/theme/types"
+import { formatNumber } from "@/utils/formatDate"
 
 import { AutoImage } from "./AutoImage"
-import { formatNumber } from "@/utils/formatDate"
-import { spacing } from "@/theme/spacing"
-import { colors } from "@/theme/colors"
 import { Icon } from "./Icon"
-import { useState } from "react"
+import { SmartImage } from "./SmartImage"
+import { ImageSource } from "expo-image"
 
 export interface ScriptCardProps {
   /**
    * An optional style override useful for padding & margin.
    */
   style?: StyleProp<ViewStyle>
-  imageSource: ImageSourcePropType
+  imageSource: ImageSource
   status: ScriptStatus
   numberOfParts: number
   title: string
@@ -70,10 +72,10 @@ export const ScriptCard = (props: ScriptCardProps) => {
   return (
     <TouchableOpacity style={$styles}>
       <View>
-        <AutoImage
+        <SmartImage
           style={$imageContainer}
-          source={currentImageSource}
-          maxWidth={180}
+          imageStyle={$imageStyle}
+          image={currentImageSource}
           onError={handleImageError}
         />
       </View>
@@ -131,6 +133,7 @@ const $container: ViewStyle = {
   flex: 1,
 }
 const $imageContainer: ImageStyle = { height: 92 }
+const $imageStyle: ImageStyle = { height: 92, width: 180, maxWidth: 180 }
 const $contentContainer: ViewStyle = {
   flex: 1,
 }

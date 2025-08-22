@@ -2,7 +2,7 @@ import { ImageStyle, TouchableOpacity, View, ViewStyle, Image } from "react-nati
 
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { DEFAULT_IMAGE } from "@/utils/app.default"
+import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
 
 import { Button } from "./Button"
 import { Icon } from "./Icon"
@@ -25,7 +25,10 @@ export function AvatarEditor({
   return (
     <View style={$avatarSheet}>
       <View style={$avatarWrapper}>
-        <Image style={themed($avatarStyle)} source={value ? { uri: value } : DEFAULT_IMAGE} />
+        <Image
+          style={themed($avatarStyle)}
+          source={value ? { uri: value } : DEFAULT_PROFILE_IMAGE}
+        />
       </View>
 
       <View style={$avatarActionsRow}>

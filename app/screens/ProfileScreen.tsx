@@ -28,7 +28,7 @@ import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
-import { DEFAULT_IMAGE } from "@/utils/app.default"
+import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -124,7 +124,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
   const [editorConfig, setEditorConfig] = useState<EditorConfig | null>(null)
   const [username, setUsername] = useState("W_Matterhorn")
   const [bio, setBio] = useState(
-    "Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth.",
+    "Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth. Adding more text to test expand",
   )
   const [pendingBackground, setPendingBackground] = useState<string | null>(null)
 
@@ -176,7 +176,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
     }
   }
 
-  const defaultProfileImage = DEFAULT_IMAGE
+  const defaultProfileImage = DEFAULT_PROFILE_IMAGE
 
   const handleBgImageSelected = (uri: string) => {
     setPendingBackground(uri)
@@ -241,7 +241,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
         <View style={$profileCardContainer}>
           <ProfileCard
             picture={profileImage ? { uri: profileImage } : defaultProfileImage}
-            name="W_Matterhorn"
+            name={username}
             showUpdateButton
             isPro={true}
             onUpload={() => {
@@ -283,7 +283,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
             textStyle={$profileDescription}
             maxChars={200}
             preset="description"
-            content="Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth. ssdd,Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth.  "
+            content={bio}
           />
         </View>
         <TouchableOpacity style={$bioBtn} onPress={openBioEditor}>
