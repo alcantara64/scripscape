@@ -62,7 +62,7 @@ export function FieldEditor({
     if (!canSave) return
     try {
       setSaving(true)
-      await onSave(value.trimEnd()) // small nicety
+      await onSave(value.trimEnd())
       onClose?.()
     } finally {
       setSaving(false)

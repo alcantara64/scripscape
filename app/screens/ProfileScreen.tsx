@@ -11,6 +11,10 @@ import {
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 
+import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
+import { AvatarEditor } from "@/components/AvatarEditor"
+import { Button } from "@/components/Button"
+import { FieldEditor } from "@/components/FieldEditor"
 import { FollowerCard } from "@/components/FollowerCard"
 import { FollowersList } from "@/components/FollowersList"
 import { Icon } from "@/components/Icon"
@@ -20,17 +24,14 @@ import { ProfileCard } from "@/components/ProfileCard"
 import { Screen } from "@/components/Screen"
 import { ScriptList } from "@/components/ScriptList"
 import { Text } from "@/components/Text"
+import { TextField } from "@/components/TextField"
 import { mock_scripts } from "@/mockups/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_IMAGE } from "@/utils/app.default"
-import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
-import { TextField } from "@/components/TextField"
-import { colors } from "@/theme/colors"
-import { Button } from "@/components/Button"
-import { FieldEditor } from "@/components/FieldEditor"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -110,6 +111,14 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
   // Pull in navigation via hook
   const navigation = useNavigation()
   const { themed } = useAppTheme()
+
+  const avatarPickerRef = useRef<{
+    pickImage: () => Promise<void>
+    takePhoto?: () => Promise<void>
+  }>(null)
+  const [pendingAvatar, setPendingAvatar] = useState<string | null>(null)
+  const [sheetView, setSheetView] = useState<"field" | "avatar" | null>(null)
+
   const [currentTab, setCurrentTab] = useState<"followers" | "script">("followers")
   const bgPickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const profilePickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
@@ -139,6 +148,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
         return undefined
       },
     })
+    setSheetView("field")
     sheet.current?.open()
   }
 
@@ -153,6 +163,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
       multiline: true,
       validate: (v) => (v.trim().length === 0 ? "Bio can't be empty" : undefined),
     })
+    setSheetView("field")
     sheet.current?.open()
   }
 
@@ -187,6 +198,14 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
         onImageSelected={handleProfileImageSelected}
         aspect={[1, 1]} // square for profile
       />
+
+      {/* Avatar editor picker (hidden) */}
+      <ImagePickerWithCropping
+        ref={avatarPickerRef}
+        onImageSelected={(uri) => setPendingAvatar(uri)}
+        aspect={[1, 1]}
+      />
+
       <ImageBackground
         source={backgroundImage ? { uri: backgroundImage } : DEFAULT_BACKGROUND_IMAGE}
         style={$coverImage}
@@ -232,7 +251,11 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
             name="W_Matterhorn"
             showUpdateButton
             isPro={true}
-            onUpload={() => profilePickerRef.current?.pickImage()}
+            onUpload={() => {
+              setPendingAvatar(profileImage ?? null)
+              setSheetView("avatar")
+              sheet.current?.open()
+            }}
           />
           <TouchableOpacity style={$editContainer} onPress={openUsernameEditor}>
             <Icon containerStyle={$editContentItems as ImageStyle} icon="edit" />
@@ -321,7 +344,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
         snapPoints={["75%", "85%"]}
         onChange={(i) => console.log("sheet index:", i)}
       >
-        {editorConfig ? (
+        {sheetView === "field" && editorConfig ? (
           <FieldEditor
             title={editorConfig.title}
             label={editorConfig.label}
@@ -332,6 +355,17 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
             validate={editorConfig.validate}
             inputWrapperStyle={$inputWrapperStyle}
             onSave={handleSave}
+            onClose={() => sheet.current?.close()}
+          />
+        ) : sheetView === "avatar" ? (
+          <AvatarEditor
+            value={pendingAvatar ?? profileImage}
+            onUpload={() => avatarPickerRef.current?.pickImage()}
+            onTakePhoto={() => avatarPickerRef.current?.takePhoto?.()} // only if your picker exposes it
+            onSave={() => {
+              if (pendingAvatar) setProfileImage(pendingAvatar)
+              sheet.current?.close()
+            }}
             onClose={() => sheet.current?.close()}
           />
         ) : (
