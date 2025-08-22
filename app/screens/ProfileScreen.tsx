@@ -19,6 +19,7 @@ import { Icon } from "@/components/Icon"
 import { ImagePickerWithCropping } from "@/components/ImagePickerWithCroping"
 import { Line } from "@/components/Line"
 import { ProfileCard } from "@/components/ProfileCard"
+import ReadMoreText from "@/components/ReadMore"
 import { Screen } from "@/components/Screen"
 import { ScriptList } from "@/components/ScriptList"
 import { Text } from "@/components/Text"
@@ -113,11 +114,10 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
     takePhoto?: () => Promise<void>
   }>(null)
   const [pendingAvatar, setPendingAvatar] = useState<string | null>(null)
-  const [sheetView, setSheetView] = useState<"field" | "avatar" | null>(null)
+  const [sheetView, setSheetView] = useState<"field" | "avatar" | "background" | null>(null)
 
   const [currentTab, setCurrentTab] = useState<"followers" | "script">("followers")
   const bgPickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
-  const profilePickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const sheet = useRef<BottomSheetController | null>(null)
@@ -126,6 +126,8 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
   const [bio, setBio] = useState(
     "Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth.",
   )
+  const [pendingBackground, setPendingBackground] = useState<string | null>(null)
+
   const toggleScriptFollowerTab = (type: "followers" | "script") => {
     setCurrentTab(type)
   }
@@ -137,10 +139,10 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
       label: "Username",
       icon: "person",
       initialValue: username,
-      maxLength: 32,
+      maxLength: 15,
       validate: (v) => {
-        if (v.trim().length < 3) return "Username must be at least 3 characters"
-        if (!/^[a-z0-9_]+$/i.test(v)) return "Use letters, numbers, and underscores only"
+        if (v.trim().length < 6) return "Username must be at least 6 characters"
+        if (!/^[a-z0-9_]+$/i.test(v)) return "cannot include any spaces or special characters"
         return undefined
       },
     })
@@ -177,22 +179,15 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
   const defaultProfileImage = DEFAULT_IMAGE
 
   const handleBgImageSelected = (uri: string) => {
-    setBackgroundImage(uri)
+    setPendingBackground(uri)
   }
-  const handleProfileImageSelected = (uri: string) => {
-    setProfileImage(uri)
-  }
+
   return (
     <>
       <ImagePickerWithCropping
         ref={bgPickerRef}
         onImageSelected={handleBgImageSelected}
         aspect={[16, 9]} // wide ratio for background
-      />
-      <ImagePickerWithCropping
-        ref={profilePickerRef}
-        onImageSelected={handleProfileImageSelected}
-        aspect={[1, 1]} // square for profile
       />
 
       {/* Avatar editor picker (hidden) */}
@@ -222,7 +217,9 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
           <TouchableOpacity
             style={themed($uploadButtonContainer)}
             onPress={() => {
-              bgPickerRef.current?.pickImage()
+              setPendingBackground(backgroundImage ?? null)
+              setSheetView("background")
+              sheet.current?.open()
             }}
           >
             <View style={themed($uploadButtonItem)}>
@@ -276,15 +273,18 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
         </View>
         <View>
           <Text text="Bio" preset="subheading" />
-          <Text
+          {/* <Text
             text="Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth."
             preset="description"
             style={$profileDescription}
             numberOfLines={4}
+          /> */}
+          <ReadMoreText
+            textStyle={$profileDescription}
+            maxChars={200}
+            preset="description"
+            content="Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth. ssdd,Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth.  "
           />
-          <Pressable>
-            <Text text="Read more" preset="readMore" />
-          </Pressable>
         </View>
         <TouchableOpacity style={$bioBtn} onPress={openBioEditor}>
           <Icon icon="edit" />
@@ -353,9 +353,20 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
           <AvatarEditor
             value={pendingAvatar ?? profileImage}
             onUpload={() => avatarPickerRef.current?.pickImage()}
-            onTakePhoto={() => avatarPickerRef.current?.takePhoto?.()} // only if your picker exposes it
+            onTakePhoto={() => avatarPickerRef.current?.takePhoto?.()}
             onSave={() => {
               if (pendingAvatar) setProfileImage(pendingAvatar)
+              sheet.current?.close()
+            }}
+            onClose={() => sheet.current?.close()}
+          />
+        ) : sheetView === "background" ? (
+          <AvatarEditor
+            // reuse the same component for background too
+            value={pendingBackground ?? backgroundImage}
+            onUpload={() => bgPickerRef.current?.pickImage()} // uses 16:9 aspect picker
+            onSave={() => {
+              if (pendingBackground) setBackgroundImage(pendingBackground)
               sheet.current?.close()
             }}
             onClose={() => sheet.current?.close()}

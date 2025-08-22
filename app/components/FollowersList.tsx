@@ -1,15 +1,15 @@
 import { useState } from "react"
-import { ActivityIndicator, StyleProp, TextStyle, View, ViewStyle } from "react-native"
+import { ActivityIndicator, StyleProp, View, ViewStyle } from "react-native"
 import { ContentStyle } from "@shopify/flash-list"
 
-import { Text } from "@/components/Text"
 import { IFollowers } from "@/interface/follower"
 import { useAppTheme } from "@/theme/context"
+import { spacing } from "@/theme/spacing"
 import type { ThemedStyle } from "@/theme/types"
+
 import { EmptyState } from "./EmptyState"
 import { FollowerCard } from "./FollowerCard"
 import { ListView } from "./ListView"
-import { spacing } from "@/theme/spacing"
 
 export interface FollowersListProps {
   /**

@@ -103,7 +103,7 @@ export function App() {
         <GestureHandlerRootView>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
-              <ThemeProvider>
+              <ThemeProvider initialContext="light">
                 <AppNavigator
                   linking={linking}
                   initialState={initialNavigationState}
