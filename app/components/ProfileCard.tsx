@@ -70,6 +70,8 @@ const $container: ViewStyle = {
 }
 const $name: ThemedStyle<TextStyle> = ({ colors }) => ({
   color: colors.fadedTint,
+  lineHeight: 33,
+  fontWeight: 400,
 })
 
 const $profileSection: ViewStyle = { flexDirection: "row", alignItems: "center", marginBottom: 20 }

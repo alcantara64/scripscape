@@ -234,7 +234,8 @@ const $sectionHeader: ThemedStyle<TextStyle> = ({ colors, typography, spacing })
   fontFamily: typography.primary.medium,
   fontSize: spacing.lg,
   marginBottom: spacing.xs,
-  fontWeight: "bold",
+  fontWeight: "500",
+  lineHeight: 33,
 })
 const $categoryContainer: ViewStyle = {}
 const $separator: ViewStyle = {

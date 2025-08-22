@@ -246,16 +246,20 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
   )
 })
 
-const $labelStyle: ThemedStyle<TextStyle> = ({ spacing }) => ({
+const $labelStyle: ThemedStyle<TextStyle> = ({ spacing, colors }) => ({
   marginBottom: spacing.xs,
+  fontSize: spacing.sm + 2,
+  color: colors.descriptionText,
+  fontWeight: "500",
+  lineHeight: 20,
 })
 
 const $inputWrapperStyle: ThemedStyle<ViewStyle> = ({ colors }) => ({
   alignItems: "flex-start",
   borderWidth: 1,
-  borderRadius: 4,
-  backgroundColor: colors.palette.neutral200,
-  borderColor: colors.palette.neutral400,
+  borderRadius: 12,
+  // backgroundColor: colors.palette.neutral200,
+  borderColor: colors.tintInactive,
   overflow: "hidden",
 })
 
@@ -271,10 +275,15 @@ const $inputStyle: ThemedStyle<TextStyle> = ({ colors, typography, spacing }) =>
   paddingHorizontal: 0,
   marginVertical: spacing.xs,
   marginHorizontal: spacing.sm,
+  fontWeight: "400",
 })
 
-const $helperStyle: ThemedStyle<TextStyle> = ({ spacing }) => ({
+const $helperStyle: ThemedStyle<TextStyle> = ({ spacing, colors }) => ({
   marginTop: spacing.xs,
+  fontSize: spacing.sm + 2,
+  color: colors.tintInactive,
+  fontWeight: "400",
+  lineHeight: 20,
 })
 
 const $rightAccessoryStyle: ThemedStyle<ViewStyle> = ({ spacing }) => ({

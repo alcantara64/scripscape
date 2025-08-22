@@ -26,6 +26,11 @@ import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_IMAGE } from "@/utils/app.default"
+import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
+import { TextField } from "@/components/TextField"
+import { colors } from "@/theme/colors"
+import { Button } from "@/components/Button"
+import { FieldEditor } from "@/components/FieldEditor"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -90,6 +95,17 @@ const followers = [
 
 interface ProfileScreenProps extends AppStackScreenProps<"Profile"> {}
 
+type EditorConfig = {
+  key: "username" | "bio"
+  title: string
+  label: string
+  icon: string
+  initialValue: string
+  maxLength?: number
+  multiline?: boolean
+  validate?: (v: string) => string | undefined
+}
+
 export const ProfileScreen: FC<ProfileScreenProps> = () => {
   // Pull in navigation via hook
   const navigation = useNavigation()
@@ -99,9 +115,56 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
   const profilePickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
   const [profileImage, setProfileImage] = useState<string | null>(null)
-
+  const sheet = useRef<BottomSheetController | null>(null)
+  const [editorConfig, setEditorConfig] = useState<EditorConfig | null>(null)
+  const [username, setUsername] = useState("W_Matterhorn")
+  const [bio, setBio] = useState(
+    "Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth.",
+  )
   const toggleScriptFollowerTab = (type: "followers" | "script") => {
     setCurrentTab(type)
+  }
+
+  const openUsernameEditor = () => {
+    setEditorConfig({
+      key: "username",
+      title: "Edit Username",
+      label: "Username",
+      icon: "person",
+      initialValue: username,
+      maxLength: 32,
+      validate: (v) => {
+        if (v.trim().length < 3) return "Username must be at least 3 characters"
+        if (!/^[a-z0-9_]+$/i.test(v)) return "Use letters, numbers, and underscores only"
+        return undefined
+      },
+    })
+    sheet.current?.open()
+  }
+
+  const openBioEditor = () => {
+    setEditorConfig({
+      key: "bio",
+      title: "Edit Bio",
+      label: "Bio",
+      icon: "info",
+      initialValue: bio,
+      maxLength: 160,
+      multiline: true,
+      validate: (v) => (v.trim().length === 0 ? "Bio can't be empty" : undefined),
+    })
+    sheet.current?.open()
+  }
+
+  const handleSave = async (value: string) => {
+    if (!editorConfig) return
+    if (editorConfig.key === "username") {
+      // await api.updateUsername(value)
+      setUsername(value)
+    } else if (editorConfig.key === "bio") {
+      // await api.updateBio(value)
+      setBio(value)
+    }
   }
 
   const defaultProfileImage = DEFAULT_IMAGE
@@ -171,7 +234,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
             isPro={true}
             onUpload={() => profilePickerRef.current?.pickImage()}
           />
-          <TouchableOpacity style={$editContainer}>
+          <TouchableOpacity style={$editContainer} onPress={openUsernameEditor}>
             <Icon containerStyle={$editContentItems as ImageStyle} icon="edit" />
             <Text text="Edit" style={$editContentItems} />
           </TouchableOpacity>
@@ -204,7 +267,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
             <Text text="Read more" preset="readMore" />
           </Pressable>
         </View>
-        <TouchableOpacity style={$bioBtn}>
+        <TouchableOpacity style={$bioBtn} onPress={openBioEditor}>
           <Icon icon="edit" />
           <Text text="Edit Bio" size="xs" />
         </TouchableOpacity>
@@ -253,6 +316,30 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
           <ScriptList data={mock_scripts} />
         )}
       </Screen>
+      <AppBottomSheet
+        controllerRef={sheet}
+        snapPoints={["75%", "85%"]}
+        onChange={(i) => console.log("sheet index:", i)}
+      >
+        {editorConfig ? (
+          <FieldEditor
+            title={editorConfig.title}
+            label={editorConfig.label}
+            icon={editorConfig.icon}
+            initialValue={editorConfig.initialValue}
+            maxLength={editorConfig.maxLength}
+            multiline={editorConfig.multiline}
+            validate={editorConfig.validate}
+            inputWrapperStyle={$inputWrapperStyle}
+            onSave={handleSave}
+            onClose={() => sheet.current?.close()}
+          />
+        ) : (
+          <View style={{ padding: 12 }}>
+            <Text text="Nothing to edit yet." />
+          </View>
+        )}
+      </AppBottomSheet>
     </>
   )
 }
@@ -264,6 +351,7 @@ const $root: ViewStyle = {
 const $coverImage: ImageStyle = {
   minHeight: 140,
 }
+const $inputWrapperStyle: ViewStyle = { paddingTop: 4, paddingBottom: 4 }
 const $profileHeaderContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
   alignContent: "center",
@@ -307,7 +395,7 @@ const $editContainer: ViewStyle = {
   flexDirection: "row",
   gap: 4,
   alignItems: "baseline",
-  paddingTop: 12,
+  paddingTop: 18,
   marginLeft: 4,
 }
 const $editContentItems: ViewStyle = {
@@ -367,3 +455,12 @@ const $profileDescription: TextStyle = {
   fontSize: 14,
   lineHeight: 20,
 }
+const $fieldTitle: ViewStyle = {
+  gap: 20,
+}
+
+const $buttonStyle: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  backgroundColor: colors.buttonBackground,
+  borderRadius: 12,
+  borderWidth: 0,
+})
