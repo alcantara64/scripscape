@@ -2,10 +2,6 @@ import { forwardRef, useImperativeHandle } from "react"
 import { Alert, StyleProp, TextStyle, View, ViewStyle } from "react-native"
 import * as ImagePicker from "expo-image-picker"
 
-import { Text } from "@/components/Text"
-import { useAppTheme } from "@/theme/context"
-import type { ThemedStyle } from "@/theme/types"
-
 export interface ImagePickerWithCroppingProps {
   onImageSelected: (uri: string) => void
   aspect?: number[]
@@ -19,6 +15,24 @@ interface ImagePickerRef {
  */
 export const ImagePickerWithCropping = forwardRef<ImagePickerRef, ImagePickerWithCroppingProps>(
   ({ onImageSelected, aspect = [4, 3] }, ref) => {
+    const takePhoto = async () => {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync()
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Denied",
+          "Sorry, we need camera roll permissions to make this work!",
+        )
+        return
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+      })
+      console.log("result", result)
+      if (!result.canceled) {
+        onImageSelected(result.assets[0].uri)
+      }
+    }
     const pickImage = async () => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (status !== "granted") {
@@ -30,7 +44,7 @@ export const ImagePickerWithCropping = forwardRef<ImagePickerRef, ImagePickerWit
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ["images", "livePhotos"],
         allowsEditing: true,
         aspect,
         quality: 1,
@@ -43,6 +57,7 @@ export const ImagePickerWithCropping = forwardRef<ImagePickerRef, ImagePickerWit
 
     useImperativeHandle(ref, () => ({
       pickImage,
+      takePhoto,
     }))
 
     return null

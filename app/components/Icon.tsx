@@ -152,6 +152,7 @@ export const iconRegistry = {
   edit: require("@assets/icons/edit.png"),
   script: require("@assets/icons/open-book.png"),
   part: require("@assets/icons/parts.png"),
+  camera: require("@assets/icons/camera.png"),
 }
 
 const $imageStyleBase: ImageStyle = {

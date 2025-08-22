@@ -1,5 +1,5 @@
 // FieldEditor.tsx (or place above your ProfileScreen component)
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { View, ViewStyle } from "react-native"
 
 import { Button } from "@/components/Button"
@@ -39,6 +39,11 @@ export function FieldEditor({
   const [value, setValue] = useState(initialValue)
   const [touched, setTouched] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setValue(initialValue)
+    setTouched(false)
+  }, [initialValue])
 
   const length = value.length
   const changed = value !== initialValue
@@ -94,7 +99,7 @@ export function FieldEditor({
       />
 
       <Button
-        style={themed($buttonStyle)}
+        style={[themed($buttonStyle), !canSave && themed($disableButton)]}
         text={saving ? "Saving..." : "Save"}
         disabled={!canSave}
         onPress={handleSave}
@@ -108,4 +113,7 @@ const $buttonStyle: ThemedStyle<ViewStyle> = ({ colors }) => ({
   backgroundColor: colors.buttonBackground,
   borderRadius: 12,
   borderWidth: 0,
+})
+const $disableButton: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  backgroundColor: colors.tintInactive,
 })

@@ -13,9 +13,7 @@ import { useNavigation } from "@react-navigation/native"
 
 import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
 import { AvatarEditor } from "@/components/AvatarEditor"
-import { Button } from "@/components/Button"
 import { FieldEditor } from "@/components/FieldEditor"
-import { FollowerCard } from "@/components/FollowerCard"
 import { FollowersList } from "@/components/FollowersList"
 import { Icon } from "@/components/Icon"
 import { ImagePickerWithCropping } from "@/components/ImagePickerWithCroping"
@@ -24,10 +22,8 @@ import { ProfileCard } from "@/components/ProfileCard"
 import { Screen } from "@/components/Screen"
 import { ScriptList } from "@/components/ScriptList"
 import { Text } from "@/components/Text"
-import { TextField } from "@/components/TextField"
 import { mock_scripts } from "@/mockups/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
-import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
@@ -159,7 +155,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
       label: "Bio",
       icon: "info",
       initialValue: bio,
-      maxLength: 160,
+      maxLength: 300,
       multiline: true,
       validate: (v) => (v.trim().length === 0 ? "Bio can't be empty" : undefined),
     })
@@ -339,11 +335,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
           <ScriptList data={mock_scripts} />
         )}
       </Screen>
-      <AppBottomSheet
-        controllerRef={sheet}
-        snapPoints={["75%", "85%"]}
-        onChange={(i) => console.log("sheet index:", i)}
-      >
+      <AppBottomSheet controllerRef={sheet} snapPoints={["75%", "85%"]}>
         {sheetView === "field" && editorConfig ? (
           <FieldEditor
             title={editorConfig.title}
