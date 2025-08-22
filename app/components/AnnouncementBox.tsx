@@ -6,6 +6,7 @@ import { spacing } from "@/theme/spacing"
 import type { ThemedStyle } from "@/theme/types"
 
 import { AutoImage } from "./AutoImage"
+import { SmartImage } from "./SmartImage"
 
 export interface AnnouncementBoxProps {
   /**
@@ -29,7 +30,7 @@ export const AnnouncementBox = (props: AnnouncementBoxProps) => {
   return (
     <View style={$styles}>
       <View>
-        <AutoImage style={$imageStyle} source={imageSource} maxHeight={204} />
+        <SmartImage imageStyle={$imageStyle} image={imageSource} />
       </View>
       <View style={$textContainer}>
         <Text numberOfLines={1} style={themed($title)}>
@@ -72,6 +73,8 @@ const $container: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
 const $imageStyle: ImageStyle = {
   borderRadius: spacing.xs,
   width: "100%",
+  height: 204,
+  maxHeight: 204,
 }
 
 const $textContainer: ViewStyle = {

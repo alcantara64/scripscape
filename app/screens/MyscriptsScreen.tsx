@@ -3,6 +3,7 @@ import { ViewStyle } from "react-native"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import { Loader } from "@/components/Loader"
 // import { useNavigation } from "@react-navigation/native"
 
 interface MyScriptsScreenProps extends AppStackScreenProps<"MyScripts"> {}
@@ -11,7 +12,7 @@ export const MyScriptsScreen: FC<MyScriptsScreenProps> = () => {
   // Pull in navigation via hook
   // const navigation = useNavigation()
   return (
-    <Screen style={$root} preset="scroll" safeAreaEdges={["top"]}>
+    <Screen style={$root} preset="auto" safeAreaEdges={["top"]}>
       <Text text="myscripts" />
     </Screen>
   )

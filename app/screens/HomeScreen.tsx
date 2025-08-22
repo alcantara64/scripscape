@@ -18,6 +18,7 @@ import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_IMAGE } from "@/utils/app.default"
+import { Loader } from "@/components/Loader"
 
 // import { useNavigation } from "@react-navigation/native"
 const BannerPlaceHolder = require("../../assets/images/cover.png")
@@ -38,6 +39,20 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
   const Separator = () => <View style={$separator} />
 
   const { themed } = useAppTheme()
+  if (isLoading) {
+    return (
+      <Loader
+        message="Fetching your scripts…"
+        // Optional: use a remote Lottie URL instead of local file
+        // source={{ uri: "https://assets9.lottiefiles.com/packages/lf20_q5pk6p1k.json" }}
+        loop
+        autoPlay
+        speed={1}
+        size={180}
+        backgroundColor="#240E56"
+      />
+    )
+  }
   return (
     <Screen style={$root} preset="scroll" safeAreaEdges={["top"]}>
       <View style={$headerContainer}>

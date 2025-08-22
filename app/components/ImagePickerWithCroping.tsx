@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle } from "react"
-import { Alert, StyleProp, TextStyle, View, ViewStyle } from "react-native"
+import { Alert } from "react-native"
 import * as ImagePicker from "expo-image-picker"
 
 export interface ImagePickerWithCroppingProps {
