@@ -1,6 +1,6 @@
 export enum ScriptStatus {
-  inprogress = "inprogress",
-  completed = "completed",
+  inprogress = "Inprogress",
+  completed = "Completed",
 }
 
 export interface IScript {

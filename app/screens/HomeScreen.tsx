@@ -54,25 +54,32 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
     )
   }
   return (
-    <Screen style={$root} preset="scroll" safeAreaEdges={["top"]}>
-      <View style={$headerContainer}>
-        <View style={$logoContainer}>
-          <View style={$logoIcon}>
-            <Icon icon="logo" size={28} color={colors.palette.neutral100} />
+    <Screen
+      style={$root}
+      preset="scroll"
+      safeAreaEdges={["top"]}
+      ScrollViewProps={{ stickyHeaderIndices: [0] }}
+    >
+      <View>
+        <View style={$headerContainer}>
+          <View style={$logoContainer}>
+            <View style={$logoIcon}>
+              <Icon icon="logo" size={28} color={colors.palette.neutral100} />
+            </View>
+            <Text text="Scripscape" style={themed($logoTextStyle)} />
           </View>
-          <Text text="Scripscape" style={themed($logoTextStyle)} />
-        </View>
-        <View style={$actionSection}>
-          <View>
-            <Icon icon="search" size={24} color={colors.palette.neutral100} />
+          <View style={$actionSection}>
+            <View>
+              <Icon icon="search" size={24} color={colors.palette.neutral100} />
+            </View>
+            <TouchableOpacity onPress={openDraw}>
+              <AutoImage
+                style={themed($profileSectionImage)}
+                source={DEFAULT_PROFILE_IMAGE}
+                maxWidth={36}
+              />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={openDraw}>
-            <AutoImage
-              style={themed($profileSectionImage)}
-              source={DEFAULT_PROFILE_IMAGE}
-              maxWidth={36}
-            />
-          </TouchableOpacity>
         </View>
       </View>
       <View style={$welcomeTextContainer}>

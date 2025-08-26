@@ -116,7 +116,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
   const [pendingAvatar, setPendingAvatar] = useState<string | null>(null)
   const [sheetView, setSheetView] = useState<"field" | "avatar" | "background" | null>(null)
 
-  const [currentTab, setCurrentTab] = useState<"followers" | "script">("followers")
+  const [currentTab, setCurrentTab] = useState<"followers" | "script">("script")
   const bgPickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
   const [profileImage, setProfileImage] = useState<string | null>(null)
