@@ -1,14 +1,24 @@
 import { FC, useState } from "react"
-import { Dimensions, ImageStyle, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
+import {
+  Dimensions,
+  ImageStyle,
+  Pressable,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from "react-native"
 
 import { AnnouncementBox } from "@/components/AnnouncementBox"
 import { AppCarousel } from "@/components/AppCarousel"
 import { AutoImage } from "@/components/AutoImage"
 import { Icon } from "@/components/Icon"
 import { ListView } from "@/components/ListView"
+import { Loader } from "@/components/Loader"
 import { Screen } from "@/components/Screen"
 import { ScriptCard } from "@/components/ScriptCard"
 import { Text } from "@/components/Text"
+import { useAuth } from "@/context/AuthContext"
 import { ScriptStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { drawerRef } from "@/navigators/Drawer"
@@ -18,7 +28,6 @@ import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
-import { Loader } from "@/components/Loader"
 
 // import { useNavigation } from "@react-navigation/native"
 const BannerPlaceHolder = require("../../assets/images/cover.png")
@@ -39,6 +48,13 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
   const Separator = () => <View style={$separator} />
 
   const { themed } = useAppTheme()
+  const { requireAuth } = useAuth()
+
+  const onLike = async () => {
+    console.log("pressed")
+    await requireAuth() // pops the sheet if not logged in
+    // proceed with the protected action...
+  }
   if (isLoading) {
     return (
       <Loader
@@ -62,12 +78,17 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
     >
       <View>
         <View style={$headerContainer}>
-          <View style={$logoContainer}>
+          <TouchableOpacity
+            style={$logoContainer}
+            onPress={() => {
+              onLike()
+            }}
+          >
             <View style={$logoIcon}>
               <Icon icon="logo" size={28} color={colors.palette.neutral100} />
             </View>
             <Text text="Scripscape" style={themed($logoTextStyle)} />
-          </View>
+          </TouchableOpacity>
           <View style={$actionSection}>
             <View>
               <Icon icon="search" size={24} color={colors.palette.neutral100} />

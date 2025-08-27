@@ -22,6 +22,7 @@ type Presets =
   | "description"
   | "readMore"
   | "sectionHeader"
+  | "contentTitle"
 
 export interface TextProps extends RNTextProps {
   /**
@@ -126,6 +127,15 @@ const $sectionStyleHeader: ThemedStyle<TextStyle> = ({ colors, typography, spaci
   lineHeight: 33,
 })
 
+const $contentTitle: ThemedStyle<TextStyle> = ({ colors, typography, spacing }) => ({
+  color: colors.text,
+  fontFamily: typography.primary.medium,
+  fontSize: spacing.lg,
+  marginBottom: spacing.xs,
+  fontWeight: "400",
+  lineHeight: 33,
+})
+
 const $presets: Record<Presets, ThemedStyleArray<TextStyle>> = {
   default: [$baseStyle],
   bold: [$baseStyle, { ...$fontWeightStyles.bold }],
@@ -143,5 +153,6 @@ const $presets: Record<Presets, ThemedStyleArray<TextStyle>> = {
   description: [$baseStyle, { ...$sizeStyles.xs, ...$fontWeightStyles.normal }, $descriptionStyle],
   readMore: [$baseStyle, $readMoreStyle],
   sectionHeader: [$baseStyle, $sectionStyleHeader],
+  contentTitle: [$baseStyle, $contentTitle],
 }
 const $rtlStyle: TextStyle = isRTL ? { writingDirection: "rtl" } : {}

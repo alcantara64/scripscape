@@ -273,12 +273,6 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
         </View>
         <View>
           <Text text="Bio" preset="subheading" />
-          {/* <Text
-            text="Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth."
-            preset="description"
-            style={$profileDescription}
-            numberOfLines={4}
-          /> */}
           <ReadMoreText
             textStyle={$profileDescription}
             maxChars={200}

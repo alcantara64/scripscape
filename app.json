@@ -11,9 +11,7 @@
   },
   "newArchEnabled": true,
   "jsEngine": "hermes",
-  "assetBundlePatterns": [
-    "**/*"
-  ],
+  "assetBundlePatterns": ["**/*"],
   "android": {
     "icon": "./assets/images/app-icon-android-legacy.png",
     "package": "com.scripscape",
@@ -38,21 +36,18 @@
       "NSPrivacyAccessedAPITypes": [
         {
           "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-          "NSPrivacyAccessedAPITypeReasons": [
-            "CA92.1"
-          ]
+          "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
         },
         {
           "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-          "NSPrivacyAccessedAPITypeReasons": [
-            "CA92.1"
-          ]
+          "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
         }
       ]
     },
     "infoPlist": {
       "ITSAppUsesNonExemptEncryption": false
-    }
+    },
+    "usesAppleSignIn": true
   },
   "web": {
     "favicon": "./assets/images/app-icon-web-favicon.png",
@@ -64,6 +59,8 @@
   "plugins": [
     "expo-localization",
     "expo-font",
+    "expo-secure-store",
+    "expo-apple-authentication",
     [
       "expo-splash-screen",
       {
