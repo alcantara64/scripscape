@@ -8,12 +8,12 @@ import {
   useRef,
   useState,
 } from "react"
-import * as SecureStore from "expo-secure-store"
 import { useMMKVString } from "react-native-mmkv"
 
 import { AuthSheet } from "@/components/AuthSheet" // <- your AuthSheet component
 // If you already have this type elsewhere, import it instead:
 import { User } from "@/interface/auth"
+import { readTokens } from "@/utils/storage/auth"
 
 export type AuthContextType = {
   isAuthenticated: boolean
@@ -51,6 +51,7 @@ const defer = (): Deferred => {
   })
   return { promise, resolve, reject }
 }
+type TokensArg = { accessToken?: string; refreshToken?: string; tokenType?: string }
 
 export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
   children,
@@ -58,6 +59,8 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
 }) => {
   const [authToken, setAuthToken] = useMMKVString("AuthProvider.authToken")
   const [authEmail, setAuthEmail] = useMMKVString("AuthProvider.authEmail")
+  const [authRefreshToken, setAuthRefreshToken] = useMMKVString("AuthProvider.authRefreshToken")
+  const [authTokenType, setAuthTokenType] = useMMKVString("AuthProvider.authTokenType")
 
   const [sheetVisible, setSheetVisible] = useState(false)
   const waiterRef = useRef<Deferred | null>(null)
@@ -87,7 +90,6 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
    * If not authenticated, it opens the login sheet and resolves on success.
    */
   const requireAuth = useCallback(() => {
-    console.log({ isAuthenticated })
     if (isAuthenticated) return Promise.resolve()
     if (!waiterRef.current) waiterRef.current = defer()
     openAuthSheet()
@@ -96,10 +98,15 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
 
   // Called by the sheet when login succeeds
   const handleAuthenticated = useCallback(
-    async (_user: User) => {
+    async (_user: User, tokens?: TokensArg) => {
+      const saved = await readTokens()
+      const accessToken = tokens?.accessToken ?? saved.accessToken ?? undefined
+      const refreshToken = tokens?.refreshToken ?? saved.refreshToken ?? undefined
+      const tokenType = tokens?.tokenType ?? saved.tokenType ?? "Bearer"
       // The AuthSheet helpers store tokens in SecureStore; mirror into MMKV for your app state
-      const token = await SecureStore.getItemAsync("accessToken")
-      if (token) setAuthToken(token)
+      if (accessToken) setAuthToken(accessToken)
+      if (refreshToken) setAuthRefreshToken?.(refreshToken) // if you track it in state
+      setAuthTokenType?.(tokenType)
 
       // Try to hydrate email if we didn't get it from the sheet
       if (!_user.email) {

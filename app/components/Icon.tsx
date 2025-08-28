@@ -156,6 +156,7 @@ export const iconRegistry = {
   google: require("@assets/icons/google.png"),
   message: require("@assets/icons/email.png"),
   key: require("@assets/icons/key.png"),
+  hide: require("@assets/icons/hide.png"),
 }
 
 const $imageStyleBase: ImageStyle = {

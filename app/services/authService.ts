@@ -7,7 +7,7 @@ export class AuthService {
   constructor(private httpClient: Api) {}
 
   login(identifier: string, password: string): Promise<ApiResult<AuthResponse>> {
-    return this.httpClient.post<AuthResponse>("/api/v1/users/login", { identifier, password })
+    return this.httpClient.post<AuthResponse>("/users/login", { identifier, password })
   }
 
   loginWithGoogle(id_token: string): Promise<ApiResult<AuthResponse>> {

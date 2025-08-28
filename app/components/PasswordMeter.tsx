@@ -23,8 +23,8 @@ function strength(score: number) {
   // label + tint (swap these colors with your theme if you want)
   if (score <= 1) return { label: "Weak", tint: "#FF453A" }
   if (score === 2) return { label: "Fair", tint: "#FFD60A" }
-  if (score === 3) return { label: "Good", tint: "#30D158" }
-  return { label: "Strong", tint: "#0A84FF" }
+  if (score === 3) return { label: "Good", tint: "#497d56ff" }
+  return { label: "Strong", tint: "#30D158" }
 }
 
 export function PasswordMeter({ password }: { password: string }) {
@@ -71,7 +71,9 @@ export function PasswordMeter({ password }: { password: string }) {
           const ok = checks[i]
           return (
             <View key={r.id} style={themed($ruleRow)}>
-              <Icon icon="check" size={16} style={{ marginRight: 8, opacity: ok ? 1 : 0.35 }} />
+              <View>
+                <Icon icon="check" size={16} style={{ marginRight: 8, opacity: ok ? 1 : 0.35 }} />
+              </View>
               <Text style={[themed($ruleText), { opacity: ok ? 1 : 0.55 }]}>{r.label}</Text>
             </View>
           )
@@ -89,14 +91,14 @@ const $meterRow: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   marginTop: spacing.xs,
 })
 
-const $segments: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
+const $segments: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
   flex: 1,
-  height: 6,
-  backgroundColor: colors.palette.accentActive, // track color
+  height: 3,
+  // backgroundColor: colors.palette.accentActive, // track colo
   borderRadius: 999,
   overflow: "hidden",
-  gap: spacing.xxxs, // space between segments
+  gap: spacing.xxs, // space between segments
 })
 
 const $segment: ThemedStyle<ViewStyle> = () => ({
@@ -118,16 +120,19 @@ const $rulesGrid: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   gap: spacing.xs,
   columnGap: spacing.lg,
   marginTop: spacing.xs,
+  justifyContent: "flex-start",
+  flex: 1,
 })
 
 const $ruleRow: ThemedStyle<ViewStyle> = () => ({
   flexDirection: "row",
   alignItems: "center",
-  width: "48%", // two columns
+  width: "44%",
 })
 
 const $ruleText: ThemedStyle<TextStyle> = ({ typography, colors }) => ({
   fontFamily: typography.primary.normal,
-  fontSize: 14,
+  fontSize: 12,
   color: colors.text,
+  lineHeight: 16,
 })

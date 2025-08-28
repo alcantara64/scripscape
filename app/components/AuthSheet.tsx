@@ -24,15 +24,19 @@ import Animated, {
 } from "react-native-reanimated"
 
 import { Text } from "@/components/Text"
-import { User } from "@/interface/auth"
+import { AuthResponse, User } from "@/interface/auth"
 import { authService } from "@/services/authService"
+import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
 import { AppBottomSheet, BottomSheetController } from "./AppBottomSheet"
-import { Icon } from "./Icon"
+import { Icon, PressableIcon } from "./Icon"
+import { PasswordMeter } from "./PasswordMeter"
 import { TextField } from "./TextField"
-import { colors } from "@/theme/colors"
+import { persistTokens } from "@/utils/storage/auth"
+import { OtpInput } from "react-native-otp-entry"
+
 // ...
 
 export interface AuthSheetProps {
@@ -48,9 +52,10 @@ export interface AuthSheetProps {
   showApple?: boolean
   /** Google OAuth client id (RN/Expo mobile client id) */
   googleClientId: string
+  setAuthToken: (token: Omit<AuthResponse, "users">) => void
 }
 
-type Mode = "signin" | "signup"
+type Mode = "signin" | "signup" | "forgot:email" | "forgot:code" | "forgot:reset" | "forgot:done"
 
 const AnimatedContainer: React.FC<React.PropsWithChildren<{ style?: any }>> = ({
   children,
@@ -88,6 +93,7 @@ type SignInProps = {
   onEmailLogin: () => void
   switchToSignUp: () => void
   themed: any
+  switchToForgotPassword: () => void
 }
 
 const SignInContent = memo((p: SignInProps) => {
@@ -158,7 +164,9 @@ const SignInContent = memo((p: SignInProps) => {
       </StaggerItem>
 
       <StaggerItem index={6}>
-        <Text text="Forgot Password?" preset="readMore" style={themed($forgotPassword)} />
+        <Pressable onPress={p.switchToForgotPassword}>
+          <Text text="Forgot Password?" preset="readMore" style={themed($forgotPassword)} />
+        </Pressable>
       </StaggerItem>
 
       <StaggerItem index={7}>
@@ -409,6 +417,14 @@ export const AuthSheet = (props: AuthSheetProps) => {
   const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState<null | "google" | "apple" | "email">(null)
+  const [showPlainPassword, setShowPlainPassword] = useState(false)
+
+  // Forgot password state
+  const [resetEmail, setResetEmail] = useState("")
+  const [code, setCode] = useState("") // 6-digit code as a string
+  const [newPass, setNewPass] = useState("")
+  const [confirmPass, setConfirmPass] = useState("")
+  const [resendIn, setResendIn] = useState(0) // seconds
 
   // ----- Google (ID token flow) -----
   const [googleRequest, googleResponse, googlePromptAsync] = Google.useIdTokenAuthRequest({
@@ -453,9 +469,18 @@ export const AuthSheet = (props: AuthSheetProps) => {
   const onEmailLogin = async () => {
     setLoading("email")
     try {
-      const user = await authService.login(identifier.trim(), password)
-      console.log("user", user)
-      onAuthenticated(user)
+      const response = await authService.login(identifier.trim(), password)
+      if (response.ok) {
+        const { user, accessToken, refreshToken, tokenType, expiresIn } = response.data
+        await persistTokens({
+          accessToken,
+          refreshToken,
+          tokenType,
+          accessTokenExpires: expiresIn,
+        })
+
+        onAuthenticated(user)
+      }
     } catch (e) {
       console.warn("Email login failed", e)
     } finally {
@@ -487,258 +512,365 @@ export const AuthSheet = (props: AuthSheetProps) => {
   const switchToSignIn = () => setMode("signin")
   const switchToSignUpWithEmail = () => setCreateAccountMode("email-password")
 
-  const CreateEmailPasswordAccount = () => (
-    <>
-      {/* ----- CREATE ACCOUNT CONTENT (same sheet) ----- */}
+  const header = useMemo(() => {
+    switch (mode) {
+      case "signin":
+        return {
+          title: "Sign in",
+          subtitle: undefined,
+          onBack: undefined as (() => void) | undefined,
+        }
+      case "signup":
+        if (createAccountMode === "socials")
+          return { title: "Create an account", subtitle: "Choose a sign-up method" }
+        return {
+          title: "Create an account",
+          subtitle: "Use your email and a password",
+          onBack: () => setCreateAccountMode("socials"),
+        }
+      case "forgot:email":
+        return {
+          title: "Forgot password",
+          subtitle: "We’ll send a verification code",
+          onBack: () => setMode("signin"),
+        }
+      case "forgot:code":
+        return {
+          title: "Verification code",
+          subtitle: "Enter the 6-digit code",
+          onBack: () => setMode("forgot:email"),
+        }
+      case "forgot:reset":
+        return {
+          title: "Reset password",
+          subtitle: "Create a new password",
+          onBack: () => setMode("forgot:code"),
+        }
+      case "forgot:done":
+        return { title: "All set!", subtitle: "Your password was updated", onBack: undefined }
+      default:
+        return { title: "", subtitle: undefined, onBack: undefined }
+    }
+  }, [mode, createAccountMode])
 
-      <StaggerItem index={0}>
-        <View>
-          <TextField
-            LeftAccessory={(props) => (
-              <Icon icon="person" style={props.style} size={24} color={colors.tintInactive} />
-            )}
-            label="username"
-            placeholderTextColor={colors.tintInactive}
-            placeholder="Enter your username"
-            autoCapitalize="none"
-          />
-        </View>
-      </StaggerItem>
-      <StaggerItem index={1}>
-        <View style={$inputContainer}>
-          <TextField
-            LeftAccessory={(props) => (
-              <Icon icon="message" style={props.style} size={24} color={colors.tintInactive} />
-            )}
-            label="Email"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            placeholder="Enter your email"
-            placeholderTextColor={colors.tintInactive}
-          />
-        </View>
-      </StaggerItem>
+  const CreateEmailPasswordAccount = () => {
+    const [signupPassword, setSignupPassword] = useState("")
+    return (
+      <>
+        {/* ----- CREATE ACCOUNT CONTENT (same sheet) ----- */}
+
+        <StaggerItem index={0}>
+          <View>
+            <TextField
+              LeftAccessory={(props) => (
+                <Icon icon="person" style={props.style} size={24} color={colors.tintInactive} />
+              )}
+              label="username"
+              placeholderTextColor={colors.tintInactive}
+              placeholder="Enter your username"
+              autoCapitalize="none"
+            />
+          </View>
+        </StaggerItem>
+        <StaggerItem index={1}>
+          <View style={$inputContainer}>
+            <TextField
+              LeftAccessory={(props) => (
+                <Icon icon="message" style={props.style} size={24} color={colors.tintInactive} />
+              )}
+              label="Email"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholder="Enter your email"
+              placeholderTextColor={colors.tintInactive}
+            />
+          </View>
+        </StaggerItem>
+        <StaggerItem index={2}>
+          <View style={$inputContainer}>
+            <TextField
+              LeftAccessory={(props) => (
+                <Icon icon="key" style={props.style} size={24} color={colors.tintInactive} />
+              )}
+              label="Password"
+              secureTextEntry
+              placeholder="Enter your password"
+              placeholderTextColor={colors.tintInactive}
+              onChangeText={setSignupPassword}
+              RightAccessory={(props) => (
+                <Icon icon="eye" style={props.style} size={24} color={colors.tintInactive} />
+              )}
+            />
+          </View>
+          <PasswordMeter password={signupPassword} />
+        </StaggerItem>
+
+        <StaggerItem index={3}>
+          <Pressable
+            style={themed($cta)}
+            onPress={() => {
+              /* call signup */
+            }}
+          >
+            <Text style={themed($ctaText)}>Sign Up</Text>
+          </Pressable>
+        </StaggerItem>
+        <StaggerItem index={5}>
+          <View>
+            <Text style={themed($legal)}>
+              By signing up, you agree to our {"\n"}
+              <Text
+                style={themed($legalLink)}
+                onPress={() => Linking.openURL(TERMS_URL)}
+                accessibilityRole="link"
+              >
+                {"Terms of Use "}
+              </Text>
+              {"and "}
+              <Text
+                style={themed($legalLink)}
+                onPress={() => Linking.openURL(PRIVACY_URL)}
+                accessibilityRole="link"
+              >
+                Privacy Policy
+              </Text>
+            </Text>
+          </View>
+        </StaggerItem>
+
+        <StaggerItem index={7}>
+          <View style={$createAccountContainer}>
+            <Text text="Already have an account?" style={{ textAlign: "center" }} />
+            <Pressable onPress={switchToSignIn} style={themed($cabtn)}>
+              <Text style={themed($createAccountTxt)}>Sign in</Text>
+            </Pressable>
+          </View>
+        </StaggerItem>
+      </>
+    )
+  }
+
+  const ForgotEmailContent = memo(({ themed, onCancel, onNext }: any) => (
+    <>
       <StaggerItem index={2}>
-        <View style={$inputContainer}>
+        <Text preset="description" style={themed($description)}>
+          Please fill in your email address below, to get your verification code.
+        </Text>
+      </StaggerItem>
+
+      <StaggerItem index={3}>
+        <TextField
+          LeftAccessory={(props) => (
+            <Icon icon="message" style={props.style} size={24} color={colors.tintInactive} />
+          )}
+          label="Email"
+          value={resetEmail}
+          onChangeText={setResetEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          placeholder="Enter your email"
+          placeholderTextColor={colors.tintInactive}
+          autoFocus
+        />
+      </StaggerItem>
+
+      <StaggerItem index={4}>
+        <Pressable style={themed($cta)} onPress={onNext}>
+          <Text style={themed($ctaText)}>Send verification code</Text>
+        </Pressable>
+      </StaggerItem>
+
+      <StaggerItem index={5}>
+        <Pressable onPress={onCancel} style={themed($cabtn)}>
+          <Text style={themed($createAccountTxt)}>Back to sign in</Text>
+        </Pressable>
+      </StaggerItem>
+    </>
+  ))
+  ForgotEmailContent.displayName = "ForgotEmailContent"
+
+  const ForgotCodeContent = memo(({ themed, onBack, onVerify, onResend, waiting }: any) => (
+    <>
+      <StaggerItem index={2}>
+        <Text preset="description" style={themed($description)}>
+          We have sent the code to your email <Text style={themed($legalLink)}>{resetEmail}</Text>
+          Please enter the code below.
+        </Text>
+      </StaggerItem>
+
+      <StaggerItem index={3}>
+        <View style={$phoneInputContainer}>
+          <OtpInput
+            numberOfDigits={6}
+            onTextChange={(text) => setCode(text)}
+            textInputProps={{
+              accessibilityLabel: "One-Time Password",
+              style: {
+                color: colors.text,
+              },
+            }}
+            theme={{ pinCodeTextStyle: themed($pinCodeTextStyle) }}
+            onFilled={(text) => onVerify(text)}
+          />
+        </View>
+      </StaggerItem>
+
+      <StaggerItem index={4}>
+        <Pressable style={themed($cta)} onPress={onVerify}>
+          <Text style={themed($ctaText)}>Verify code</Text>
+        </Pressable>
+      </StaggerItem>
+
+      <StaggerItem index={5}>
+        <View style={{ alignItems: "center", marginTop: 8 }}>
+          <Text style={themed($description)}>
+            Didn’t get the code?{" "}
+            <Text style={themed($legalLink)} onPress={onResend} accessibilityRole="button">
+              {waiting > 0 ? `Resend in ${waiting}s` : "Resend code"}
+            </Text>
+          </Text>
+        </View>
+      </StaggerItem>
+
+      <StaggerItem index={6}>
+        <Pressable onPress={onBack} style={themed($cabtn)}>
+          <Text style={themed($createAccountTxt)}>Back</Text>
+        </Pressable>
+      </StaggerItem>
+    </>
+  ))
+  ForgotCodeContent.displayName = "ForgotCodeContent"
+
+  const ForgotResetContent = memo(({ themed, onBack, onSubmit }: any) => (
+    <>
+      <StaggerItem index={2}>
+        <TextField
+          LeftAccessory={(props) => (
+            <Icon icon="key" style={props.style} size={24} color={colors.tintInactive} />
+          )}
+          label="New Password"
+          value={newPass}
+          onChangeText={setNewPass}
+          secureTextEntry={showPlainPassword}
+          placeholder="Enter your new password"
+          placeholderTextColor={colors.tintInactive}
+          RightAccessory={(props) => (
+            <PressableIcon
+              icon={showPlainPassword ? "eye" : "hide"}
+              onPress={() => setShowPlainPassword(!showPlainPassword)}
+              style={props.style}
+              size={24}
+              color={colors.tintInactive}
+            />
+          )}
+        />
+        {/* <PasswordMeter password={newPass} /> */}
+      </StaggerItem>
+
+      <StaggerItem index={3}>
+        <View style={$confirmPasswordContainer}>
           <TextField
             LeftAccessory={(props) => (
               <Icon icon="key" style={props.style} size={24} color={colors.tintInactive} />
             )}
-            label="Password"
-            secureTextEntry
-            placeholder="Enter your password"
+            label="Confirm Password"
+            value={confirmPass}
+            onChangeText={setConfirmPass}
+            secureTextEntry={showPlainPassword}
+            placeholder="Re-enter your new password"
             placeholderTextColor={colors.tintInactive}
             RightAccessory={(props) => (
-              <Icon icon="eye" style={props.style} size={24} color={colors.tintInactive} />
+              <PressableIcon
+                icon={showPlainPassword ? "eye" : "hide"}
+                onPress={() => setShowPlainPassword(!showPlainPassword)}
+                style={props.style}
+                size={24}
+                color={colors.tintInactive}
+              />
             )}
           />
         </View>
       </StaggerItem>
 
-      <StaggerItem index={3}>
-        <Pressable
-          style={themed($cta)}
-          onPress={() => {
-            /* call signup */
-          }}
-        >
-          <Text style={themed($ctaText)}>Sign Up</Text>
+      <StaggerItem index={4}>
+        <Pressable style={themed($cta)} onPress={onSubmit}>
+          <Text style={themed($ctaText)}>Reset Password</Text>
         </Pressable>
       </StaggerItem>
+
       <StaggerItem index={5}>
-        <View>
-          <Text style={themed($legal)}>
-            By signing up, you agree to our {"\n"}
-            <Text
-              style={themed($legalLink)}
-              onPress={() => Linking.openURL(TERMS_URL)}
-              accessibilityRole="link"
-            >
-              {"Terms of Use "}
-            </Text>
-            {"and "}
-            <Text
-              style={themed($legalLink)}
-              onPress={() => Linking.openURL(PRIVACY_URL)}
-              accessibilityRole="link"
-            >
-              Privacy Policy
-            </Text>
+        <Pressable onPress={onBack} style={themed($cabtn)}>
+          <Text style={themed($createAccountTxt)}>Back</Text>
+        </Pressable>
+      </StaggerItem>
+    </>
+  ))
+  ForgotResetContent.displayName = "ForgotResetContent"
+
+  const ForgotDoneContent = memo(({ themed, onSignIn }: any) => (
+    <>
+      <StaggerItem index={1}>
+        <View style={{ alignItems: "center", gap: 8 }}>
+          <Icon icon="shield-check" size={56} color={colors.tintInactive} />
+          <Text preset="contentTitle" style={themed($title)}>
+            Your password has been reset successfully
+          </Text>
+          <Text preset="description" style={themed($description)}>
+            Great, your new password is set.
           </Text>
         </View>
       </StaggerItem>
 
-      <StaggerItem index={7}>
-        <View style={$createAccountContainer}>
-          <Text text="Already have an account?" style={{ textAlign: "center" }} />
-          <Pressable onPress={switchToSignIn} style={themed($cabtn)}>
-            <Text style={themed($createAccountTxt)}>Sign in</Text>
-          </Pressable>
-        </View>
-      </StaggerItem>
-    </>
-  )
-  const SignInScreen = () => (
-    <>
-      {showApple && (
-        <StaggerItem index={1}>
-          <Apple.AppleAuthenticationButton
-            buttonType={Apple.AppleAuthenticationButtonType.CONTINUE}
-            buttonStyle={Apple.AppleAuthenticationButtonStyle.BLACK}
-            cornerRadius={12}
-            style={themed($appleBtn)}
-            onPress={onAppleLogin}
-          />
-        </StaggerItem>
-      )}
       <StaggerItem index={2}>
-        <Pressable
-          disabled={!googleRequest || loading === "google"}
-          onPress={() => googlePromptAsync()}
-          style={themed([$btn, loading === "google" && $btnDisabled])}
-        >
-          <Image source={require("../../assets/icons/google.png")} style={$googleAuth} />
-          <Text style={themed($btnText)}>
-            {loading === "google" ? "Connecting…" : "Continue with Google"}
-          </Text>
+        <Pressable style={themed($cta)} onPress={onSignIn}>
+          <Text style={themed($ctaText)}>Sign in</Text>
         </Pressable>
-      </StaggerItem>
-      <StaggerItem index={3}>
-        <View style={themed($dividerRow)}>
-          <View style={themed($line)} />
-          <Text style={themed($dividerText)}>Or</Text>
-          <View style={themed($line)} />
-        </View>
-      </StaggerItem>
-      <StaggerItem index={4}>
-        <TextField
-          LeftAccessory={(props) => <Icon icon="message" style={props.style} size={24} />}
-          label="Email"
-          value={identifier}
-          onChangeText={setIdentifier}
-          placeholder="Enter your username or email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-      </StaggerItem>
-      <StaggerItem index={5}>
-        <TextField
-          LeftAccessory={(props) => <Icon icon="key" style={props.style} size={24} />}
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Enter your password"
-          secureTextEntry
-          containerStyle={themed($input)}
-        />
-      </StaggerItem>
-      <StaggerItem index={6}>
-        <Text text="Forgot Password?" preset="readMore" style={themed($forgotPassword)} />
-      </StaggerItem>
-      <StaggerItem index={7}>
-        <Pressable
-          onPress={onEmailLogin}
-          style={themed([$cta, loading === "email" && $ctaDisabled])}
-        >
-          <Text style={themed($ctaText)}>{loading === "email" ? "Signing in…" : "Sign in"}</Text>
-        </Pressable>
-      </StaggerItem>
-      <StaggerItem index={8}>
-        <View style={$createAccountContainer}>
-          <Text text="Are you new to Scripscape?" style={{ textAlign: "center" }} />
-          <Pressable onPress={switchToSignUp} style={themed($cabtn)}>
-            <Text style={themed($createAccountTxt)}>Create an account</Text>
-          </Pressable>
-        </View>
       </StaggerItem>
     </>
-  )
-  const CreateAccount = () => (
-    <>
-      {showApple && (
-        <StaggerItem index={1}>
-          <Apple.AppleAuthenticationButton
-            buttonType={Apple.AppleAuthenticationButtonType.SIGN_UP}
-            buttonStyle={Apple.AppleAuthenticationButtonStyle.BLACK}
-            cornerRadius={12}
-            style={themed($appleBtn)}
-            onPress={onAppleLogin}
-          />
-        </StaggerItem>
-      )}
-      <StaggerItem index={2}>
-        <Pressable
-          disabled={!googleRequest || loading === "google"}
-          onPress={() => googlePromptAsync()}
-          style={themed([$btn, loading === "google" && $btnDisabled])}
-        >
-          <Image source={require("../../assets/icons/google.png")} style={$googleAuth} />
-          <Text style={themed($btnText)}>
-            {loading === "google" ? "Connecting…" : "Sign up with Google"}
-          </Text>
-        </Pressable>
-      </StaggerItem>
-      <StaggerItem index={3}>
-        <View style={themed($dividerRow)}>
-          <View style={themed($line)} />
-          <Text style={themed($dividerText)}>Or</Text>
-          <View style={themed($line)} />
-        </View>
-      </StaggerItem>
-
-      <StaggerItem index={4}>
-        <Pressable
-          onPress={switchToSignUpWithEmail}
-          style={themed([$cta, loading === "email" && $ctaDisabled])}
-        >
-          <Text style={themed($ctaText)}>{"Sign up with email "}</Text>
-        </Pressable>
-      </StaggerItem>
-      <StaggerItem index={5}>
-        <View>
-          <Text style={themed($legal)}>
-            By signing up, you agree to our {"\n"}
-            <Text
-              style={themed($legalLink)}
-              onPress={() => Linking.openURL(TERMS_URL)}
-              accessibilityRole="link"
-            >
-              {"Terms of Use "}
-            </Text>
-            {"and "}
-            <Text
-              style={themed($legalLink)}
-              onPress={() => Linking.openURL(PRIVACY_URL)}
-              accessibilityRole="link"
-            >
-              Privacy Policy
-            </Text>
-          </Text>
-        </View>
-      </StaggerItem>
-      <StaggerItem index={6}>
-        <View style={$createAccountContainer}>
-          <Text text="Are you new to Scripscape?" style={{ textAlign: "center" }} />
-          <Pressable onPress={switchToSignIn} style={themed($cabtn)}>
-            <Text style={themed($createAccountTxt)}>Sign in</Text>
-          </Pressable>
-        </View>
-      </StaggerItem>
-    </>
-  )
+  ))
+  ForgotDoneContent.displayName = "ForgotDoneContent"
 
   return (
     <AppBottomSheet controllerRef={sheetRef} snapPoints={["85%"]}>
       <AnimatedContainer style={$styles}>
         <StaggerItem index={0}>
-          <Text preset="contentTitle" style={themed($title)}>
-            {mode === "signin" ? "Sign in" : "Create an account"}
-          </Text>
+          <View style={{ alignItems: "center", marginBottom: 8 }}>
+            {/* Back button only when header.onBack exists */}
+            {!!header.onBack && (
+              <Pressable
+                onPress={header.onBack}
+                style={{ position: "absolute", left: 0, padding: 8 }}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+              >
+                <Icon icon="arrowLeft" size={24} color={colors.tintInactive} />
+              </Pressable>
+            )}
+
+            <Text preset="contentTitle" style={themed($title)}>
+              {header.title}
+            </Text>
+
+            {/* {!!header.subtitle && <Text style={themed($subtitle)}>{header.subtitle}</Text>} */}
+          </View>
         </StaggerItem>
         <Animated.View
           key={mode}
-          entering={mode === "signin" ? FadeInLeft.duration(260) : FadeInRight.duration(260)}
-          exiting={mode === "signin" ? FadeOutRight.duration(220) : FadeOutLeft.duration(220)}
+          entering={
+            mode.startsWith("forgot")
+              ? FadeInRight.duration(260)
+              : mode === "signin"
+                ? FadeInLeft.duration(260)
+                : FadeInRight.duration(260)
+          }
+          exiting={
+            mode.startsWith("forgot")
+              ? FadeOutLeft.duration(220)
+              : mode === "signin"
+                ? FadeOutRight.duration(220)
+                : FadeOutLeft.duration(220)
+          }
         >
           {mode === "signin" ? (
             <SignInContent
@@ -753,9 +885,10 @@ export const AuthSheet = (props: AuthSheetProps) => {
               onAppleLogin={onAppleLogin}
               onEmailLogin={onEmailLogin}
               switchToSignUp={() => setMode("signup")}
+              switchToForgotPassword={() => setMode("forgot:email")}
               themed={themed}
             />
-          ) : createAccountMode === "socials" ? (
+          ) : mode === "signup" && createAccountMode === "socials" ? (
             <SignUpContent
               showApple={showApple}
               googleRequest={googleRequest}
@@ -766,8 +899,39 @@ export const AuthSheet = (props: AuthSheetProps) => {
               themed={themed}
               switchToSignUpWithEmail={switchToSignUpWithEmail}
             />
-          ) : (
+          ) : mode === "signup" && createAccountMode === "email-password" ? (
             <CreateEmailPasswordAccount />
+          ) : mode === "forgot:email" ? (
+            <ForgotEmailContent
+              themed={themed}
+              onCancel={() => setMode("signin")}
+              onNext={() => setMode("forgot:code")}
+            />
+          ) : mode === "forgot:code" ? (
+            <ForgotCodeContent
+              themed={themed}
+              waiting={resendIn}
+              onBack={() => setMode("forgot:email")}
+              onVerify={() => {}}
+              onResend={() => setMode("forgot:reset")}
+            />
+          ) : mode === "forgot:reset" ? (
+            <ForgotResetContent
+              themed={themed}
+              onBack={() => setMode("forgot:code")}
+              onSubmit={() => setMode("forgot:done")}
+            />
+          ) : (
+            <ForgotDoneContent
+              themed={themed}
+              onSignIn={() => {
+                // clear transient state & go back
+                setCode("")
+                setNewPass("")
+                setConfirmPass("")
+                setMode("signin")
+              }}
+            />
           )}
         </Animated.View>
       </AnimatedContainer>
@@ -778,7 +942,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
 // ---------------- STYLES ----------------
 
 const $container: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingHorizontal: spacing.xxs,
+  paddingHorizontal: spacing.xxxs,
   paddingTop: spacing.md,
 })
 
@@ -863,14 +1027,14 @@ const $cta: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   backgroundColor: colors.buttonBackground,
   alignItems: "center",
   justifyContent: "center",
-  marginTop: spacing.sm,
+  marginTop: spacing.md,
 })
 const $cabtn: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   height: 48,
   borderRadius: spacing.sm,
   alignItems: "center",
   justifyContent: "center",
-  marginTop: spacing.sm,
+  marginTop: spacing.sm + 2,
   borderWidth: 1,
   borderColor: colors.palette.accentActive,
 })
@@ -893,15 +1057,12 @@ const $createAccountTxt: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
   lineHeight: 20,
 })
 
-const $createAccountContainer: ViewStyle = { marginTop: 90 }
-const $legal: ThemedStyle<TextStyle> = ({ colors, spacing, typography }) => ({
+const $createAccountContainer: ViewStyle = { marginTop: 60 }
+const $description: ThemedStyle<TextStyle> = ({ colors, spacing, typography }) => ({
   textAlign: "center",
-  color: colors.text,
-  fontFamily: typography.primary.normal,
-  fontSize: 15,
-  lineHeight: 24,
-  fontWeight: 600,
-  marginTop: spacing.sm,
+  fontSize: spacing.sm + 2,
+  lineHeight: 20,
+  marginBottom: spacing.lg,
 })
 
 const $legalLink: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
@@ -917,4 +1078,16 @@ const $legalLink: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
 
 const $inputContainer: ViewStyle = {
   marginTop: 12,
+}
+const $phoneInputContainer: ViewStyle = {
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 16,
+  width: "100%",
+}
+const $pinCodeTextStyle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.text,
+})
+const $confirmPasswordContainer: ViewStyle = {
+  marginTop: 18,
 }

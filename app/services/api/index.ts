@@ -5,11 +5,13 @@
  * See the [Backend API Integration](https://docs.infinite.red/ignite-cli/boilerplate/app/services/#backend-api-integration)
  * documentation for more details.
  */
-import { ApiResponse, ApisauceConfig, ApisauceInstance, create } from "apisauce"
+import { ApiResponse, ApisauceInstance, create } from "apisauce"
 import { AxiosRequestConfig } from "axios"
 
 import Config from "@/config"
+import { AuthResponse } from "@/interface/auth"
 import type { ApiResult, EpisodeItem } from "@/services/api/types"
+import { persistTokens, readTokens } from "@/utils/storage/auth"
 
 import { GeneralApiProblem, getGeneralApiProblem } from "./apiProblem"
 import type { ApiConfig, ApiFeedResponse } from "./types"
@@ -95,7 +97,7 @@ export class Api {
   }
   async get<T>(url: string, params?: Params, cfg?: AxiosRequestConfig): Promise<ApiResult<T>> {
     const res = await this.apisauce.get<T>(url, params, cfg)
-    console.log(res.config)
+    console.log(res)
     return this.normalize(res)
   }
 
@@ -124,6 +126,28 @@ export class Api {
   ): Promise<ApiResult<T>> {
     const res = await this.apisauce.delete<T>(url, payload, cfg)
     return this.normalize(res)
+  }
+
+  async refreshIfNeeded() {
+    const { accessTokenExpires, refreshToken, tokenType } = await readTokens()
+    const needsRefresh = !accessTokenExpires || Date.now() > accessTokenExpires - 30_000
+
+    if (needsRefresh && refreshToken) {
+      const r = await this.apisauce.post<ApiResult<Omit<AuthResponse, "user">>>("/auth/refresh", {
+        refreshToken,
+      })
+      if (r.data?.ok) {
+        await persistTokens({
+          accessToken: r.data.data.accessToken,
+          refreshToken: r.data.data.refreshToken ?? refreshToken,
+          tokenType: r.data.data.tokenType ?? tokenType ?? "Bearer",
+          accessTokenExpires: r.data.data.expiresIn as number,
+        })
+        const { accessToken } = await readTokens()
+        if (accessToken)
+          this.apisauce.headers.Authorization = `${r.data.data.tokenType ?? tokenType ?? "Bearer"} ${accessToken}`
+      }
+    }
   }
 }
 
