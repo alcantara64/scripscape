@@ -7,7 +7,7 @@ export interface CarouselProps<T> {
    * An optional style override useful for padding & margin.
    */
   style?: StyleProp<ViewStyle>
-  carouselRef: Ref<ICarouselInstance> | undefined
+  carouselRef?: Ref<ICarouselInstance> | undefined
   data: Array<T>
   renderItem: CarouselRenderItem<T>
   width: number

@@ -97,7 +97,6 @@ export class Api {
   }
   async get<T>(url: string, params?: Params, cfg?: AxiosRequestConfig): Promise<ApiResult<T>> {
     const res = await this.apisauce.get<T>(url, params, cfg)
-    console.log(res)
     return this.normalize(res)
   }
 

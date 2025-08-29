@@ -11,8 +11,11 @@ import {
   Linking,
 } from "react-native"
 import * as Apple from "expo-apple-authentication"
+import * as Application from "expo-application"
+import { makeRedirectUri } from "expo-auth-session"
 import { ImageStyle } from "expo-image"
 import * as Google from "expo-auth-session/providers/google"
+import { OtpInput } from "react-native-otp-entry"
 import Animated, {
   FadeInDown,
   FadeOutDown,
@@ -29,14 +32,13 @@ import { authService } from "@/services/authService"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
+import { persistTokens } from "@/utils/storage/auth"
+import { toast } from "@/utils/toast"
 
 import { AppBottomSheet, BottomSheetController } from "./AppBottomSheet"
 import { Icon, PressableIcon } from "./Icon"
 import { PasswordMeter } from "./PasswordMeter"
 import { TextField } from "./TextField"
-import { persistTokens } from "@/utils/storage/auth"
-import { OtpInput } from "react-native-otp-entry"
-
 // ...
 
 export interface AuthSheetProps {
@@ -427,13 +429,21 @@ export const AuthSheet = (props: AuthSheetProps) => {
   const [resendIn, setResendIn] = useState(0) // seconds
 
   // ----- Google (ID token flow) -----
+
+  const redirectUri = makeRedirectUri({
+    // optional: explicitly set the native URI
+    native: `${Application.applicationId}:/oauthredirect`,
+  })
   const [googleRequest, googleResponse, googlePromptAsync] = Google.useIdTokenAuthRequest({
-    clientId: googleClientId,
+    // clientId: googleClientId,
+    iosClientId: "332271036639-mlae4nf7as8967n06gqcmcb90o4g3l0l.apps.googleusercontent.com",
+    androidClientId: googleClientId,
+    redirectUri,
   })
 
-  useEffect(() => {
-    if (visible) sheetRef.current?.expand()
-  }, [visible])
+  // useEffect(() => {
+  //   if (visible) sheetRef.current?.expand()
+  // }, [visible])
 
   useEffect(() => {
     ;(async () => {
@@ -442,8 +452,20 @@ export const AuthSheet = (props: AuthSheetProps) => {
         if (!id_token) return
         setLoading("google")
         try {
-          const user = await authService.loginWithGoogle(id_token)
-          onAuthenticated(user)
+          const response = await authService.loginWithGoogle(id_token)
+
+          if (response.ok) {
+            const { user, accessToken, refreshToken, tokenType, expiresIn } = response.data
+            await persistTokens({
+              accessToken,
+              refreshToken,
+              tokenType,
+              accessTokenExpires: expiresIn,
+            })
+            onAuthenticated(user)
+          } else {
+            toast.error(response.problem.message as string)
+          }
         } catch (e) {
           console.warn("Google auth failed", e)
         } finally {
@@ -478,8 +500,9 @@ export const AuthSheet = (props: AuthSheetProps) => {
           tokenType,
           accessTokenExpires: expiresIn,
         })
-
         onAuthenticated(user)
+      } else {
+        toast.error(response.problem.message as string)
       }
     } catch (e) {
       console.warn("Email login failed", e)
@@ -499,8 +522,20 @@ export const AuthSheet = (props: AuthSheetProps) => {
         ],
       })
       if (!cred.identityToken) throw new Error("No identityToken from Apple")
-      const user = await authService.loginWithApple(cred.identityToken)
-      onAuthenticated(user)
+      console.log({ cred })
+      const response = await authService.loginWithApple(cred.identityToken)
+      if (response.ok) {
+        const { user, accessToken, refreshToken, tokenType, expiresIn } = response.data
+        await persistTokens({
+          accessToken,
+          refreshToken,
+          tokenType,
+          accessTokenExpires: expiresIn,
+        })
+        onAuthenticated(user)
+      } else {
+        toast.error(response.problem.message as string)
+      }
     } catch (e: any) {
       if (e?.code !== "ERR_CANCELED") console.warn("Apple auth failed", e)
     } finally {
@@ -555,6 +590,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
 
   const CreateEmailPasswordAccount = () => {
     const [signupPassword, setSignupPassword] = useState("")
+
     return (
       <>
         {/* ----- CREATE ACCOUNT CONTENT (same sheet) ----- */}
@@ -606,12 +642,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
         </StaggerItem>
 
         <StaggerItem index={3}>
-          <Pressable
-            style={themed($cta)}
-            onPress={() => {
-              /* call signup */
-            }}
-          >
+          <Pressable style={themed($cta)} onPress={() => {}}>
             <Text style={themed($ctaText)}>Sign Up</Text>
           </Pressable>
         </StaggerItem>
@@ -900,7 +931,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
               switchToSignUpWithEmail={switchToSignUpWithEmail}
             />
           ) : mode === "signup" && createAccountMode === "email-password" ? (
-            <CreateEmailPasswordAccount />
+            <CreateEmailPasswordAccount on />
           ) : mode === "forgot:email" ? (
             <ForgotEmailContent
               themed={themed}
@@ -1065,15 +1096,20 @@ const $description: ThemedStyle<TextStyle> = ({ colors, spacing, typography }) =
   marginBottom: spacing.lg,
 })
 
+const $legal: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  fontSize: spacing.md - 1,
+  color: colors.text,
+  lineHeight: 24,
+  fontWeight: 500,
+  textAlign: "center",
+  marginTop: spacing.sm,
+})
+
 const $legalLink: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
   color: colors.palette.primary300,
   fontFamily: typography.primary.medium,
   textDecorationStyle: "solid", // try "dotted" or "dashed" if you prefer
   textDecorationColor: colors.palette.primary300,
-  // If you want a thicker underline look:
-  // paddingBottom: 1,
-  // borderBottomWidth: 2,
-  // borderBottomColor: colors.palette.primary300,
 })
 
 const $inputContainer: ViewStyle = {

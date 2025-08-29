@@ -6,6 +6,7 @@ import { Drawer } from "react-native-drawer-layout"
 import { Icon } from "@/components/Icon"
 import { ProfileCard } from "@/components/ProfileCard"
 import { Text } from "@/components/Text"
+import { useAuth } from "@/context/AuthContext"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
@@ -18,7 +19,8 @@ interface NavBarListItem {
   title: string
   icon: JSX.Element
   screen: keyof AppStackParamList
-  authenticated: boolean
+  requireAuth: boolean
+  action?: () => void
 }
 
 export const DrawerNavigation = (props) => {
@@ -30,30 +32,36 @@ export const DrawerNavigation = (props) => {
     theme: { colors },
   } = useAppTheme()
 
+  const { isAuthenticated, logout, authEmail, username, requireAuth } = useAuth()
+
   const NAV_ITEMS: Array<NavBarListItem> = [
     {
       title: "Sign In or Register",
       icon: <Icon icon="logout" size={24} />,
       screen: "Login",
-      authenticated: false,
+      requireAuth: false,
+      action: async () => {
+        await requireAuth()
+      },
     },
-    {
-      title: "Help",
-      icon: <Icon icon="help" size={24} />,
-      screen: "Login",
-      authenticated: false,
-    },
+
     {
       title: "My Profile",
       icon: <Icon icon="person" size={24} />,
       screen: "Profile",
-      authenticated: true,
+      requireAuth: true,
     },
     {
       title: "Settings",
       icon: <Icon icon="settings" size={24} />,
       screen: "Profile",
-      authenticated: true,
+      requireAuth: true,
+    },
+    {
+      title: "Help",
+      icon: <Icon icon="help" size={24} />,
+      screen: "Login",
+      requireAuth: false,
     },
   ]
 
@@ -61,6 +69,12 @@ export const DrawerNavigation = (props) => {
     openDrawer: () => setOpen(true),
     closeDrawer: () => setOpen(false),
   }))
+
+  const openAuthScreen = async () => {
+    console.log("pressed")
+    await requireAuth() // pops the sheet if not logged in
+    // proceed with the protected action...
+  }
 
   return (
     <Drawer
@@ -72,17 +86,30 @@ export const DrawerNavigation = (props) => {
       drawerStyle={{ backgroundColor: colors.transparent }}
       renderDrawerContent={() => (
         <View style={themed([$drawer, $drawerInsets])}>
-          <ProfileCard
-            isPro
-            picture={DEFAULT_PROFILE_IMAGE}
-            name="W_Matterhorn"
-            email="W.Matterhorn@gmail.com"
-          />
-          <View style={$verticalLine} />
+          {isAuthenticated && (
+            <>
+              <ProfileCard
+                isPro
+                picture={DEFAULT_PROFILE_IMAGE}
+                name={username || ""}
+                email={authEmail}
+              />
 
-          {NAV_ITEMS.map((item) => (
+              <View style={$verticalLine} />
+            </>
+          )}
+          {NAV_ITEMS.filter(
+            (item) =>
+              (item.requireAuth && isAuthenticated) || !item.requireAuth === !isAuthenticated,
+          ).map((item) => (
             <TouchableOpacity
-              onPress={() => navigation.navigate(item.screen)}
+              onPress={() => {
+                if (item.action) {
+                  item.action()
+                } else {
+                  navigation.navigate(item.screen)
+                }
+              }}
               key={item.title}
               style={{ flexDirection: "row", gap: 8, alignItems: "center", marginTop: 24 }}
             >
@@ -91,13 +118,19 @@ export const DrawerNavigation = (props) => {
             </TouchableOpacity>
           ))}
           <View></View>
-
-          <View style={$footer}>
-            <TouchableOpacity style={$logoutBtn}>
-              <Text style={$logoutText}>Log Out</Text>
+          {isAuthenticated && (
+            <TouchableOpacity
+              style={$footer}
+              onPress={() => {
+                logout()
+              }}
+            >
+              <TouchableOpacity style={$logoutBtn}>
+                <Text style={$logoutText}>Log Out</Text>
+              </TouchableOpacity>
+              <Text style={$version}>Version 1.0.0.1</Text>
             </TouchableOpacity>
-            <Text style={$version}>Version 1.0.0.1</Text>
-          </View>
+          )}
         </View>
       )}
     >

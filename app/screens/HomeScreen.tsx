@@ -28,6 +28,7 @@ import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
+import { EmptyState } from "@/components/EmptyState"
 
 // import { useNavigation } from "@react-navigation/native"
 const BannerPlaceHolder = require("../../assets/images/cover.png")
@@ -48,7 +49,7 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
   const Separator = () => <View style={$separator} />
 
   const { themed } = useAppTheme()
-  const { requireAuth } = useAuth()
+  const { requireAuth, authEmail, username } = useAuth()
 
   const onLike = async () => {
     console.log("pressed")
@@ -78,12 +79,7 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
     >
       <View>
         <View style={$headerContainer}>
-          <TouchableOpacity
-            style={$logoContainer}
-            onPress={() => {
-              onLike()
-            }}
-          >
+          <TouchableOpacity style={$logoContainer}>
             <View style={$logoIcon}>
               <Icon icon="logo" size={28} color={colors.palette.neutral100} />
             </View>
@@ -104,24 +100,31 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
         </View>
       </View>
       <View style={$welcomeTextContainer}>
-        <Text text="👋 Welcome back, MollyMoonbeam!" style={themed($welcomeTextStyle)} />
+        {username && (
+          <Text text={`👋 Welcome back, ${authEmail}!`} style={themed($welcomeTextStyle)} />
+        )}
+        {!username && <Text text={` Welcome to Scripscape`} style={themed($welcomeTextStyle)} />}
       </View>
       <View>
-        <AppCarousel
-          data={banners?.data || []}
-          height={331}
-          width={width - 28}
-          renderItem={({ index, item }) => (
-            <AnnouncementBox
-              imageSource={{
-                uri: `https://cms.scripscape.com${item.Image?.formats.large.url}`,
-              }}
-              // imageSource={BannerPlaceHolder}
-              title={item.Title}
-              description={item.Description}
+        {!error ||
+          (banners?.data && (
+            <AppCarousel
+              data={banners?.data || []}
+              height={331}
+              width={width - 28}
+              renderItem={({ index, item }) => (
+                <AnnouncementBox
+                  imageSource={{
+                    uri: `https://cms.scripscape.com${item.Image?.formats.large.url}`,
+                  }}
+                  // imageSource={BannerPlaceHolder}
+                  title={item.Title}
+                  description={item.Description}
+                />
+              )}
             />
-          )}
-        />
+          ))}
+        {(error || !banners?.data || banners?.data.length < 1) && <EmptyState />}
       </View>
       <View style={$sectionContainer}>
         <Text text="Featured" style={themed($sectionHeader)} />

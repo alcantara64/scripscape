@@ -34,6 +34,7 @@ import { ThemeProvider } from "./theme/context"
 import { customFontsToLoad } from "./theme/typography"
 import { loadDateFnsLocale } from "./utils/formatDate"
 import * as storage from "./utils/storage"
+import Toast from "react-native-toast-message"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -103,13 +104,14 @@ export function App() {
         <GestureHandlerRootView>
           <QueryClientProvider client={queryClient}>
             <ThemeProvider initialContext="light">
-              <AuthProvider googleClientId="">
+              <AuthProvider googleClientId="332271036639-150inr72du38nv6ggrf7sthue2le6tag.apps.googleusercontent.com">
                 <AppNavigator
                   linking={linking}
                   initialState={initialNavigationState}
                   onStateChange={onNavigationStateChange}
                 />
               </AuthProvider>
+              <Toast />
             </ThemeProvider>
           </QueryClientProvider>
         </GestureHandlerRootView>

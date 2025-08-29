@@ -19,6 +19,7 @@ export type AuthContextType = {
   isAuthenticated: boolean
   authToken?: string
   authEmail?: string
+  username?: string
   setAuthToken: (token?: string) => void
   setAuthEmail: (email: string) => void
   logout: () => void
@@ -59,6 +60,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
 }) => {
   const [authToken, setAuthToken] = useMMKVString("AuthProvider.authToken")
   const [authEmail, setAuthEmail] = useMMKVString("AuthProvider.authEmail")
+  const [username, setUsername] = useMMKVString("AuthProvider.username")
   const [authRefreshToken, setAuthRefreshToken] = useMMKVString("AuthProvider.authRefreshToken")
   const [authTokenType, setAuthTokenType] = useMMKVString("AuthProvider.authTokenType")
 
@@ -71,11 +73,9 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
   const logout = useCallback(() => {
     setAuthToken(undefined)
     setAuthEmail("")
-    closeAuthSheet()
-  }, [setAuthEmail, setAuthToken, closeAuthSheet])
+  }, [setAuthEmail, setAuthToken])
 
   const isAuthenticated = !!authToken
-
   // same validation rules you already had
   const validationError = useMemo(() => {
     if (!authEmail || authEmail.length === 0) return "can't be blank"
@@ -108,6 +108,8 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
       if (refreshToken) setAuthRefreshToken?.(refreshToken) // if you track it in state
       setAuthTokenType?.(tokenType)
 
+      if (_user.username) setUsername(_user.username)
+
       // Try to hydrate email if we didn't get it from the sheet
       if (!_user.email) {
         try {
@@ -124,7 +126,14 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
       waiterRef.current?.resolve()
       waiterRef.current = null
     },
-    [setAuthEmail, setAuthToken, closeAuthSheet],
+    [
+      setAuthEmail,
+      setAuthToken,
+      closeAuthSheet,
+      setAuthRefreshToken,
+      setUsername,
+      setAuthTokenType,
+    ],
   )
 
   // Called by the sheet when dismissed/canceled
@@ -146,6 +155,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
     requireAuth,
     openAuthSheet,
     closeAuthSheet,
+    username,
   }
 
   return (
