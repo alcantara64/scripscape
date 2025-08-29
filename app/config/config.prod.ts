@@ -6,5 +6,6 @@
  * https://reactnative.dev/docs/security#storing-sensitive-info
  */
 export default {
-  API_URL: "https://cms.scripscape.com/api/",
+  API_URL: "https://api.scripscape.com/api/v1",
+  CMS_URL: "https://cms.scripscape.com",
 }

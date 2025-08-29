@@ -58,11 +58,15 @@ export function getGeneralApiProblem(response: ApiResponse<any>): GeneralApiProb
     case "CLIENT_ERROR":
       switch (response.status) {
         case 401:
-          return { kind: "unauthorized" }
+          return { kind: "unauthorized", message: response.data.message }
         case 403:
           return { kind: "forbidden" }
         case 404:
           return { kind: "not-found" }
+        case 409:
+          return { kind: "bad-data", message: response.data?.message }
+        case 400:
+          return { kind: "bad-data", message: response.data?.message }
         default:
           return { kind: "rejected" }
       }

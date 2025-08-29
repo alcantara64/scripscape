@@ -22,6 +22,11 @@ export interface AuthResponse {
   expiresIn: string | number
 }
 
+export interface CreateAccountResponse {
+  user: User
+  message: string
+}
+
 export interface MeResponse {
   user: User
 }

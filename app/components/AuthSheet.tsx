@@ -6,9 +6,9 @@ import {
   type StyleProp,
   type ViewStyle,
   type TextStyle,
-  TextInput,
   Image,
   Linking,
+  ActivityIndicator,
 } from "react-native"
 import * as Apple from "expo-apple-authentication"
 import * as Application from "expo-application"
@@ -399,6 +399,16 @@ CreateAccountContent.displayName = "CreateAccountContent"
 const TERMS_URL = "https://scripscape.com/terms"
 const PRIVACY_URL = "https://scripscape.com/privacy"
 
+const LeftAccessoryMessageIcon = memo((props: any) => (
+  <Icon icon="message" style={props.style} size={24} color={colors.tintInactive} />
+))
+LeftAccessoryMessageIcon.displayName = "LeftAccessoryMessageIcon"
+
+const LeftAccessoryKeyIcon = memo((props: any) => (
+  <Icon icon="key" style={props.style} size={24} color={colors.tintInactive} />
+))
+LeftAccessoryKeyIcon.displayName = "LeftAccessoryKeyIcon"
+
 export const AuthSheet = (props: AuthSheetProps) => {
   const {
     style,
@@ -418,7 +428,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
   const sheetRef = useRef<BottomSheetController>(null)
   const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState<null | "google" | "apple" | "email">(null)
+  const [loading, setLoading] = useState<null | "google" | "apple" | "email" | "signup">(null)
   const [showPlainPassword, setShowPlainPassword] = useState(false)
 
   // Forgot password state
@@ -502,7 +512,31 @@ export const AuthSheet = (props: AuthSheetProps) => {
         })
         onAuthenticated(user)
       } else {
-        toast.error(response.problem.message as string)
+        toast.error(response.problem.message as string, response.problem.message)
+      }
+    } catch (e) {
+      console.warn("Email login failed", e)
+    } finally {
+      setLoading(null)
+    }
+  }
+  const onEmailSignUp = async (payload: { username: string; password: string; email: string }) => {
+    setLoading("signup")
+    try {
+      const response = await authService.signUpWithEmailPassword(payload)
+      if (response.ok) {
+        // const { user, accessToken, refreshToken, tokenType, expiresIn } = response.data
+        // await persistTokens({
+        //   accessToken,
+        //   refreshToken,
+        //   tokenType,
+        //   accessTokenExpires: expiresIn,
+        // })
+        // onAuthenticated(user)
+        toast.success(response.data.message)
+        setMode("signin")
+      } else {
+        toast.error(response.problem.message as string, "Error")
       }
     } catch (e) {
       console.warn("Email login failed", e)
@@ -522,7 +556,6 @@ export const AuthSheet = (props: AuthSheetProps) => {
         ],
       })
       if (!cred.identityToken) throw new Error("No identityToken from Apple")
-      console.log({ cred })
       const response = await authService.loginWithApple(cred.identityToken)
       if (response.ok) {
         const { user, accessToken, refreshToken, tokenType, expiresIn } = response.data
@@ -588,13 +621,53 @@ export const AuthSheet = (props: AuthSheetProps) => {
     }
   }, [mode, createAccountMode])
 
-  const CreateEmailPasswordAccount = () => {
+  const CreateEmailPasswordAccount = (props: {
+    loading: boolean
+    onSignUp: (identifier: { email: string; password: string; username: string }) => void
+  }) => {
     const [signupPassword, setSignupPassword] = useState("")
+    const [username, setUsername] = useState("")
+    const [email, setEmail] = useState("")
+    const [showPassword, setShowPassword] = useState(showPlainPassword)
+
+    // track which fields user touched
+    const [touched, setTouched] = useState<{
+      username?: boolean
+      email?: boolean
+      password?: boolean
+    }>({})
+
+    const validateUsername = (v: string) => {
+      if (v.trim().length < 6) return "Username must be at least 6 characters"
+      if (!/^[a-z0-9_]+$/i.test(v)) return "Cannot include spaces or special characters"
+      return undefined
+    }
+
+    const validateEmail = (v: string) => {
+      if (!v) return "Email is required"
+      // Simple email regex, good enough for client-side
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Invalid email address"
+      return undefined
+    }
+
+    const validatePassword = (v: string) => {
+      if (v.length < 8) return "Password must be at least 8 characters"
+      if (!/[A-Z]/.test(v)) return "Must include at least one uppercase letter"
+      if (!/[a-z]/.test(v)) return "Must include at least one lowercase letter"
+      if (!/[0-9]/.test(v)) return "Must include at least one number"
+      if (!/[!@#$%^&*]/.test(v)) return "Must include at least one special character"
+      return undefined
+    }
+
+    const usernameError = useMemo(() => validateUsername(username), [username])
+    const emailError = useMemo(() => validateEmail(email), [email])
+    const passwordError = useMemo(() => validatePassword(signupPassword), [signupPassword])
+
+    // all conditions met = form valid
+    const canSubmit = !usernameError && !emailError && !passwordError
 
     return (
       <>
-        {/* ----- CREATE ACCOUNT CONTENT (same sheet) ----- */}
-
         <StaggerItem index={0}>
           <View>
             <TextField
@@ -603,7 +676,13 @@ export const AuthSheet = (props: AuthSheetProps) => {
               )}
               label="username"
               placeholderTextColor={colors.tintInactive}
+              status={touched.username && usernameError ? "error" : undefined}
+              helper={touched.username ? usernameError : undefined}
               placeholder="Enter your username"
+              onChangeText={(text) => {
+                setTouched((t) => ({ ...t, username: true }))
+                setUsername(text)
+              }}
               autoCapitalize="none"
             />
           </View>
@@ -611,14 +690,18 @@ export const AuthSheet = (props: AuthSheetProps) => {
         <StaggerItem index={1}>
           <View style={$inputContainer}>
             <TextField
-              LeftAccessory={(props) => (
-                <Icon icon="message" style={props.style} size={24} color={colors.tintInactive} />
-              )}
+              LeftAccessory={LeftAccessoryMessageIcon}
               label="Email"
               autoCapitalize="none"
               keyboardType="email-address"
               placeholder="Enter your email"
               placeholderTextColor={colors.tintInactive}
+              status={touched.email && emailError ? "error" : undefined}
+              helper={touched.email ? emailError : undefined}
+              onChangeText={(txt) => {
+                setEmail(txt)
+                setTouched((t) => ({ ...t, email: true }))
+              }}
             />
           </View>
         </StaggerItem>
@@ -629,12 +712,18 @@ export const AuthSheet = (props: AuthSheetProps) => {
                 <Icon icon="key" style={props.style} size={24} color={colors.tintInactive} />
               )}
               label="Password"
-              secureTextEntry
+              secureTextEntry={showPassword}
               placeholder="Enter your password"
               placeholderTextColor={colors.tintInactive}
               onChangeText={setSignupPassword}
               RightAccessory={(props) => (
-                <Icon icon="eye" style={props.style} size={24} color={colors.tintInactive} />
+                <PressableIcon
+                  icon={showPassword ? "eye" : "hide"}
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={props.style}
+                  size={24}
+                  color={colors.tintInactive}
+                />
               )}
             />
           </View>
@@ -642,8 +731,21 @@ export const AuthSheet = (props: AuthSheetProps) => {
         </StaggerItem>
 
         <StaggerItem index={3}>
-          <Pressable style={themed($cta)} onPress={() => {}}>
-            <Text style={themed($ctaText)}>Sign Up</Text>
+          <Pressable
+            disabled={!canSubmit || props.loading}
+            style={[themed($cta), (!canSubmit || !!props.loading) && { opacity: 0.5 }]}
+            onPress={() => {
+              props.onSignUp({ email, password: signupPassword, username })
+            }}
+          >
+            {props.loading ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <ActivityIndicator />
+                <Text style={themed($ctaText)}>Creating…</Text>
+              </View>
+            ) : (
+              <Text style={themed($ctaText)}>Sign Up</Text>
+            )}
           </Pressable>
         </StaggerItem>
         <StaggerItem index={5}>
@@ -862,7 +964,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
   ForgotDoneContent.displayName = "ForgotDoneContent"
 
   return (
-    <AppBottomSheet controllerRef={sheetRef} snapPoints={["85%"]}>
+    <AppBottomSheet controllerRef={sheetRef} enablePanDownToClose={false} snapPoints={["85%"]}>
       <AnimatedContainer style={$styles}>
         <StaggerItem index={0}>
           <View style={{ alignItems: "center", marginBottom: 8 }}>
@@ -931,7 +1033,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
               switchToSignUpWithEmail={switchToSignUpWithEmail}
             />
           ) : mode === "signup" && createAccountMode === "email-password" ? (
-            <CreateEmailPasswordAccount on />
+            <CreateEmailPasswordAccount onSignUp={onEmailSignUp} loading={loading === "signup"} />
           ) : mode === "forgot:email" ? (
             <ForgotEmailContent
               themed={themed}

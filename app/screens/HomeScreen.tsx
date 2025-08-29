@@ -1,17 +1,11 @@
 import { FC, useState } from "react"
-import {
-  Dimensions,
-  ImageStyle,
-  Pressable,
-  TextStyle,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native"
+import { Dimensions, ImageStyle, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 
 import { AnnouncementBox } from "@/components/AnnouncementBox"
 import { AppCarousel } from "@/components/AppCarousel"
 import { AutoImage } from "@/components/AutoImage"
+import { EmptyState } from "@/components/EmptyState"
+import { EmptyStateIllustration } from "@/components/EmptyStateCard"
 import { Icon } from "@/components/Icon"
 import { ListView } from "@/components/ListView"
 import { Loader } from "@/components/Loader"
@@ -28,7 +22,8 @@ import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
-import { EmptyState } from "@/components/EmptyState"
+import Config from "@/config"
+import { HomeScreenSkeleton } from "@/components/skeleton/screens/HomeScreenSkeleton"
 
 // import { useNavigation } from "@react-navigation/native"
 const BannerPlaceHolder = require("../../assets/images/cover.png")
@@ -49,27 +44,8 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
   const Separator = () => <View style={$separator} />
 
   const { themed } = useAppTheme()
-  const { requireAuth, authEmail, username } = useAuth()
-
-  const onLike = async () => {
-    console.log("pressed")
-    await requireAuth() // pops the sheet if not logged in
-    // proceed with the protected action...
-  }
-  if (isLoading) {
-    return (
-      <Loader
-        message="Fetching your scripts…"
-        // Optional: use a remote Lottie URL instead of local file
-        // source={{ uri: "https://assets9.lottiefiles.com/packages/lf20_q5pk6p1k.json" }}
-        loop
-        autoPlay
-        speed={1}
-        size={180}
-        backgroundColor="#240E56"
-      />
-    )
-  }
+  const { username } = useAuth()
+  if (isLoading) return <HomeScreenSkeleton />
   return (
     <Screen
       style={$root}
@@ -101,30 +77,35 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
       </View>
       <View style={$welcomeTextContainer}>
         {username && (
-          <Text text={`👋 Welcome back, ${authEmail}!`} style={themed($welcomeTextStyle)} />
+          <Text
+            numberOfLines={1}
+            text={`👋 Welcome back, ${username}!`}
+            style={themed($welcomeTextStyle)}
+          />
         )}
         {!username && <Text text={` Welcome to Scripscape`} style={themed($welcomeTextStyle)} />}
       </View>
       <View>
-        {!error ||
-          (banners?.data && (
-            <AppCarousel
-              data={banners?.data || []}
-              height={331}
-              width={width - 28}
-              renderItem={({ index, item }) => (
-                <AnnouncementBox
-                  imageSource={{
-                    uri: `https://cms.scripscape.com${item.Image?.formats.large.url}`,
-                  }}
-                  // imageSource={BannerPlaceHolder}
-                  title={item.Title}
-                  description={item.Description}
-                />
-              )}
-            />
-          ))}
-        {(error || !banners?.data || banners?.data.length < 1) && <EmptyState />}
+        {!error && banners && banners?.data?.length > 0 && (
+          <AppCarousel
+            data={banners?.data ?? []}
+            height={331}
+            width={width - 28}
+            renderItem={({ index, item }) => (
+              <AnnouncementBox
+                imageSource={{
+                  uri: `${Config.CMS_URL}${item?.Image?.formats?.large?.url ?? ""}`,
+                }}
+                title={item?.Title}
+                description={item?.Description}
+              />
+            )}
+          />
+        )}
+
+        {(error || !banners?.data || banners?.data.length < 1) && (
+          <EmptyStateIllustration width={width - 22} height={331} />
+        )}
       </View>
       <View style={$sectionContainer}>
         <Text text="Featured" style={themed($sectionHeader)} />

@@ -9,11 +9,11 @@ import { Text } from "@/components/Text"
 import { useAuth } from "@/context/AuthContext"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 
 import { AppStackParamList } from "./AppNavigator"
 import { drawerRef } from "./Drawer"
-import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
 
 interface NavBarListItem {
   title: string
@@ -21,6 +21,7 @@ interface NavBarListItem {
   screen: keyof AppStackParamList
   requireAuth: boolean
   action?: () => void
+  global: boolean
 }
 
 export const DrawerNavigation = (props) => {
@@ -43,6 +44,7 @@ export const DrawerNavigation = (props) => {
       action: async () => {
         await requireAuth()
       },
+      global: false,
     },
 
     {
@@ -50,18 +52,21 @@ export const DrawerNavigation = (props) => {
       icon: <Icon icon="person" size={24} />,
       screen: "Profile",
       requireAuth: true,
+      global: false,
     },
     {
       title: "Settings",
       icon: <Icon icon="settings" size={24} />,
       screen: "Profile",
       requireAuth: true,
+      global: false,
     },
     {
       title: "Help",
       icon: <Icon icon="help" size={24} />,
       screen: "Login",
       requireAuth: false,
+      global: true,
     },
   ]
 
@@ -100,7 +105,9 @@ export const DrawerNavigation = (props) => {
           )}
           {NAV_ITEMS.filter(
             (item) =>
-              (item.requireAuth && isAuthenticated) || !item.requireAuth === !isAuthenticated,
+              (item.requireAuth && isAuthenticated) ||
+              !item.requireAuth === !isAuthenticated ||
+              item.global,
           ).map((item) => (
             <TouchableOpacity
               onPress={() => {
@@ -119,17 +126,12 @@ export const DrawerNavigation = (props) => {
           ))}
           <View></View>
           {isAuthenticated && (
-            <TouchableOpacity
-              style={$footer}
-              onPress={() => {
-                logout()
-              }}
-            >
-              <TouchableOpacity style={$logoutBtn}>
+            <View style={$footer}>
+              <TouchableOpacity style={$logoutBtn} onPress={logout}>
                 <Text style={$logoutText}>Log Out</Text>
               </TouchableOpacity>
               <Text style={$version}>Version 1.0.0.1</Text>
-            </TouchableOpacity>
+            </View>
           )}
         </View>
       )}

@@ -1,4 +1,4 @@
-import type { AuthResponse, MeResponse } from "@/interface/auth"
+import type { AuthResponse, CreateAccountResponse, MeResponse } from "@/interface/auth"
 
 import { Api } from "./api"
 import { ApiResult } from "./api/types"
@@ -11,17 +11,25 @@ export class AuthService {
   }
 
   loginWithGoogle(id_token: string): Promise<ApiResult<AuthResponse>> {
-    return this.httpClient.post<AuthResponse>("/api/v1/auth/google", { id_token })
+    return this.httpClient.post<AuthResponse>("/auth/google", { id_token })
   }
 
   loginWithApple(id_token: string): Promise<ApiResult<AuthResponse>> {
-    return this.httpClient.post<AuthResponse>("/api/v1/auth/apple", { id_token })
+    return this.httpClient.post<AuthResponse>("/auth/apple", { id_token })
   }
 
   refresh(
     refreshToken: string,
   ): Promise<ApiResult<Pick<AuthResponse, "accessToken" | "tokenType" | "expiresIn">>> {
-    return this.httpClient.post("/api/v1/users/refresh", { refreshToken })
+    return this.httpClient.post("/users/refresh", { refreshToken })
+  }
+
+  signUpWithEmailPassword(payload: {
+    username: string
+    email: string
+    password: string
+  }): Promise<ApiResult<CreateAccountResponse>> {
+    return this.httpClient.post<CreateAccountResponse>("/users", payload)
   }
 
   me(): Promise<ApiResult<MeResponse>> {
