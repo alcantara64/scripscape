@@ -39,7 +39,7 @@ export const FollowersList = (props: FollowersListProps) => {
       data={data}
       extraData={data.length}
       refreshing={refreshing}
-      estimatedItemSize={177}
+      estimatedItemSize={data.length}
       ItemSeparatorComponent={Separator}
       onRefresh={refresh}
       ListEmptyComponent={
@@ -96,7 +96,7 @@ export const FollowersList = (props: FollowersListProps) => {
 const $container: ViewStyle = {}
 
 const $listContentContainer: ThemedStyle<ContentStyle> = ({ spacing }) => ({
-  paddingHorizontal: spacing.sm,
+  // paddingHorizontal: spacing.sm,
   paddingBottom: spacing.lg,
 })
 

@@ -1,10 +1,8 @@
 import { useState } from "react"
-import { StyleProp, TextStyle, View, ViewStyle, StyleSheet, ActivityIndicator } from "react-native"
+import { StyleProp, View, ViewStyle, StyleSheet, ActivityIndicator } from "react-native"
 import { Image, ImageSource, ImageStyle } from "expo-image"
 
-import { Text } from "@/components/Text"
 import { useAppTheme } from "@/theme/context"
-import type { ThemedStyle } from "@/theme/types"
 
 export interface SmartImageProps {
   /**

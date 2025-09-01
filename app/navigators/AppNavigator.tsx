@@ -17,6 +17,7 @@ import { useAppTheme } from "@/theme/context"
 import { DemoNavigator, DemoTabParamList } from "./DemoNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { SubscriptionScreen } from "@/screens/SubscriptionScreen"
+import { SearchScreen } from "@/screens/SearchScreen"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -39,6 +40,7 @@ export type AppStackParamList = {
   MyScripts: undefined
   Settings: undefined
   Subscription: undefined
+  Search: undefined
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
@@ -79,6 +81,7 @@ const AppStack = () => {
       <Stack.Screen name="Demo" component={DemoNavigator} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+      <Stack.Screen name="Search" component={SearchScreen} />
     </Stack.Navigator>
   )
 }

@@ -29,67 +29,11 @@ import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
+import { followers } from "@/utils/mock"
 
 // import { useNavigation } from "@react-navigation/native"
 
 const DEFAULT_BACKGROUND_IMAGE = require("../../assets/images/profile-banner.png")
-
-const followers = [
-  {
-    id: "1",
-    name: "John Beacon",
-    avatar: "https://randomuser.me/api/portraits/men/31.jpg",
-    isPro: true,
-    followers: 333,
-    scripts: 200,
-    isFollowing: true,
-  },
-  {
-    id: "2",
-    name: "Johnny Argyle",
-    avatar: "https://randomuser.me/api/portraits/men/46.jpg",
-    isPro: false,
-    followers: 200,
-    scripts: 266,
-    isFollowing: true,
-  },
-  {
-    id: "3",
-    name: "John Tyrone",
-    avatar: "https://randomuser.me/api/portraits/men/52.jpg",
-    isPro: false,
-    followers: 189,
-    scripts: 344,
-    isFollowing: true,
-  },
-  {
-    id: "4",
-    name: "Sarah Vega",
-    avatar: "https://randomuser.me/api/portraits/women/21.jpg",
-    isPro: true,
-    followers: 420,
-    scripts: 180,
-    isFollowing: false,
-  },
-  {
-    id: "5",
-    name: "Michael Chen",
-    avatar: "https://randomuser.me/api/portraits/men/18.jpg",
-    isPro: false,
-    followers: 276,
-    scripts: 143,
-    isFollowing: true,
-  },
-  {
-    id: "6",
-    name: "Lena Alvarez",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    isPro: false,
-    followers: 310,
-    scripts: 215,
-    isFollowing: false,
-  },
-]
 
 interface ProfileScreenProps extends AppStackScreenProps<"Profile"> {}
 
@@ -324,9 +268,13 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
 
         {/* Script and FollowerList List */}
         {currentTab === "followers" ? (
-          <FollowersList data={followers} />
+          <View style={$listContainer}>
+            <FollowersList data={followers} />
+          </View>
         ) : (
-          <ScriptList data={mock_scripts} />
+          <View style={$listContainer}>
+            <ScriptList data={mock_scripts} />
+          </View>
         )}
       </Screen>
       <AppBottomSheet controllerRef={sheet} snapPoints={["75%", "85%"]}>
@@ -495,3 +443,6 @@ const $buttonStyle: ThemedStyle<ViewStyle> = ({ colors }) => ({
   borderRadius: 12,
   borderWidth: 0,
 })
+const $listContainer: ViewStyle = {
+  paddingHorizontal: spacing.sm,
+}

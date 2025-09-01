@@ -1,16 +1,17 @@
 import { FC, memo, useState } from "react"
 import { ImageStyle, Pressable, TextStyle, View, ViewStyle } from "react-native"
-import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { LinearGradient } from "expo-linear-gradient"
+import { useNavigation } from "@react-navigation/native"
+
+import { Icon, PressableIcon } from "@/components/Icon"
+import { ListView } from "@/components/ListView"
+import { ProBadge } from "@/components/ProBadge"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
-import { Icon, PressableIcon } from "@/components/Icon"
-import { useNavigation } from "@react-navigation/native"
-import { ThemedStyle } from "@/theme/types"
-import { ProBadge } from "@/components/ProBadge"
 import { spacing } from "@/theme/spacing"
-import { ListView } from "@/components/ListView"
-import { LinearGradient } from "expo-linear-gradient"
+import { ThemedStyle } from "@/theme/types"
 
 interface SubscriptionScreenProps extends AppStackScreenProps<"Subscription"> {}
 

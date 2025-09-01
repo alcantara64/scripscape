@@ -5,7 +5,7 @@ import { AnnouncementBox } from "@/components/AnnouncementBox"
 import { AppCarousel } from "@/components/AppCarousel"
 import { AutoImage } from "@/components/AutoImage"
 import { EmptyStateIllustration } from "@/components/EmptyStateCard"
-import { Icon } from "@/components/Icon"
+import { Icon, PressableIcon } from "@/components/Icon"
 import { ListView } from "@/components/ListView"
 import { Screen } from "@/components/Screen"
 import { ScriptCard } from "@/components/ScriptCard"
@@ -23,13 +23,13 @@ import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
 import Config from "@/config"
 import { HomeScreenSkeleton } from "@/components/skeleton/screens/HomeScreenSkeleton"
 
-// import { useNavigation } from "@react-navigation/native"
+import { useNavigation } from "@react-navigation/native"
 
 interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
 
 export const HomeScreen: FC<HomeScreenProps> = () => {
   // Pull in navigation via hook
-  // const navigation = useNavigation()
+  const navigation = useNavigation()
   const { width } = Dimensions.get("window")
   const { data: banners, isLoading, error } = useBanners()
   const CATEGORIES = ["All", "Action", "Adventure", "Comedy", "Drama", "Drama"]
@@ -59,9 +59,15 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
             <Text text="Scripscape" style={themed($logoTextStyle)} />
           </View>
           <View style={$actionSection}>
-            <View>
-              <Icon icon="search" size={24} color={colors.palette.neutral100} />
-            </View>
+            <PressableIcon
+              onPress={() => {
+                navigation.navigate("Search")
+              }}
+              icon="search"
+              size={24}
+              color={colors.palette.neutral100}
+            />
+
             <TouchableOpacity onPress={openDraw}>
               <AutoImage
                 style={themed($profileSectionImage)}

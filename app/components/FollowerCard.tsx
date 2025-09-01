@@ -31,13 +31,14 @@ export interface FollowerCardProps {
   isPro?: boolean
   scripts: number
   followers: number
+  showFollowButton: boolean
 }
 
 /**
  * Describe your component here
  */
 export const FollowerCard = (props: FollowerCardProps) => {
-  const { style, picture, name, isPro, followers, scripts } = props
+  const { style, picture, name, isPro, followers, scripts, showFollowButton } = props
   const $styles = [$container, style]
   const { themed } = useAppTheme()
 
@@ -82,9 +83,11 @@ export const FollowerCard = (props: FollowerCardProps) => {
           </View>
         </View>
       </View>
-      <TouchableOpacity style={themed($followUnfollowButton)}>
-        <Text text="Unfollow" size="sm" style={$followText} />
-      </TouchableOpacity>
+      {showFollowButton && (
+        <TouchableOpacity style={themed($followUnfollowButton)}>
+          <Text text="Unfollow" size="sm" style={$followText} />
+        </TouchableOpacity>
+      )}
     </View>
   )
 }

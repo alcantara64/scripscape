@@ -82,7 +82,7 @@ export const ScriptList = (props: ScriptListProps) => {
 const $container: ViewStyle = {}
 
 const $listContentContainer: ThemedStyle<ContentStyle> = ({ spacing }) => ({
-  paddingHorizontal: spacing.sm,
+  // paddingHorizontal: spacing.sm,
   paddingBottom: spacing.lg,
 })
 
