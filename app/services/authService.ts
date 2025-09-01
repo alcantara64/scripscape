@@ -17,6 +17,12 @@ export class AuthService {
   loginWithApple(id_token: string): Promise<ApiResult<AuthResponse>> {
     return this.httpClient.post<AuthResponse>("/auth/apple", { id_token })
   }
+  forgotPassword(email: string): Promise<ApiResult<{ message: string }>> {
+    return this.httpClient.post<{ message: string }>("/auth/forgot", { email })
+  }
+  verifyCode(email: string, code: string): Promise<ApiResult<{ message: string }>> {
+    return this.httpClient.post<{ message: string }>("/auth/verify-forgot-code", { email, code })
+  }
 
   refresh(
     refreshToken: string,

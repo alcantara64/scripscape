@@ -153,7 +153,7 @@ const $partContainer: ViewStyle = {
   alignItems: "center",
 }
 const $statusContainer = (status: ScriptStatus): ViewStyle => ({
-  backgroundColor: status === ScriptStatus.completed ? colors.success : colors.tint,
+  backgroundColor: status === ScriptStatus.completed ? colors.success : colors.palette.accent500,
   gap: spacing.xs,
   borderRadius: 8,
   marginBottom: spacing.xxs,

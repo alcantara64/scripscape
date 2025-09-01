@@ -1,5 +1,13 @@
 import { JSX, useImperativeHandle, useState } from "react"
-import { View, Image, ViewStyle, TextStyle, TouchableOpacity, ImageStyle } from "react-native"
+import {
+  View,
+  Image,
+  ViewStyle,
+  TextStyle,
+  TouchableOpacity,
+  ImageStyle,
+  Pressable,
+} from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { Drawer } from "react-native-drawer-layout"
 
@@ -124,7 +132,24 @@ export const DrawerNavigation = (props) => {
               <Text text={item.title} />
             </TouchableOpacity>
           ))}
-          <View></View>
+          {isAuthenticated && (
+            <View style={themed($subcriptionContainer)}>
+              <Pressable
+                onPress={() => {
+                  navigation.navigate("Subscription")
+                }}
+                style={themed($cabtn)}
+              >
+                <Text style={themed($createAccountTxt)}>Upgrade to Pro</Text>
+              </Pressable>
+              <View style={themed($paymentDescriptionContainer)}>
+                <Text style={themed($paymentDescription)}>
+                  Start from <Text style={themed($amountStyle)} text="$35/month" />
+                </Text>
+                <Text preset="description" text="Cancel anytime" />
+              </View>
+            </View>
+          )}
           {isAuthenticated && (
             <View style={$footer}>
               <TouchableOpacity style={$logoutBtn} onPress={logout}>
@@ -163,3 +188,33 @@ const $logoutBtn: ViewStyle = {
 }
 const $logoutText: TextStyle = { color: "#fff", fontSize: 14, alignSelf: "center" }
 const $version: TextStyle = { color: "#999", fontSize: 10, alignSelf: "center" }
+const $createAccountTxt: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
+  fontFamily: typography.primary.medium,
+  color: colors.palette.neutral300,
+  fontSize: 18,
+  fontWeight: 500,
+  lineHeight: 20,
+})
+const $cabtn: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  height: 48,
+  borderRadius: spacing.sm,
+  alignItems: "center",
+  justifyContent: "center",
+  marginTop: spacing.sm + 2,
+  borderWidth: 1,
+  borderColor: colors.palette.accentActive,
+})
+const $amountStyle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.palette.accent500,
+})
+const $paymentDescriptionContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  marginTop: spacing.sm,
+  justifyContent: "space-between",
+})
+const $paymentDescription: ThemedStyle<TextStyle> = ({ colors }) => ({})
+
+const $subcriptionContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  marginTop: spacing.md,
+})

@@ -4,6 +4,7 @@ import type { ThemedStyle } from "@/theme/types"
 import { Text } from "@/components/Text"
 import { colors } from "@/theme/colors"
 import { spacing } from "@/theme/spacing"
+import Svg, { Path } from "react-native-svg"
 
 export interface ProBadgeProps {
   /**
@@ -22,7 +23,10 @@ export const ProBadge = (props: ProBadgeProps) => {
 
   return (
     <View style={[$styles, $proBadge]}>
-      <Text style={$proText} text="PRO ⭐" weight="bold" size="md" />
+      <Text style={$proText} text="PRO " weight="bold" size="md" />
+      <Svg width={10} height={10} viewBox="0 0 24 24" fill="#e4f7fd">
+        <Path d="M12 .587l3.668 7.568L24 9.748l-6 5.844 1.416 8.259L12 19.896l-7.416 3.955L6 15.592 0 9.748l8.332-1.593z" />
+      </Svg>
     </View>
   )
 }
@@ -34,6 +38,7 @@ const $proBadge: ViewStyle = {
   borderRadius: 4,
   marginTop: 5,
   alignSelf: "flex-start",
+  flexDirection: "row",
 }
 
 const $proText: TextStyle = {

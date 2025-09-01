@@ -122,7 +122,7 @@ const $sectionStyleHeader: ThemedStyle<TextStyle> = ({ colors, typography, spaci
   color: colors.text,
   fontFamily: typography.primary.medium,
   fontSize: spacing.lg,
-  marginBottom: spacing.xs,
+
   fontWeight: "500",
   lineHeight: 33,
 })

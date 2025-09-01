@@ -24,6 +24,7 @@ export type AuthContextType = {
   setAuthEmail: (email: string) => void
   logout: () => void
   validationError: string
+  currentUser?: User
 
   // ---- extras (non-breaking) ----
   requireAuth: () => Promise<void>
@@ -65,6 +66,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
   const [authTokenType, setAuthTokenType] = useMMKVString("AuthProvider.authTokenType")
 
   const [sheetVisible, setSheetVisible] = useState(false)
+  // const [currentUser, setCurrentUser] = useMMKVString("AuthProvider.currentUser")
   const waiterRef = useRef<Deferred | null>(null)
 
   const openAuthSheet = useCallback(() => setSheetVisible(true), [])
@@ -156,6 +158,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
     openAuthSheet,
     closeAuthSheet,
     username,
+    // currentUser,
   }
 
   return (

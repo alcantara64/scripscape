@@ -4,11 +4,9 @@ import { Dimensions, ImageStyle, TextStyle, TouchableOpacity, View, ViewStyle } 
 import { AnnouncementBox } from "@/components/AnnouncementBox"
 import { AppCarousel } from "@/components/AppCarousel"
 import { AutoImage } from "@/components/AutoImage"
-import { EmptyState } from "@/components/EmptyState"
 import { EmptyStateIllustration } from "@/components/EmptyStateCard"
 import { Icon } from "@/components/Icon"
 import { ListView } from "@/components/ListView"
-import { Loader } from "@/components/Loader"
 import { Screen } from "@/components/Screen"
 import { ScriptCard } from "@/components/ScriptCard"
 import { Text } from "@/components/Text"
@@ -26,7 +24,6 @@ import Config from "@/config"
 import { HomeScreenSkeleton } from "@/components/skeleton/screens/HomeScreenSkeleton"
 
 // import { useNavigation } from "@react-navigation/native"
-const BannerPlaceHolder = require("../../assets/images/cover.png")
 
 interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
 
@@ -55,12 +52,12 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
     >
       <View>
         <View style={$headerContainer}>
-          <TouchableOpacity style={$logoContainer}>
+          <View style={$logoContainer}>
             <View style={$logoIcon}>
               <Icon icon="logo" size={28} color={colors.palette.neutral100} />
             </View>
             <Text text="Scripscape" style={themed($logoTextStyle)} />
-          </TouchableOpacity>
+          </View>
           <View style={$actionSection}>
             <View>
               <Icon icon="search" size={24} color={colors.palette.neutral100} />

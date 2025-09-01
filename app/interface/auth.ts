@@ -10,6 +10,7 @@ export interface User {
   cover_photo_url?: string | null
   bio?: string | null
   is_pro: boolean
+  isNew?: boolean
   created_at: string
   updated_at: string
 }
