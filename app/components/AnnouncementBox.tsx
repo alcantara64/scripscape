@@ -1,4 +1,13 @@
-import { ImageStyle, Platform, StyleProp, TextStyle, View, ViewStyle } from "react-native"
+import {
+  ImageStyle,
+  Linking,
+  Platform,
+  Pressable,
+  StyleProp,
+  TextStyle,
+  View,
+  ViewStyle,
+} from "react-native"
 
 import { Text } from "@/components/Text"
 import { useAppTheme } from "@/theme/context"
@@ -16,19 +25,24 @@ export interface AnnouncementBoxProps {
   imageSource: any
   title: string
   description: string
+  link?: string | null
 }
 
 /**
  * Describe your component here
  */
 export const AnnouncementBox = (props: AnnouncementBoxProps) => {
-  const { style, imageSource, title, description } = props
+  const { style, imageSource, title, description, link } = props
 
   const { themed } = useAppTheme()
   const $styles = [themed($container), style]
 
+  const gotoUrl = () => {
+    if (link) Linking.openURL(link)
+  }
+
   return (
-    <View style={$styles}>
+    <Pressable style={$styles} onPress={gotoUrl}>
       <View>
         <SmartImage imageStyle={$imageStyle} image={imageSource} />
       </View>
@@ -40,7 +54,7 @@ export const AnnouncementBox = (props: AnnouncementBoxProps) => {
           {description}
         </Text>
       </View>
-    </View>
+    </Pressable>
   )
 }
 

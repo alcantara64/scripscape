@@ -1,5 +1,6 @@
 import { FC, useState } from "react"
 import { Dimensions, ImageStyle, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
+import { useNavigation } from "@react-navigation/native"
 
 import { AnnouncementBox } from "@/components/AnnouncementBox"
 import { AppCarousel } from "@/components/AppCarousel"
@@ -9,7 +10,9 @@ import { Icon, PressableIcon } from "@/components/Icon"
 import { ListView } from "@/components/ListView"
 import { Screen } from "@/components/Screen"
 import { ScriptCard } from "@/components/ScriptCard"
+import { HomeScreenSkeleton } from "@/components/skeleton/screens/HomeScreenSkeleton"
 import { Text } from "@/components/Text"
+import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
 import { ScriptStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
@@ -20,10 +23,6 @@ import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
-import Config from "@/config"
-import { HomeScreenSkeleton } from "@/components/skeleton/screens/HomeScreenSkeleton"
-
-import { useNavigation } from "@react-navigation/native"
 
 interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
 
@@ -101,6 +100,7 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
                 }}
                 title={item?.Title}
                 description={item?.Description}
+                link={item.Url}
               />
             )}
           />

@@ -423,7 +423,7 @@ const validatePassword = (v: string) => {
   if (!/[A-Z]/.test(v)) return "Must include at least one uppercase letter"
   if (!/[a-z]/.test(v)) return "Must include at least one lowercase letter"
   if (!/[0-9]/.test(v)) return "Must include at least one number"
-  if (!/[!@#$%^&*]/.test(v)) return "Must include at least one special character"
+  if (!/[^A-Za-z0-9]/.test(v)) return "Must include at least one special character"
   return undefined
 }
 
@@ -651,7 +651,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
     const [signupPassword, setSignupPassword] = useState("")
     const [username, setUsername] = useState("")
     const [email, setEmail] = useState("")
-    const [showPassword, setShowPassword] = useState(showPlainPassword)
+    const [showPassword, setShowPassword] = useState(true)
 
     // track which fields user touched
     const [touched, setTouched] = useState<{
