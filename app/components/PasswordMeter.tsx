@@ -83,8 +83,6 @@ export function PasswordMeter({ password }: { password: string }) {
   )
 }
 
-/* ---------- styles ---------- */
-
 const $meterRow: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
   alignItems: "center",

@@ -21,9 +21,12 @@ export class AuthService {
     return this.httpClient.post<{ message: string }>("/auth/forgot", { email })
   }
   verifyCode(email: string, code: string): Promise<ApiResult<{ message: string }>> {
-    return this.httpClient.post<{ message: string }>("/auth/verify-forgot-code", { email, code })
+    return this.httpClient.post<{ message: string }>("/auth/verify-code", { email, code })
   }
 
+  updatePassword(password: string, code: string): Promise<ApiResult<{ message: string }>> {
+    return this.httpClient.post<{ message: string }>("/auth/reset", { password, code })
+  }
   refresh(
     refreshToken: string,
   ): Promise<ApiResult<Pick<AuthResponse, "accessToken" | "tokenType" | "expiresIn">>> {

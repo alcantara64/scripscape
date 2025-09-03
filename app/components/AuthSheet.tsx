@@ -9,6 +9,7 @@ import {
   Image,
   Linking,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from "react-native"
 import * as Apple from "expo-apple-authentication"
 import * as Application from "expo-application"
@@ -397,8 +398,8 @@ const CreateAccountContent = memo((p: CreateAccountProps) => {
 
 CreateAccountContent.displayName = "CreateAccountContent"
 
-const TERMS_URL = "https://scripscape.com/terms"
-const PRIVACY_URL = "https://scripscape.com/privacy"
+const TERMS_URL = "http://scripscape.com/terms-of-use"
+const PRIVACY_URL = "http://scripscape.com/privacy-policy"
 
 const LeftAccessoryMessageIcon = memo((props: any) => (
   <Icon icon="message" style={props.style} size={24} color={colors.tintInactive} />
@@ -452,9 +453,8 @@ export const AuthSheet = (props: AuthSheetProps) => {
 
   // Forgot password state
   const [resetEmail, setResetEmail] = useState("")
-  const [newPass, setNewPass] = useState("")
-  const [confirmPass, setConfirmPass] = useState("")
   const [resendIn, setResendIn] = useState(0) // seconds
+  const [resetCode, setResetCode] = useState("")
 
   // ----- Google (ID token flow) -----
 
@@ -803,6 +803,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
         if (response.ok) {
           const { message } = response.data
           toast.success(message)
+          setResendIn(60)
           setMode("forgot:code")
         } else {
           toast.error(response.problem.message as string, response.problem.message)
@@ -861,76 +862,161 @@ export const AuthSheet = (props: AuthSheetProps) => {
   })
   ForgotEmailContent.displayName = "ForgotEmailContent"
 
-  const ForgotCodeContent = memo(
-    ({ themed, onBack, onVerify, onResend, waiting, resetEmail }: any) => {
-      const [code, setCode] = useState("")
-      return (
-        <>
-          <StaggerItem index={2}>
-            <Text preset="description" style={themed($description)}>
-              We have sent the code to your email{" "}
-              <Text style={themed($legalLink)}>{resetEmail}</Text>
-              Please enter the code below.
-            </Text>
-          </StaggerItem>
+  const ForgotCodeContent = memo(({ themed, onBack, onVerify, waiting }: any) => {
+    const [code, setCode] = useState("")
+    const [loadingReset, setLoadingReset] = useState(false)
 
-          <StaggerItem index={3}>
-            <View style={$phoneInputContainer}>
-              <OtpInput
-                numberOfDigits={6}
-                onTextChange={(text) => setCode(text)}
-                textInputProps={{
-                  accessibilityLabel: "One-Time Password",
-                  style: {
-                    color: colors.text,
-                  },
-                }}
-                theme={{ pinCodeTextStyle: themed($pinCodeTextStyle) }}
-                onFilled={(text) => onVerify(text)}
-              />
-            </View>
-          </StaggerItem>
+    async function resend() {
+      if (resendIn > 0) return
+      const response = await authService.forgotPassword(resetEmail)
+      if (response.ok) {
+        const { message } = response.data
+        toast.success(message)
+      } else {
+        toast.error(response.problem.message as string, response.problem.message)
+      }
+      setResendIn(30)
+    }
 
-          <StaggerItem index={4}>
-            <Pressable style={themed($cta)} onPress={onVerify}>
-              <Text style={themed($ctaText)}>Verify code</Text>
-            </Pressable>
-          </StaggerItem>
+    const onVerifyVerificationCode = async () => {
+      setLoadingReset(true)
+      try {
+        const response = await authService.verifyCode(resetEmail, code)
+        if (response.ok) {
+          console.log(response.data)
+          const { message } = response.data
+          toast.success(message)
+          setMode("forgot:reset")
+          setResetCode(code)
+        } else {
+          toast.error(response.problem.message as string, response.problem.message)
+        }
+      } catch (e) {
+        console.warn("Error  verifying code", e)
+      } finally {
+        setLoadingReset(false)
+      }
+    }
+    return (
+      <>
+        <StaggerItem index={2}>
+          <Text preset="description" style={themed($description)}>
+            We have sent the code to your email <Text style={themed($legalLink)}>{resetEmail}</Text>
+            Please enter the code below.
+          </Text>
+        </StaggerItem>
 
-          <StaggerItem index={5}>
-            <View style={{ alignItems: "center", marginTop: 8 }}>
-              <Text style={themed($description)}>
-                Didn’t get the code?{" "}
-                <Text style={themed($legalLink)} onPress={onResend} accessibilityRole="button">
-                  {waiting > 0 ? `Resend in ${waiting}s` : "Resend code"}
-                </Text>
+        <StaggerItem index={3}>
+          <View style={$phoneInputContainer}>
+            <OtpInput
+              numberOfDigits={6}
+              onTextChange={(text) => setCode(text)}
+              textInputProps={{
+                accessibilityLabel: "One-Time Password",
+                style: {
+                  color: colors.text,
+                },
+              }}
+              theme={{ pinCodeTextStyle: themed($pinCodeTextStyle) }}
+              onFilled={(text) => onVerify(text)}
+            />
+          </View>
+        </StaggerItem>
+
+        <StaggerItem index={4}>
+          <Pressable
+            style={themed($cta)}
+            onPress={() => {
+              onVerifyVerificationCode()
+              setResetCode(code)
+            }}
+          >
+            <Text style={themed($ctaText)}>Verify code</Text>
+          </Pressable>
+        </StaggerItem>
+
+        <StaggerItem index={5}>
+          <View style={{ alignItems: "center", marginTop: 8 }}>
+            <Text style={themed($description)}>
+              Didn’t get the code?{" "}
+              <Text style={themed($legalLink)} onPress={resend} accessibilityRole="button">
+                {waiting > 0 ? `Resend in ${waiting}s` : "Resend code"}
               </Text>
-            </View>
-          </StaggerItem>
+            </Text>
+          </View>
+        </StaggerItem>
 
-          <StaggerItem index={6}>
-            <Pressable onPress={onBack} style={themed($cabtn)}>
-              <Text style={themed($createAccountTxt)}>Back</Text>
-            </Pressable>
-          </StaggerItem>
-        </>
-      )
-    },
-  )
+        <StaggerItem index={6}>
+          <Pressable onPress={onBack} style={themed($cabtn)}>
+            <Text style={themed($createAccountTxt)}>Back</Text>
+          </Pressable>
+        </StaggerItem>
+      </>
+    )
+  })
   ForgotCodeContent.displayName = "ForgotCodeContent"
+  const RULES = [
+    { id: "len8", label: "Minimum 8 characters", test: (s: string) => s.length >= 8 },
+    { id: "upper", label: "1 uppercase letter", test: (s: string) => /[A-Z]/.test(s) },
+    { id: "num", label: "At least 1 number", test: (s: string) => /\d/.test(s) },
+    {
+      id: "spec",
+      label: "At least 1 special character",
+      test: (s: string) => /[^A-Za-z0-9]/.test(s),
+    },
+  ] as const
 
   const ForgotResetContent = memo(({ themed, onBack, onSubmit }: any) => {
-    const [resetpassword, setResetPassword] = useState("")
-    const [confirmResetpassword, setConfirmResetPassword] = useState("")
+    const [resetPassword, setResetPassword] = useState("")
+    const [confirmResetPassword, setConfirmResetPassword] = useState("")
+    const [touched, setTouched] = useState(false)
+    const [showPlainPassword, setShowPlainPassword] = useState(false)
+
+    const ruleResults = useMemo(
+      () => RULES.map((r) => [r.id, r.test(resetPassword)] as const),
+      [resetPassword],
+    )
+    const allRulesMet = useMemo(() => ruleResults.every(([, ok]) => ok), [ruleResults])
+
+    const passwordMismatch =
+      touched && confirmResetPassword.length > 0 && resetPassword !== confirmResetPassword
+
+    const canSubmit =
+      resetPassword.length > 0 &&
+      confirmResetPassword.length > 0 &&
+      allRulesMet &&
+      !passwordMismatch
+
+    const updatePassword = async () => {
+      // setLoadingReset(true)
+      try {
+        const response = await authService.updatePassword(resetPassword, resetCode)
+        if (response.ok) {
+          const { message } = response.data
+          toast.success(message)
+          setMode("forgot:done")
+        } else {
+          toast.error(response.problem.message as string, response.problem.message)
+        }
+      } catch (e) {
+        console.warn("Error  verifying code", e)
+      } finally {
+        // setLoadingReset(false)
+      }
+    }
+
     return (
       <>
         <StaggerItem index={2}>
           <TextField
             LeftAccessory={LeftAccessoryKeyIcon}
             label="New Password"
-            value={resetpassword}
-            onChangeText={setResetPassword}
-            secureTextEntry={showPlainPassword}
+            value={resetPassword}
+            onChangeText={(txt) => {
+              setResetPassword(txt)
+              if (!touched) setTouched(true)
+            }}
+            secureTextEntry={!showPlainPassword}
             placeholder="Enter your new password"
             placeholderTextColor={colors.tintInactive}
             RightAccessory={(props) => (
@@ -943,7 +1029,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
               />
             )}
           />
-          {/* <PasswordMeter password={newPass} /> */}
+          <PasswordMeter password={resetPassword} />
         </StaggerItem>
 
         <StaggerItem index={3}>
@@ -951,11 +1037,16 @@ export const AuthSheet = (props: AuthSheetProps) => {
             <TextField
               LeftAccessory={LeftAccessoryKeyIcon}
               label="Confirm Password"
-              value={confirmResetpassword}
-              onChangeText={setConfirmResetPassword}
-              secureTextEntry={showPlainPassword}
+              value={confirmResetPassword}
+              onChangeText={(txt) => {
+                setConfirmResetPassword(txt)
+                if (!touched) setTouched(true)
+              }}
+              secureTextEntry={!showPlainPassword}
               placeholder="Re-enter your new password"
               placeholderTextColor={colors.tintInactive}
+              status={passwordMismatch ? "error" : undefined}
+              helper={passwordMismatch ? "Passwords do not match" : undefined}
               RightAccessory={(props) => (
                 <PressableIcon
                   icon={showPlainPassword ? "eye" : "hide"}
@@ -970,7 +1061,14 @@ export const AuthSheet = (props: AuthSheetProps) => {
         </StaggerItem>
 
         <StaggerItem index={4}>
-          <Pressable style={themed($cta)} onPress={onSubmit}>
+          <Pressable
+            style={[themed($cta), !canSubmit && themed($ctaDisabled)]}
+            disabled={!canSubmit}
+            onPress={() => {
+              if (!canSubmit) return
+              updatePassword()
+            }}
+          >
             <Text style={themed($ctaText)}>Reset Password</Text>
           </Pressable>
         </StaggerItem>
@@ -983,6 +1081,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
       </>
     )
   })
+
   ForgotResetContent.displayName = "ForgotResetContent"
 
   const ForgotDoneContent = memo(({ themed, onSignIn }: any) => (
@@ -1012,109 +1111,116 @@ export const AuthSheet = (props: AuthSheetProps) => {
   ForgotDoneContent.displayName = "ForgotDoneContent"
 
   return (
-    <AppBottomSheet controllerRef={sheetRef} snapPoints={["90%"]}>
-      <AnimatedContainer style={$styles}>
-        <StaggerItem index={0}>
-          <View style={{ alignItems: "center", marginBottom: 8 }}>
-            {/* Back button only when header.onBack exists */}
-            {!!header.onBack && (
-              <Pressable
-                onPress={header.onBack}
-                style={{ position: "absolute", left: 0, padding: 8 }}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel="Go back"
-              >
-                <Icon icon="arrowLeft" size={24} color={colors.tintInactive} />
-              </Pressable>
+    <AppBottomSheet
+      controllerRef={sheetRef}
+      snapPoints={["90%"]}
+      onChange={(index) => {
+        if (index === -1) onCanceled()
+      }}
+    >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <AnimatedContainer style={$styles}>
+          <StaggerItem index={0}>
+            <View style={{ alignItems: "center", marginBottom: 8 }}>
+              {/* Back button only when header.onBack exists */}
+              {!!header.onBack && (
+                <Pressable
+                  onPress={header.onBack}
+                  style={{ position: "absolute", left: 0, padding: 8 }}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Go back"
+                >
+                  <Icon icon="arrowLeft" size={24} color={colors.tintInactive} />
+                </Pressable>
+              )}
+
+              <Text preset="contentTitle" style={themed($title)}>
+                {header.title}
+              </Text>
+
+              {/* {!!header.subtitle && <Text style={themed($subtitle)}>{header.subtitle}</Text>} */}
+            </View>
+          </StaggerItem>
+          <Animated.View
+            key={mode}
+            entering={
+              mode.startsWith("forgot")
+                ? FadeInRight.duration(260)
+                : mode === "signin"
+                  ? FadeInLeft.duration(260)
+                  : FadeInRight.duration(260)
+            }
+            exiting={
+              mode.startsWith("forgot")
+                ? FadeOutLeft.duration(220)
+                : mode === "signin"
+                  ? FadeOutRight.duration(220)
+                  : FadeOutLeft.duration(220)
+            }
+          >
+            {mode === "signin" ? (
+              <SignInContent
+                showApple={showApple}
+                googleRequest={googleRequest}
+                googlePromptAsync={() => googlePromptAsync()}
+                loading={loading}
+                identifier={identifier}
+                setIdentifier={setIdentifier}
+                password={password}
+                setPassword={setPassword}
+                onAppleLogin={onAppleLogin}
+                onEmailLogin={onEmailLogin}
+                switchToSignUp={() => setMode("signup")}
+                switchToForgotPassword={() => setMode("forgot:email")}
+                themed={themed}
+              />
+            ) : mode === "signup" && createAccountMode === "socials" ? (
+              <SignUpContent
+                showApple={showApple}
+                googleRequest={googleRequest}
+                googlePromptAsync={() => googlePromptAsync()}
+                loading={loading}
+                onAppleLogin={onAppleLogin}
+                switchToSignIn={() => setMode("signin")}
+                themed={themed}
+                switchToSignUpWithEmail={switchToSignUpWithEmail}
+              />
+            ) : mode === "signup" && createAccountMode === "email-password" ? (
+              <CreateEmailPasswordAccount onSignUp={onEmailSignUp} loading={loading === "signup"} />
+            ) : mode === "forgot:email" ? (
+              <ForgotEmailContent
+                themed={themed}
+                onCancel={() => setMode("signin")}
+                onNext={(email: string) => setMode("forgot:code")}
+              />
+            ) : mode === "forgot:code" ? (
+              <ForgotCodeContent
+                themed={themed}
+                waiting={resendIn}
+                onBack={() => setMode("forgot:email")}
+                onVerify={(code) => {
+                  // setResetCode(code)
+                }}
+              />
+            ) : mode === "forgot:reset" ? (
+              <ForgotResetContent
+                themed={themed}
+                onBack={() => setMode("forgot:code")}
+                onSubmit={() => setMode("forgot:done")}
+              />
+            ) : (
+              <ForgotDoneContent
+                themed={themed}
+                onSignIn={() => {
+                  // clear transient state & go back
+                  setMode("signin")
+                }}
+              />
             )}
-
-            <Text preset="contentTitle" style={themed($title)}>
-              {header.title}
-            </Text>
-
-            {/* {!!header.subtitle && <Text style={themed($subtitle)}>{header.subtitle}</Text>} */}
-          </View>
-        </StaggerItem>
-        <Animated.View
-          key={mode}
-          entering={
-            mode.startsWith("forgot")
-              ? FadeInRight.duration(260)
-              : mode === "signin"
-                ? FadeInLeft.duration(260)
-                : FadeInRight.duration(260)
-          }
-          exiting={
-            mode.startsWith("forgot")
-              ? FadeOutLeft.duration(220)
-              : mode === "signin"
-                ? FadeOutRight.duration(220)
-                : FadeOutLeft.duration(220)
-          }
-        >
-          {mode === "signin" ? (
-            <SignInContent
-              showApple={showApple}
-              googleRequest={googleRequest}
-              googlePromptAsync={() => googlePromptAsync()}
-              loading={loading}
-              identifier={identifier}
-              setIdentifier={setIdentifier}
-              password={password}
-              setPassword={setPassword}
-              onAppleLogin={onAppleLogin}
-              onEmailLogin={onEmailLogin}
-              switchToSignUp={() => setMode("signup")}
-              switchToForgotPassword={() => setMode("forgot:email")}
-              themed={themed}
-            />
-          ) : mode === "signup" && createAccountMode === "socials" ? (
-            <SignUpContent
-              showApple={showApple}
-              googleRequest={googleRequest}
-              googlePromptAsync={() => googlePromptAsync()}
-              loading={loading}
-              onAppleLogin={onAppleLogin}
-              switchToSignIn={() => setMode("signin")}
-              themed={themed}
-              switchToSignUpWithEmail={switchToSignUpWithEmail}
-            />
-          ) : mode === "signup" && createAccountMode === "email-password" ? (
-            <CreateEmailPasswordAccount onSignUp={onEmailSignUp} loading={loading === "signup"} />
-          ) : mode === "forgot:email" ? (
-            <ForgotEmailContent
-              themed={themed}
-              onCancel={() => setMode("signin")}
-              onNext={(email: string) => setMode("forgot:code")}
-            />
-          ) : mode === "forgot:code" ? (
-            <ForgotCodeContent
-              themed={themed}
-              waiting={resendIn}
-              onBack={() => setMode("forgot:email")}
-              onVerify={() => {}}
-              onResend={() => setMode("forgot:reset")}
-            />
-          ) : mode === "forgot:reset" ? (
-            <ForgotResetContent
-              themed={themed}
-              onBack={() => setMode("forgot:code")}
-              onSubmit={() => setMode("forgot:done")}
-            />
-          ) : (
-            <ForgotDoneContent
-              themed={themed}
-              onSignIn={() => {
-                // clear transient state & go back
-                setNewPass("")
-                setConfirmPass("")
-                setMode("signin")
-              }}
-            />
-          )}
-        </Animated.View>
-      </AnimatedContainer>
+          </Animated.View>
+        </AnimatedContainer>
+      </KeyboardAvoidingView>
     </AppBottomSheet>
   )
 }
