@@ -1,9 +1,9 @@
-import React, { useMemo, useRef, useEffect } from "react"
-import { View, StyleSheet, type ViewStyle, type TextStyle } from "react-native"
+import { useMemo, useRef, useEffect } from "react"
+import { type ViewStyle } from "react-native"
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet"
+
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 export type BottomSheetController = {
   open: () => void
