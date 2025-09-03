@@ -1,5 +1,5 @@
-import { useMemo, useRef, useEffect } from "react"
-import { type ViewStyle } from "react-native"
+import { useMemo, useRef, useEffect, useCallback } from "react"
+import { Keyboard, type ViewStyle } from "react-native"
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet"
 
 import { useAppTheme } from "@/theme/context"
@@ -78,6 +78,14 @@ export const AppBottomSheet = (props: AppBottomSheetProps) => {
     }
   }, [controllerRef])
 
+  const handleChange = useCallback(
+    (index: number) => {
+      if (index <= 0) Keyboard.dismiss()
+      onChange?.(index)
+    },
+    [onChange],
+  )
+
   return (
     <BottomSheet
       ref={bottomSheetRef}
@@ -85,9 +93,14 @@ export const AppBottomSheet = (props: AppBottomSheetProps) => {
       snapPoints={memoSnapPoints}
       enablePanDownToClose={enablePanDownToClose}
       backdropComponent={(bsProps) => (
-        <BottomSheetBackdrop {...bsProps} disappearsOnIndex={-1} appearsOnIndex={0} />
+        <BottomSheetBackdrop
+          {...bsProps}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          pressBehavior="close"
+        />
       )}
-      onChange={onChange}
+      onChange={handleChange}
       handleIndicatorStyle={themed($handleIndicator)}
       backgroundStyle={themed($background)}
     >
