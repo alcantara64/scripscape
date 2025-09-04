@@ -1,3 +1,5 @@
+import { IScript } from "./script"
+
 // Adjust fields if your backend returns more/less
 export type Provider = "local" | "google" | "facebook" | "github" | "apple"
 
@@ -30,5 +32,10 @@ export interface CreateAccountResponse {
 
 export interface MeResponse {
   user: User
+  stats: { followers: number; following: number; scripts: number }
+  scripts: {
+    items: Array<IScript>
+    nextCursor: any | null
+  }
 }
 export type SignUpResponse = AuthResponse & { message: string }

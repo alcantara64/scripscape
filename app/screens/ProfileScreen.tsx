@@ -22,15 +22,17 @@ import { ProfileCard } from "@/components/ProfileCard"
 import ReadMoreText from "@/components/ReadMore"
 import { Screen } from "@/components/Screen"
 import { ScriptList } from "@/components/ScriptList"
+import { ProfileScreenSkeleton } from "@/components/skeleton/screens/ProfileScreenSkeleton"
 import { Text } from "@/components/Text"
 import { mock_scripts } from "@/mockups/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { useUser } from "@/querries/user"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
 import { followers } from "@/utils/mock"
-import { ProfileScreenSkeleton } from "@/components/skeleton/screens/ProfileScreenSkeleton"
+import { formatNumber } from "@/utils/formatDate"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -53,6 +55,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
   // Pull in navigation via hook
   const navigation = useNavigation()
   const { themed } = useAppTheme()
+  const { isLoading, data } = useUser()
 
   const avatarPickerRef = useRef<{
     pickImage: () => Promise<void>
@@ -63,14 +66,16 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
 
   const [currentTab, setCurrentTab] = useState<"followers" | "script">("script")
   const bgPickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
-  const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(
+    data?.user.cover_photo_url ?? null,
+  )
+  const [profileImage, setProfileImage] = useState<string | null>(
+    data?.user.profile_picture_url ?? null,
+  )
   const sheet = useRef<BottomSheetController | null>(null)
   const [editorConfig, setEditorConfig] = useState<EditorConfig | null>(null)
-  const [username, setUsername] = useState("W_Matterhorn")
-  const [bio, setBio] = useState(
-    "Watkins is a seasoned scriptwriter known for crafting compelling narratives across film and television. With a sharp ear for dialogue and story structure, he brings ideas to life with emotional depth. Adding more text to test expand",
-  )
+  const [username, setUsername] = useState(data?.user.username)
+  const [bio, setBio] = useState(data?.user.bio || "")
   const [pendingBackground, setPendingBackground] = useState<string | null>(null)
 
   const toggleScriptFollowerTab = (type: "followers" | "script") => {
@@ -83,7 +88,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
       title: "Edit Username",
       label: "Username",
       icon: "person",
-      initialValue: username,
+      initialValue: data?.user.username ?? "",
       maxLength: 15,
       validate: (v) => {
         if (v.trim().length < 6) return "Username must be at least 6 characters"
@@ -126,7 +131,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
   const handleBgImageSelected = (uri: string) => {
     setPendingBackground(uri)
   }
-  if (false) {
+  if (isLoading) {
     return <ProfileScreenSkeleton />
   }
 
@@ -209,14 +214,18 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
               <Icon icon="person" size={15} />
               <Text text="Followers" weight="normal" size="xxs" />
             </View>
-            <Text text="456K" preset="titleHeading" />
+            <Text text={formatNumber(data?.stats.followers ?? 0)} preset="titleHeading" />
           </View>
           <View>
             <View style={$iconsDescriptionContainer}>
               <Icon icon="script" size={15} />
               <Text text="Script" weight="normal" size="xxs" />
             </View>
-            <Text preset="titleHeading" text="56" />
+            <Text
+              preset="titleHeading"
+              text={formatNumber(data?.stats.scripts ?? 0)}
+              numberOfLines={1}
+            />
           </View>
         </View>
         <View>

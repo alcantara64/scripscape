@@ -56,7 +56,14 @@ export const ProfileCard = (props: ProfileCardProps) => {
           <Image source={picture} style={themed($avatar)} />
         </Pressable>
         <View>
-          <Text text={name} style={themed($name)} preset="default" weight="semiBold" size="xl" />
+          <Text
+            text={name}
+            style={themed($name)}
+            preset="default"
+            weight="semiBold"
+            size="xl"
+            numberOfLines={1}
+          />
           {email && <Text style={$email}>{email}</Text>}
           {isPro && <ProBadge />}
         </View>

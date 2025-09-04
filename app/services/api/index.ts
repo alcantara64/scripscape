@@ -46,6 +46,11 @@ export class Api {
         Accept: "application/json",
       },
     })
+
+    this.apisauce.addRequestTransform(async (request) => {
+      const { accessToken, tokenType } = await readTokens()
+      this.apisauce.headers.Authorization = `${tokenType} ${accessToken}`
+    })
   }
 
   private normalize<T>(res: ApiResponse<T>): ApiResult<T> {
