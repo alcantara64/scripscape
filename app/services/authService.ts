@@ -1,4 +1,4 @@
-import type { AuthResponse, CreateAccountResponse, MeResponse } from "@/interface/auth"
+import type { AuthResponse, MeResponse, SignUpResponse } from "@/interface/auth"
 
 import { Api } from "./api"
 import { ApiResult } from "./api/types"
@@ -10,12 +10,12 @@ export class AuthService {
     return this.httpClient.post<AuthResponse>("/users/login", { identifier, password })
   }
 
-  loginWithGoogle(id_token: string): Promise<ApiResult<AuthResponse>> {
-    return this.httpClient.post<AuthResponse>("/auth/google", { id_token })
+  loginWithGoogle(id_token: string, isSignUp?: boolean): Promise<ApiResult<AuthResponse>> {
+    return this.httpClient.post<AuthResponse>("/auth/google", { id_token, isSignUp })
   }
 
-  loginWithApple(id_token: string): Promise<ApiResult<AuthResponse>> {
-    return this.httpClient.post<AuthResponse>("/auth/apple", { id_token })
+  loginWithApple(id_token: string, isSignUp?: boolean): Promise<ApiResult<AuthResponse>> {
+    return this.httpClient.post<AuthResponse>("/auth/apple", { id_token, isSignUp })
   }
   forgotPassword(email: string): Promise<ApiResult<{ message: string }>> {
     return this.httpClient.post<{ message: string }>("/auth/forgot", { email })
@@ -37,8 +37,8 @@ export class AuthService {
     username: string
     email: string
     password: string
-  }): Promise<ApiResult<CreateAccountResponse>> {
-    return this.httpClient.post<CreateAccountResponse>("/users", payload)
+  }): Promise<ApiResult<SignUpResponse>> {
+    return this.httpClient.post<SignUpResponse>("/users", payload)
   }
 
   me(): Promise<ApiResult<MeResponse>> {

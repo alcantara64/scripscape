@@ -41,7 +41,7 @@ export const DrawerNavigation = (props) => {
     theme: { colors },
   } = useAppTheme()
 
-  const { isAuthenticated, logout, authEmail, username, requireAuth } = useAuth()
+  const { isAuthenticated, logout, authEmail, username, isPro, requireAuth } = useAuth()
 
   const NAV_ITEMS: Array<NavBarListItem> = [
     {
@@ -83,12 +83,6 @@ export const DrawerNavigation = (props) => {
     closeDrawer: () => setOpen(false),
   }))
 
-  const openAuthScreen = async () => {
-    console.log("pressed")
-    await requireAuth() // pops the sheet if not logged in
-    // proceed with the protected action...
-  }
-
   return (
     <Drawer
       open={open}
@@ -102,7 +96,7 @@ export const DrawerNavigation = (props) => {
           {isAuthenticated && (
             <>
               <ProfileCard
-                isPro
+                isPro={isPro}
                 picture={DEFAULT_PROFILE_IMAGE}
                 name={username || ""}
                 email={authEmail}

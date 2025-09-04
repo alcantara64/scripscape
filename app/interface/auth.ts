@@ -31,3 +31,4 @@ export interface CreateAccountResponse {
 export interface MeResponse {
   user: User
 }
+export type SignUpResponse = AuthResponse & { message: string }

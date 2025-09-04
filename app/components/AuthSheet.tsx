@@ -10,6 +10,8 @@ import {
   Linking,
   ActivityIndicator,
   KeyboardAvoidingView,
+  TextInput,
+  Keyboard,
 } from "react-native"
 import * as Apple from "expo-apple-authentication"
 import * as Application from "expo-application"
@@ -56,7 +58,6 @@ export interface AuthSheetProps {
   showApple?: boolean
   /** Google OAuth client id (RN/Expo mobile client id) */
   googleClientId: string
-  setAuthToken: (token: Omit<AuthResponse, "users">) => void
 }
 
 type Mode = "signin" | "signup" | "forgot:email" | "forgot:code" | "forgot:reset" | "forgot:done"
@@ -480,7 +481,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
         if (!id_token) return
         setLoading("google")
         try {
-          const response = await authService.loginWithGoogle(id_token)
+          const response = await authService.loginWithGoogle(id_token, mode === "signup")
 
           if (response.ok) {
             const { user, accessToken, refreshToken, tokenType, expiresIn } = response.data
@@ -565,7 +566,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
         ],
       })
       if (!cred.identityToken) throw new Error("No identityToken from Apple")
-      const response = await authService.loginWithApple(cred.identityToken)
+      const response = await authService.loginWithApple(cred.identityToken, mode === "signup")
       if (response.ok) {
         const { user, accessToken, refreshToken, tokenType, expiresIn } = response.data
         await persistTokens({
@@ -652,7 +653,10 @@ export const AuthSheet = (props: AuthSheetProps) => {
     const [username, setUsername] = useState("")
     const [email, setEmail] = useState("")
     const [showPassword, setShowPassword] = useState(true)
-
+    const firstRef = useRef<TextInput>(null)
+    const secondRef = useRef<TextInput>(null)
+    const thirdRef = useRef<TextInput>(null)
+    const [loadingCreateAccount, setLoadingCreateAccount] = useState(false)
     // track which fields user touched
     const [touched, setTouched] = useState<{
       username?: boolean
@@ -669,6 +673,33 @@ export const AuthSheet = (props: AuthSheetProps) => {
     const usernameError = useMemo(() => validateUsername(username), [username])
     const emailError = useMemo(() => validateEmail(email), [email])
     const passwordError = useMemo(() => validatePassword(signupPassword), [signupPassword])
+
+    const emailSignUp = async (payload: { username: string; password: string; email: string }) => {
+      setLoadingCreateAccount(true)
+      Keyboard.dismiss()
+      try {
+        const response = await authService.signUpWithEmailPassword(payload)
+        if (response.ok) {
+          const { user, accessToken, refreshToken, tokenType, expiresIn } = response.data
+          toast.success(response.data.message)
+          await persistTokens({
+            accessToken,
+            refreshToken,
+            tokenType,
+            accessTokenExpires: expiresIn,
+          })
+          onAuthenticated(user)
+
+          onCanceled()
+        } else {
+          toast.error(response.problem.message as string, "Error")
+        }
+      } catch (e) {
+        console.warn("Email login failed", e)
+      } finally {
+        setLoadingCreateAccount(false)
+      }
+    }
 
     // all conditions met = form valid
     const canSubmit = !usernameError && !emailError && !passwordError
@@ -691,12 +722,20 @@ export const AuthSheet = (props: AuthSheetProps) => {
                 setUsername(text)
               }}
               autoCapitalize="none"
+              ref={firstRef}
+              returnKeyType="next"
+              blurOnSubmit={false} // keep keyboard up (esp. iOS)
+              onSubmitEditing={() => secondRef.current?.focus()}
             />
           </View>
         </StaggerItem>
         <StaggerItem index={1}>
           <View style={$inputContainer}>
             <TextField
+              ref={secondRef}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => thirdRef.current?.focus()}
               LeftAccessory={LeftAccessoryMessageIcon}
               label="Email"
               autoCapitalize="none"
@@ -715,6 +754,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
         <StaggerItem index={2}>
           <View style={$inputContainer}>
             <TextField
+              ref={thirdRef}
               LeftAccessory={(props) => (
                 <Icon icon="key" style={props.style} size={24} color={colors.tintInactive} />
               )}
@@ -723,6 +763,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
               placeholder="Enter your password"
               placeholderTextColor={colors.tintInactive}
               onChangeText={setSignupPassword}
+              returnKeyType="done"
               RightAccessory={(props) => (
                 <PressableIcon
                   icon={showPassword ? "eye" : "hide"}
@@ -739,13 +780,17 @@ export const AuthSheet = (props: AuthSheetProps) => {
 
         <StaggerItem index={3}>
           <Pressable
-            disabled={!canSubmit || props.loading}
-            style={[themed($cta), (!canSubmit || !!props.loading) && { opacity: 0.5 }]}
+            disabled={!canSubmit || loadingCreateAccount}
+            style={[themed($cta), (!canSubmit || loadingCreateAccount) && { opacity: 0.5 }]}
             onPress={() => {
-              props.onSignUp({ email, password: signupPassword, username })
+              emailSignUp({
+                email: email.toLowerCase(),
+                password: signupPassword,
+                username: username.toLowerCase(),
+              })
             }}
           >
-            {props.loading ? (
+            {loadingCreateAccount ? (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <ActivityIndicator />
                 <Text style={themed($ctaText)}>Creating…</Text>
@@ -1109,7 +1154,7 @@ export const AuthSheet = (props: AuthSheetProps) => {
     </>
   ))
   ForgotDoneContent.displayName = "ForgotDoneContent"
-
+  console.log({ mode })
   return (
     <AppBottomSheet
       controllerRef={sheetRef}

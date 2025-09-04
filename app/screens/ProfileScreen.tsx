@@ -30,6 +30,7 @@ import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
 import { followers } from "@/utils/mock"
+import { ProfileScreenSkeleton } from "@/components/skeleton/screens/ProfileScreenSkeleton"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -124,6 +125,9 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
 
   const handleBgImageSelected = (uri: string) => {
     setPendingBackground(uri)
+  }
+  if (false) {
+    return <ProfileScreenSkeleton />
   }
 
   return (

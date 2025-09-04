@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react"
-import { useMMKVString } from "react-native-mmkv"
+import { useMMKVString, useMMKVBoolean } from "react-native-mmkv"
 
 import { AuthSheet } from "@/components/AuthSheet" // <- your AuthSheet component
 // If you already have this type elsewhere, import it instead:
@@ -25,6 +25,7 @@ export type AuthContextType = {
   logout: () => void
   validationError: string
   currentUser?: User
+  isPro?: boolean
 
   // ---- extras (non-breaking) ----
   requireAuth: () => Promise<void>
@@ -62,6 +63,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
   const [authToken, setAuthToken] = useMMKVString("AuthProvider.authToken")
   const [authEmail, setAuthEmail] = useMMKVString("AuthProvider.authEmail")
   const [username, setUsername] = useMMKVString("AuthProvider.username")
+  const [isPro, setIsPro] = useMMKVBoolean("AuthProvider.isPro")
   const [authRefreshToken, setAuthRefreshToken] = useMMKVString("AuthProvider.authRefreshToken")
   const [authTokenType, setAuthTokenType] = useMMKVString("AuthProvider.authTokenType")
 
@@ -105,6 +107,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
       const accessToken = tokens?.accessToken ?? saved.accessToken ?? undefined
       const refreshToken = tokens?.refreshToken ?? saved.refreshToken ?? undefined
       const tokenType = tokens?.tokenType ?? saved.tokenType ?? "Bearer"
+      setIsPro(_user.is_pro)
       // The AuthSheet helpers store tokens in SecureStore; mirror into MMKV for your app state
       if (accessToken) setAuthToken(accessToken)
       if (refreshToken) setAuthRefreshToken?.(refreshToken) // if you track it in state
@@ -159,6 +162,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
     closeAuthSheet,
     username,
     // currentUser,
+    isPro,
   }
 
   return (
