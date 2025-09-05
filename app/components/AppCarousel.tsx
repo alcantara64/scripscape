@@ -30,7 +30,7 @@ export const AppCarousel = <T,>(props: CarouselProps<T>) => {
       height={height}
       onSnapToItem={onScroll}
       autoPlay
-      autoPlayInterval={3000}
+      autoPlayInterval={6000}
       scrollAnimationDuration={1000}
     />
   )
