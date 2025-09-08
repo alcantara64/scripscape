@@ -5,10 +5,10 @@ import {
   TextStyle,
   View,
   ViewStyle,
-  Image,
   ImageSourcePropType,
   Pressable,
 } from "react-native"
+import { Image } from "expo-image"
 
 import { Text } from "@/components/Text"
 import { colors } from "@/theme/colors"
@@ -28,6 +28,7 @@ export interface ProfileCardProps {
   isPro?: boolean
   picture: ImageSourcePropType | undefined
   showUpdateButton?: boolean
+  blurHash?: string
   onUpload?: () => void
 }
 
@@ -35,7 +36,7 @@ export interface ProfileCardProps {
  * Describe your component here
  */
 export const ProfileCard = (props: ProfileCardProps) => {
-  const { style, name, email, isPro, picture, showUpdateButton, onUpload } = props
+  const { style, name, email, isPro, picture, showUpdateButton, onUpload, blurHash } = props
   const $styles = [$container, style]
   const { themed } = useAppTheme()
 
@@ -53,9 +54,9 @@ export const ProfileCard = (props: ProfileCardProps) => {
               containerStyle={themed($uploadButtonContainer)}
             />
           )}
-          <Image source={picture} style={themed($avatar)} />
+          <Image placeholder={{ blurhash: blurHash }} source={picture} style={themed($avatar)} />
         </Pressable>
-        <View>
+        <View style={{ alignSelf: "flex-start", marginTop: 12 }}>
           <Text
             text={name}
             style={themed($name)}

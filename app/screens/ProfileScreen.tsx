@@ -1,14 +1,13 @@
 import { FC, useRef, useState } from "react"
 import {
-  ImageBackground,
   ImageStyle,
-  Pressable,
   SafeAreaView,
   TextStyle,
   TouchableOpacity,
   View,
   ViewStyle,
 } from "react-native"
+import { ImageBackground } from "expo-image"
 import { useNavigation } from "@react-navigation/native"
 
 import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
@@ -26,13 +25,14 @@ import { ProfileScreenSkeleton } from "@/components/skeleton/screens/ProfileScre
 import { Text } from "@/components/Text"
 import { mock_scripts } from "@/mockups/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
-import { useUser } from "@/querries/user"
+import { useUpdateProfile, useUser } from "@/querries/user"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
-import { followers } from "@/utils/mock"
 import { formatNumber } from "@/utils/formatDate"
+import { followers } from "@/utils/mock"
+import { toast } from "@/utils/toast"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -56,6 +56,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
   const navigation = useNavigation()
   const { themed } = useAppTheme()
   const { isLoading, data } = useUser()
+  const updateProfile = useUpdateProfile()
 
   const avatarPickerRef = useRef<{
     pickImage: () => Promise<void>
@@ -66,21 +67,27 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
 
   const [currentTab, setCurrentTab] = useState<"followers" | "script">("script")
   const bgPickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(
-    data?.user.cover_photo_url ?? null,
-  )
-  const [profileImage, setProfileImage] = useState<string | null>(
-    data?.user.profile_picture_url ?? null,
-  )
+
   const sheet = useRef<BottomSheetController | null>(null)
   const [editorConfig, setEditorConfig] = useState<EditorConfig | null>(null)
-  const [username, setUsername] = useState(data?.user.username)
-  const [bio, setBio] = useState(data?.user.bio || "")
   const [pendingBackground, setPendingBackground] = useState<string | null>(null)
 
   const toggleScriptFollowerTab = (type: "followers" | "script") => {
     setCurrentTab(type)
   }
+
+  const mimeFromUri = (uri: string) => {
+    const ext = uri.split("?")[0].split(".").pop()?.toLowerCase()
+    if (ext === "png") return "image/png"
+    if (ext === "jpg" || ext === "jpeg") return "image/jpeg"
+    if (ext === "webp") return "image/webp"
+    return "application/octet-stream"
+  }
+  const toRNFile = (uri: string, fallbackName: string) => ({
+    uri,
+    name: fallbackName,
+    type: mimeFromUri(uri),
+  })
 
   const openUsernameEditor = () => {
     setEditorConfig({
@@ -106,7 +113,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
       title: "Edit Bio",
       label: "Bio",
       icon: "info",
-      initialValue: bio,
+      initialValue: data?.user.bio ?? "",
       maxLength: 300,
       multiline: true,
       validate: (v) => (v.trim().length === 0 ? "Bio can't be empty" : undefined),
@@ -115,16 +122,70 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
     sheet.current?.open()
   }
 
-  const handleSave = async (value: string) => {
+  const handleSave = (value: string) => {
     if (!editorConfig) return
+
     if (editorConfig.key === "username") {
-      // await api.updateUsername(value)
-      setUsername(value)
+      updateProfile.mutate(
+        { username: value },
+        {
+          onSuccess: () => {
+            setEditorConfig(null)
+            sheet.current?.close()
+          },
+        },
+      )
     } else if (editorConfig.key === "bio") {
-      // await api.updateBio(value)
-      setBio(value)
+      updateProfile.mutate(
+        { bio: value },
+        {
+          onSuccess: () => {
+            setEditorConfig(null)
+            sheet.current?.close()
+          },
+        },
+      )
     }
   }
+
+  const saveAvatar = () => {
+    if (!pendingAvatar) return
+    updateProfile.mutate(
+      { profilePicture: toRNFile(pendingAvatar, "avatar.jpg") },
+      {
+        onSuccess: () => {
+          setPendingAvatar(null)
+          sheet.current?.close()
+        },
+        onError: (error) => {
+          // optional: toast error
+
+          toast.error(error.message)
+        },
+      },
+    )
+  }
+
+  const saveBackground = () => {
+    if (!pendingBackground) return
+    updateProfile.mutate(
+      { coverPhoto: toRNFile(pendingBackground, "cover.jpg") },
+      {
+        onSuccess: () => {
+          setPendingBackground(null)
+          sheet.current?.close()
+        },
+        onError: (error) => {
+          // optional: toast error
+
+          toast.error(error.message)
+        },
+      },
+    )
+  }
+
+  const user = data?.user
+  const stats = data?.stats
 
   const defaultProfileImage = DEFAULT_PROFILE_IMAGE
 
@@ -151,7 +212,8 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
       />
 
       <ImageBackground
-        source={backgroundImage ? { uri: backgroundImage } : DEFAULT_BACKGROUND_IMAGE}
+        placeholder={{ blurhash: user?.coverPhotoBlurHash }}
+        source={user?.cover_photo_url ? { uri: user.cover_photo_url } : DEFAULT_BACKGROUND_IMAGE}
         style={$coverImage}
       >
         <SafeAreaView style={$backgroundImageContainer}>
@@ -170,7 +232,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
           <TouchableOpacity
             style={themed($uploadButtonContainer)}
             onPress={() => {
-              setPendingBackground(backgroundImage ?? null)
+              setPendingBackground(user?.cover_photo_url ?? DEFAULT_BACKGROUND_IMAGE ?? null)
               setSheetView("background")
               sheet.current?.open()
             }}
@@ -193,12 +255,13 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
       >
         <View style={$profileCardContainer}>
           <ProfileCard
-            picture={profileImage ? { uri: profileImage } : defaultProfileImage}
-            name={username}
+            picture={
+              user?.profile_picture_url ? { uri: user.profile_picture_url } : DEFAULT_PROFILE_IMAGE
+            }
+            name={data?.user?.username ?? ""}
             showUpdateButton
-            isPro={true}
+            isPro={data?.user?.is_pro}
             onUpload={() => {
-              setPendingAvatar(profileImage ?? null)
               setSheetView("avatar")
               sheet.current?.open()
             }}
@@ -214,7 +277,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
               <Icon icon="person" size={15} />
               <Text text="Followers" weight="normal" size="xxs" />
             </View>
-            <Text text={formatNumber(data?.stats.followers ?? 0)} preset="titleHeading" />
+            <Text text={formatNumber(data?.stats?.followers ?? 0)} preset="titleHeading" />
           </View>
           <View>
             <View style={$iconsDescriptionContainer}>
@@ -223,7 +286,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
             </View>
             <Text
               preset="titleHeading"
-              text={formatNumber(data?.stats.scripts ?? 0)}
+              text={formatNumber(data?.stats?.scripts ?? 0)}
               numberOfLines={1}
             />
           </View>
@@ -234,7 +297,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
             textStyle={$profileDescription}
             maxChars={200}
             preset="description"
-            content={bio}
+            content={user?.bio ?? ""}
           />
         </View>
         <TouchableOpacity style={$bioBtn} onPress={openBioEditor}>
@@ -302,28 +365,25 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
             validate={editorConfig.validate}
             inputWrapperStyle={$inputWrapperStyle}
             onSave={handleSave}
-            onClose={() => sheet.current?.close()}
+            saving={updateProfile.isPending}
+            onClose={() => {}}
           />
         ) : sheetView === "avatar" ? (
           <AvatarEditor
-            value={pendingAvatar ?? profileImage}
+            value={pendingAvatar ?? user?.profile_picture_url ?? DEFAULT_PROFILE_IMAGE}
             onUpload={() => avatarPickerRef.current?.pickImage()}
             onTakePhoto={() => avatarPickerRef.current?.takePhoto?.()}
-            onSave={() => {
-              if (pendingAvatar) setProfileImage(pendingAvatar)
-              sheet.current?.close()
-            }}
+            onSave={saveAvatar}
+            saving={updateProfile.isPending}
             onClose={() => sheet.current?.close()}
           />
         ) : sheetView === "background" ? (
           <AvatarEditor
             // reuse the same component for background too
-            value={pendingBackground ?? backgroundImage}
+            value={pendingBackground ?? user?.cover_photo_url ?? DEFAULT_BACKGROUND_IMAGE}
             onUpload={() => bgPickerRef.current?.pickImage()} // uses 16:9 aspect picker
-            onSave={() => {
-              if (pendingBackground) setBackgroundImage(pendingBackground)
-              sheet.current?.close()
-            }}
+            onSave={saveBackground}
+            saving={updateProfile.isPending}
             onClose={() => sheet.current?.close()}
           />
         ) : (

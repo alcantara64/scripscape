@@ -14,12 +14,14 @@ export function AvatarEditor({
   onTakePhoto,
   onSave,
   onClose,
+  saving,
 }: {
   value: string | null
   onUpload: () => void
   onTakePhoto?: () => void
   onSave: () => void
   onClose: () => void
+  saving?: boolean
 }) {
   const { themed } = useAppTheme()
   return (

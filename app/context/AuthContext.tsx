@@ -77,6 +77,8 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
   const logout = useCallback(() => {
     setAuthToken(undefined)
     setAuthEmail("")
+    setUsername("")
+    setIsPro(false)
   }, [setAuthEmail, setAuthToken])
 
   const isAuthenticated = !!authToken

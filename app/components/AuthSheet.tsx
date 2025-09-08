@@ -30,7 +30,7 @@ import Animated, {
 } from "react-native-reanimated"
 
 import { Text } from "@/components/Text"
-import { AuthResponse, User } from "@/interface/auth"
+import { User } from "@/interface/auth"
 import { authService } from "@/services/authService"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
@@ -1154,7 +1154,6 @@ export const AuthSheet = (props: AuthSheetProps) => {
     </>
   ))
   ForgotDoneContent.displayName = "ForgotDoneContent"
-  console.log({ mode })
   return (
     <AppBottomSheet
       controllerRef={sheetRef}

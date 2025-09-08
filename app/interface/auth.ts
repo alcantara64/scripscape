@@ -15,6 +15,8 @@ export interface User {
   isNew?: boolean
   created_at: string
   updated_at: string
+  coverPhotoBlurHash?: string
+  profilePhotoBlurHash?: string
 }
 
 export interface AuthResponse {
@@ -39,3 +41,10 @@ export interface MeResponse {
   }
 }
 export type SignUpResponse = AuthResponse & { message: string }
+
+export type UpdateProfileInput = {
+  username?: string
+  bio?: string
+  profilePicture?: File | { uri: string; name: string; type: string } | null
+  coverPhoto?: File | { uri: string; name: string; type: string } | null
+}

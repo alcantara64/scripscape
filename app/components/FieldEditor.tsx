@@ -21,6 +21,7 @@ type FieldEditorProps = {
   onSave: (value: string) => Promise<void> | void
   onClose?: () => void
   inputWrapperStyle?: ViewStyle
+  saving?: boolean
 }
 
 export function FieldEditor({
@@ -34,11 +35,11 @@ export function FieldEditor({
   onSave,
   onClose,
   inputWrapperStyle,
+  saving = false,
 }: FieldEditorProps) {
   const { themed } = useAppTheme()
   const [value, setValue] = useState(initialValue)
   const [touched, setTouched] = useState(false)
-  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setValue(initialValue)
@@ -66,11 +67,9 @@ export function FieldEditor({
   const handleSave = async () => {
     if (!canSave) return
     try {
-      setSaving(true)
       await onSave(value.trimEnd())
       onClose?.()
     } finally {
-      setSaving(false)
     }
   }
 
