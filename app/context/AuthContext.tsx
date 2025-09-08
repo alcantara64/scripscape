@@ -26,7 +26,9 @@ export type AuthContextType = {
   validationError: string
   currentUser?: User
   isPro?: boolean
-
+  profilePicture?: string
+  profilePictureBlurhash?: string
+  isNew?: boolean
   // ---- extras (non-breaking) ----
   requireAuth: () => Promise<void>
   openAuthSheet: () => void
@@ -63,7 +65,12 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
   const [authToken, setAuthToken] = useMMKVString("AuthProvider.authToken")
   const [authEmail, setAuthEmail] = useMMKVString("AuthProvider.authEmail")
   const [username, setUsername] = useMMKVString("AuthProvider.username")
+  const [profilePicture, setProfilePicture] = useMMKVString("AuthProvider.profilePicture")
+  const [profilePictureBlurhash, setProfilePictureBlurhash] = useMMKVString(
+    "AuthProvider.profilePictureBlurHash",
+  )
   const [isPro, setIsPro] = useMMKVBoolean("AuthProvider.isPro")
+  const [isNew, setIsNew] = useMMKVBoolean("AuthProvider.isNew")
   const [authRefreshToken, setAuthRefreshToken] = useMMKVString("AuthProvider.authRefreshToken")
   const [authTokenType, setAuthTokenType] = useMMKVString("AuthProvider.authTokenType")
 
@@ -79,6 +86,9 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
     setAuthEmail("")
     setUsername("")
     setIsPro(false)
+    setProfilePicture("")
+    setProfilePictureBlurhash("")
+    setIsNew(false)
   }, [setAuthEmail, setAuthToken])
 
   const isAuthenticated = !!authToken
@@ -116,6 +126,12 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
       setAuthTokenType?.(tokenType)
 
       if (_user.username) setUsername(_user.username)
+      setIsNew(_user.isNew)
+      if (_user.profile_picture_url) {
+        console.log(_user)
+        setProfilePicture(_user.profile_picture_url)
+        setProfilePictureBlurhash(_user.profile_picture_blurhash)
+      }
 
       // Try to hydrate email if we didn't get it from the sheet
       if (!_user.email) {
@@ -164,7 +180,10 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({
     closeAuthSheet,
     username,
     // currentUser,
+    profilePictureBlurhash,
+    profilePicture,
     isPro,
+    isNew,
   }
 
   return (

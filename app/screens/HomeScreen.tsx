@@ -4,7 +4,7 @@ import { useNavigation } from "@react-navigation/native"
 
 import { AnnouncementBox } from "@/components/AnnouncementBox"
 import { AppCarousel } from "@/components/AppCarousel"
-import { AutoImage } from "@/components/AutoImage"
+import { Image } from "expo-image"
 import { EmptyStateIllustration } from "@/components/EmptyStateCard"
 import { Icon, PressableIcon } from "@/components/Icon"
 import { ListView } from "@/components/ListView"
@@ -40,7 +40,8 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
   const Separator = () => <View style={$separator} />
 
   const { themed } = useAppTheme()
-  const { username } = useAuth()
+  const { username, profilePicture, profilePictureBlurhash } = useAuth()
+  console.log(profilePicture)
   if (isLoading) return <HomeScreenSkeleton />
   return (
     <Screen
@@ -68,10 +69,10 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
             />
 
             <TouchableOpacity onPress={openDraw}>
-              <AutoImage
+              <Image
                 style={themed($profileSectionImage)}
-                source={DEFAULT_PROFILE_IMAGE}
-                maxWidth={36}
+                placeholder={{ blurhash: profilePictureBlurhash }}
+                source={profilePicture ? { uri: profilePicture } : DEFAULT_PROFILE_IMAGE}
               />
             </TouchableOpacity>
           </View>

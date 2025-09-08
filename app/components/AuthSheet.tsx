@@ -450,7 +450,6 @@ export const AuthSheet = (props: AuthSheetProps) => {
   const [loading, setLoading] = useState<null | "google" | "apple" | "email" | "signup" | "forgot">(
     null,
   )
-  const [showPlainPassword, setShowPlainPassword] = useState(false)
 
   // Forgot password state
   const [resetEmail, setResetEmail] = useState("")
@@ -1159,7 +1158,11 @@ export const AuthSheet = (props: AuthSheetProps) => {
       controllerRef={sheetRef}
       snapPoints={["90%"]}
       onChange={(index) => {
-        if (index === -1) onCanceled()
+        if (index === -1) {
+          onCanceled()
+          setIdentifier("")
+          setPassword("")
+        }
       }}
     >
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>

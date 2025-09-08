@@ -41,7 +41,16 @@ export const DrawerNavigation = (props) => {
     theme: { colors },
   } = useAppTheme()
 
-  const { isAuthenticated, logout, authEmail, username, isPro, requireAuth } = useAuth()
+  const {
+    isAuthenticated,
+    logout,
+    authEmail,
+    username,
+    isPro,
+    requireAuth,
+    profilePicture,
+    profilePictureBlurhash,
+  } = useAuth()
 
   const NAV_ITEMS: Array<NavBarListItem> = [
     {
@@ -97,7 +106,8 @@ export const DrawerNavigation = (props) => {
             <>
               <ProfileCard
                 isPro={isPro}
-                picture={DEFAULT_PROFILE_IMAGE}
+                picture={profilePicture ? { uri: profilePicture } : DEFAULT_PROFILE_IMAGE}
+                blurHash={profilePictureBlurhash}
                 name={username || ""}
                 email={authEmail}
               />

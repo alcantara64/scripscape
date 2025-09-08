@@ -1,5 +1,5 @@
 import { FC } from "react"
-import { Pressable, View, ViewStyle } from "react-native"
+import { Pressable, TextStyle, View, ViewStyle } from "react-native"
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
@@ -22,8 +22,8 @@ export const AddScriptScreen: FC<AddScriptScreenProps> = () => {
         <Text preset="bold" style={themed($title)}>
           Upload Cover Image
         </Text>
-        <Pressable style={styles.browseBtn} onPress={onUpload}>
-          <Text style={styles.browseText}>Browse Images</Text>
+        <Pressable style={$browseBtn} onPress={() => {}}>
+          <Text style={$browseText}>Browse Images</Text>
         </Pressable>
       </Pressable>
     </Screen>
@@ -46,4 +46,15 @@ const $upload: ViewStyle = {
   justifyContent: "center",
   padding: 20,
   marginVertical: 12,
+}
+const $browseBtn: ViewStyle = {
+  marginTop: 8,
+  backgroundColor: "#3A57E8",
+  paddingHorizontal: 14,
+  paddingVertical: 6,
+  borderRadius: 8,
+}
+const $browseText: TextStyle = {
+  color: "#fff",
+  fontSize: 14,
 }

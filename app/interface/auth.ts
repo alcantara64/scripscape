@@ -16,7 +16,7 @@ export interface User {
   created_at: string
   updated_at: string
   coverPhotoBlurHash?: string
-  profilePhotoBlurHash?: string
+  profile_picture_blurhash?: string
 }
 
 export interface AuthResponse {
