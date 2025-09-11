@@ -151,7 +151,7 @@ function useAutoPreset(props: AutoScreenProps): {
    * @param {number} w - The width of the content.
    * @param {number} h - The height of the content.
    */
-  function onContentSizeChange(w: number, h: number) {
+  function onContentSizeChange(h: number) {
     // update scroll-view content height
     scrollViewContentHeight.current = h
     updateScrollState()
@@ -248,12 +248,8 @@ function ScreenWithScrolling(props: ScreenProps) {
  * @returns {JSX.Element} The rendered `Screen` component.
  */
 export function Screen(props: ScreenProps) {
+  const { themeContext } = useAppTheme()
   const {
-    theme: { colors },
-    themeContext,
-  } = useAppTheme()
-  const {
-    backgroundColor,
     KeyboardAvoidingViewProps,
     keyboardOffset = 0,
     safeAreaEdges,

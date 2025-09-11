@@ -3,7 +3,7 @@ import { Alert } from "react-native"
 import * as ImagePicker from "expo-image-picker"
 
 export interface ImagePickerWithCroppingProps {
-  onImageSelected: (uri: string) => void
+  onImageSelected: (uri: string, mimeType?: string) => void
   aspect?: number[]
 }
 
@@ -30,7 +30,7 @@ export const ImagePickerWithCropping = forwardRef<ImagePickerRef, ImagePickerWit
       })
       console.log("result", result)
       if (!result.canceled) {
-        onImageSelected(result.assets[0].uri)
+        onImageSelected(result.assets[0].uri, result.assets[0].mimeType)
       }
     }
     const pickImage = async () => {

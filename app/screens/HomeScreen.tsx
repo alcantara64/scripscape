@@ -41,7 +41,6 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
 
   const { themed } = useAppTheme()
   const { username, profilePicture, profilePictureBlurhash } = useAuth()
-  console.log(profilePicture)
   if (isLoading) return <HomeScreenSkeleton />
   return (
     <Screen

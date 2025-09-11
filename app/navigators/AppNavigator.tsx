@@ -18,6 +18,7 @@ import { DemoNavigator, DemoTabParamList } from "./DemoNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { SubscriptionScreen } from "@/screens/SubscriptionScreen"
 import { SearchScreen } from "@/screens/SearchScreen"
+import { WriteScriptTableContentsScreen } from "@/screens/WriteScriptTableContentsScreen"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -35,12 +36,13 @@ export type AppStackParamList = {
   // 🔥 Your screens go here
   Home: undefined
   AddScript: undefined
-  Profile: undefined
+  Profile: { id: string }
   Activity: undefined
   MyScripts: undefined
   Settings: undefined
   Subscription: undefined
   Search: undefined
+  WriteScriptTableContents: undefined
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
@@ -82,6 +84,11 @@ const AppStack = () => {
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Subscription" component={SubscriptionScreen} />
       <Stack.Screen name="Search" component={SearchScreen} />
+      <Stack.Screen
+        name="WriteScriptTableContents"
+        component={WriteScriptTableContentsScreen}
+        options={{ keyboardHandlingEnabled: false }}
+      />
     </Stack.Navigator>
   )
 }

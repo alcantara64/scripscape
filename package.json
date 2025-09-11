@@ -65,19 +65,22 @@
     "react-dom": "19.0.0",
     "react-i18next": "^15.0.1",
     "react-native": "0.79.5",
+    "react-native-draggable-flatlist": "^4.0.3",
     "react-native-drawer-layout": "^4.0.1",
     "react-native-edge-to-edge": "1.6.0",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-keyboard-controller": "^1.12.7",
     "react-native-mmkv": "^3.2.0",
     "react-native-otp-entry": "^1.8.5",
+    "react-native-pell-rich-editor": "^1.10.0",
     "react-native-reanimated": "~3.17.4",
     "react-native-reanimated-carousel": "^4.0.3",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-svg": "15.11.2",
     "react-native-toast-message": "^2.3.3",
-    "react-native-web": "^0.20.0"
+    "react-native-web": "^0.20.0",
+    "react-native-webview": "13.13.5"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

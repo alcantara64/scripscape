@@ -157,6 +157,14 @@ export const iconRegistry = {
   message: require("@assets/icons/email.png"),
   key: require("@assets/icons/key.png"),
   hide: require("@assets/icons/hide.png"),
+  trash: require("@assets/icons/trash.png"),
+  plus: require("@assets/icons/plus.png"),
+  drag: require("@assets/icons/drag.png"),
+  image: require("@assets/icons/image.png"),
+  gps: require("@assets/icons/gps.png"),
+  chatBubble: require("@assets/icons/chat-bubble.png"),
+  text: require("@assets/icons/text.png"),
+  keyboardDown: require("@assets/icons/keyboard-down.png"),
 }
 
 const $imageStyleBase: ImageStyle = {

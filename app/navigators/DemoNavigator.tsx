@@ -1,27 +1,22 @@
-import { JSX, useRef, useState } from "react"
-import { TextStyle, View, ViewStyle, ImageStyle, TouchableOpacity } from "react-native"
+import { useRef } from "react"
+import { TextStyle, ViewStyle } from "react-native"
 import { BottomTabScreenProps, createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import { CompositeScreenProps, useNavigation } from "@react-navigation/native"
-import { ContentStyle } from "@shopify/flash-list"
+import { CompositeScreenProps } from "@react-navigation/native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { Icon } from "@/components/Icon"
+import { PlusIcon } from "@/components/PlusIcon"
 import { translate } from "@/i18n/translate"
 import { ActivityScreen } from "@/screens/ActivityScreen"
 import { AddScriptScreen } from "@/screens/AddScriptScreen"
-import { DemoCommunityScreen } from "@/screens/DemoCommunityScreen"
-import { DemoDebugScreen } from "@/screens/DemoDebugScreen"
-import { DemoPodcastListScreen } from "@/screens/DemoPodcastListScreen"
 import { HomeScreen } from "@/screens/HomeScreen"
-import { MyScriptsScreen, MyscriptsScreen } from "@/screens/MyscriptsScreen"
+import { MyScriptsScreen } from "@/screens/MyscriptsScreen"
 import { SettingsScreen } from "@/screens/SettingsScreen"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
 import { AppStackParamList, AppStackScreenProps } from "./AppNavigator"
 import { DrawerNavigation } from "./DrawerNavigation"
-import { ReactComponent as MyIcon } from "../../assets/icons/create-script.svg"
-import { PlusIcon } from "@/components/PlusIcon"
 
 export type DemoTabParamList = {
   MyScripts: undefined
