@@ -8,7 +8,7 @@ import {
   ViewStyle,
 } from "react-native"
 import { ImageBackground } from "expo-image"
-import { useNavigation } from "@react-navigation/native"
+import { RouteProp, useNavigation } from "@react-navigation/native"
 
 import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
 import { AvatarEditor } from "@/components/AvatarEditor"
@@ -24,7 +24,7 @@ import { ScriptList } from "@/components/ScriptList"
 import { ProfileScreenSkeleton } from "@/components/skeleton/screens/ProfileScreenSkeleton"
 import { Text } from "@/components/Text"
 import { mock_scripts } from "@/mockups/script"
-import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import type { AppStackParamList, AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useUpdateProfile, useUser } from "@/querries/user"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
@@ -50,9 +50,9 @@ type EditorConfig = {
   multiline?: boolean
   validate?: (v: string) => string | undefined
 }
-
-export const ProfileScreen: FC<ProfileScreenProps> = () => {
+export const ProfileScreen: FC<ProfileScreenProps> = ({ route }) => {
   // Pull in navigation via hook
+  const userId = route?.params?.id
   const navigation = useNavigation()
   const { themed } = useAppTheme()
   const { isLoading, data } = useUser()
@@ -224,24 +224,28 @@ export const ProfileScreen: FC<ProfileScreenProps> = () => {
               </TouchableOpacity>
               <Text text="My Profile" preset="subheading" weight="semiBold" size="xl" />
             </View>
-            <TouchableOpacity>
-              <Icon icon="flag" size={36} />
-            </TouchableOpacity>
+            {userId && (
+              <TouchableOpacity>
+                <Icon icon="flag" size={36} />
+              </TouchableOpacity>
+            )}
           </View>
 
-          <TouchableOpacity
-            style={themed($uploadButtonContainer)}
-            onPress={() => {
-              setPendingBackground(user?.cover_photo_url ?? DEFAULT_BACKGROUND_IMAGE ?? null)
-              setSheetView("background")
-              sheet.current?.open()
-            }}
-          >
-            <View style={themed($uploadButtonItem)}>
-              <Icon icon="upload" size={16} color="#fff" />
-              <Text text="Edit" />
-            </View>
-          </TouchableOpacity>
+          {!userId && (
+            <TouchableOpacity
+              style={themed($uploadButtonContainer)}
+              onPress={() => {
+                setPendingBackground(user?.cover_photo_url ?? DEFAULT_BACKGROUND_IMAGE ?? null)
+                setSheetView("background")
+                sheet.current?.open()
+              }}
+            >
+              <View style={themed($uploadButtonItem)}>
+                <Icon icon="upload" size={16} color="#fff" />
+                <Text text="Edit" />
+              </View>
+            </TouchableOpacity>
+          )}
         </SafeAreaView>
       </ImageBackground>
       <Screen
