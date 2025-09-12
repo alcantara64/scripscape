@@ -15,11 +15,12 @@ import { insertDialogue } from "@/utils/insertDialogueBubble"
 type Props = {
   editorRef: React.RefObject<RichEditor | null>
   visible: boolean
+  onLocation: () => void
 }
 
 const BAR_HEIGHT = Platform.OS === "ios" ? 64 : 110
 
-export function KeyboardToolbar({ editorRef, visible }: Props) {
+export function KeyboardToolbar({ editorRef, visible, onLocation }: Props) {
   const kb = useKeyboardHeight()
   const insets = useSafeAreaInsets()
   const { themed } = useAppTheme()
@@ -76,7 +77,7 @@ export function KeyboardToolbar({ editorRef, visible }: Props) {
               gap: 24,
             }}
           >
-            <Pill onPress={() => run(() => editor?.setItalic?.())} icon="gps" />
+            <Pill onPress={onLocation} icon="gps" />
             <Pill onPress={() => run(() => coverImageRef?.current?.pickImage())} icon="image" />
 
             <Pill

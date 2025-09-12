@@ -223,9 +223,9 @@ export const SearchScreen: FC<SearchScreenProps> = () => {
             value={currentTab}
             onChange={(k) => setCurrentTab(k as typeof currentTab)}
             containerStyle={themed({ marginBottom: 20 })} // optional
-            tabStyle={themed({})} // optional
-            activeTabStyle={themed({})} // optional
-            tabTextStyle={themed({})} // optional
+            tabStyle={themed({})}
+            activeTabStyle={themed({})}
+            tabTextStyle={themed({})}
             activeTabTextStyle={themed({})}
             fullWidth
             gap={8}
