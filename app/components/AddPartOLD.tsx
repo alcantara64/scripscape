@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import {
   Pressable,
   StyleProp,
@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Alert,
 } from "react-native"
-import * as FileSystem from "expo-file-system"
+import { Image } from "expo-image"
 import { RichEditor } from "react-native-pell-rich-editor"
 
 import { Text } from "@/components/Text"
@@ -17,7 +17,7 @@ import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { bindDialogueClick } from "@/utils/insertDialogueBubble"
 
-import { AppBottomSheet, BottomSheetController } from "./AppBottomSheet"
+import { AppBottomSheet, type BottomSheetController } from "./AppBottomSheet"
 import { Button } from "./Button"
 import { Icon, PressableIcon } from "./Icon"
 import { ImagePickerWithCropping } from "./ImagePickerWithCroping"
@@ -27,19 +27,12 @@ import { ListView } from "./ListView"
 import { Tabs } from "./Tab"
 import { TextField } from "./TextField"
 import { Switch } from "./Toggle/Switch"
-import { Image } from "expo-image"
 
 export interface AddPartProps {
-  /**
-   * An optional style override useful for padding & margin.
-   */
   style?: StyleProp<ViewStyle>
   onBack: () => void
 }
-
-/**
- * Describe your component here
- */
+type SheetMode = "location" | "character"
 
 type UploadQuota = {
   poster: { used: number; limit: number }
@@ -48,19 +41,26 @@ type UploadQuota = {
   character: { used: number; limit: number }
 }
 
+type TabKey = "last_used" | "asc" | "des"
+const TAB_ITEMS: Array<{ label: string; key: TabKey }> = [
+  { label: "Last Used", key: "last_used" },
+  { label: "A–Z", key: "asc" },
+  { label: "Z–A", key: "des" },
+]
+
+type LocationItem = { name: string; image: string; hideName: boolean }
+
 const DIALOGUE_CSS = `
   .ss-dialogue-wrap{
     position:relative; margin:10px 0;
     -webkit-user-select:none; user-select:none;
-    -webkit-user-modify:read-only; /* iOS WebKit */
+    -webkit-user-modify:read-only;
     caret-color: transparent;
   }
-  /* Overlay button captures taps; prevents caret from entering */
   .ss-dialogue-tap{
     position:absolute; inset:0; background:transparent; border:0; padding:0; margin:0;
     z-index:2; cursor:pointer;
   }
-  /* Underlay content ignores pointer events so only the overlay is clickable */
   .ss-dialogue{ pointer-events:none; display:flex; align-items:flex-start; gap:10px; }
   .ss-avatar{ width:28px; height:28px; border-radius:50%; overflow:hidden; flex:0 0 28px; background:#2B2A45; }
   .ss-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
@@ -71,50 +71,28 @@ const DIALOGUE_CSS = `
             background:rgba(255,255,255,.75); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; }
 `.trim()
 
-const TAB_ITEMS = [
-  { label: "Last Used", key: "last_used" },
-  { label: "A-Z", key: "asc" },
-  { label: "Z-A", key: "des" },
-]
-
 const validateTitle = (v: string) =>
   v.trim().length < 3 ? "Title must be at least 3 characters" : undefined
 
-export const AddPart = (props: AddPartProps) => {
-  const { style, onBack } = props
+export const AddPart = ({ style, onBack }: AddPartProps) => {
   const $styles = [$container, style, Platform.OS === "android" && { marginTop: 24 }]
   const {
     themed,
-    theme: { colors },
+    theme: { colors, spacing },
   } = useAppTheme()
-  const editorRef = useRef<RichEditor>(null)
 
+  const editorRef = useRef<RichEditor>(null)
+  const sheetRef = useRef<BottomSheetController>(null)
+  const pickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
+
+  // content state
   const [title, setTitle] = useState("")
   const [html, setHtml] = useState(
     `<p>Tucked between misty hills and a quiet shoreline, the village felt untouched by time…</p>`,
   )
-  const focusEditor = () => editorRef.current?.focusContentEditor?.()
-  const [showQuota, setShowQuota] = useState(true)
   const [editorFocused, setEditorFocused] = useState(false)
-  const [disableEditor, setDisableEditor] = useState(false)
-
-  const sheetRef = useRef<BottomSheetController>(null)
-
-  //location
-  const [currentTab, setCurrentTab] = useState<(typeof TAB_ITEMS)[number]["key"]>("last_used")
-  const [isAddLocation, setIsAddLocation] = useState(false)
-  const [locationImage, setLocationImage] = useState<string | null>(null)
-  const locationImageRef = useRef<{ pickImage: () => Promise<void> }>(null)
-  const [locationName, setLocationName] = useState("")
-  const [showLocationName, setShowLocationName] = useState(true)
-  const [locationData, setLocationData] = useState<
-    Array<{ name: string; image: string; isHideName: boolean }>
-  >([])
-
-  const handleCoverImageSelected = (uri: string) => {
-    setLocationImage(uri)
-  }
-
+  const [sheetMode, setSheetMode] = useState<SheetMode>("location")
+  // quotas
   const quota: UploadQuota = useMemo(
     () => ({
       poster: { used: 1, limit: 1 },
@@ -133,70 +111,172 @@ export const AddPart = (props: AddPartProps) => {
     return used / total
   }, [quota])
 
+  // locations
+  const [locations, setLocations] = useState<LocationItem[]>([])
+  const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
+  const [isAddLocation, setIsAddLocation] = useState(false)
+  const [locationForm, setLocationForm] = useState<{
+    image: string | null
+    name: string
+    hideName: boolean
+  }>({
+    image: null,
+    name: "",
+    hideName: false, // "Hide Location Name" switch
+  })
+
+  // effects
   useEffect(() => {
     bindDialogueClick(editorRef)
   }, [])
 
-  const onSave = () => {
-    // TODO: send title/content to backend; this does not publish the script
-    // Your actual "Publish" occurs on the publish screen/button elsewhere
-    console.log("Saved part draft:", { title })
-  }
-  const openlocationSheet = () => {
+  // handlers (memoized)
+  const focusEditor = useCallback(() => editorRef.current?.focusContentEditor?.(), [])
+  const toggleSheetAddLocation = useCallback((on: boolean) => setIsAddLocation(on), [])
+  const openLocationSheet = useCallback(() => {
+    setSheetMode("location")
     sheetRef.current?.expand()
-    setDisableEditor(true)
-  }
-  const locationTextMax = 50
-  const locationNameErr = useMemo(() => validateTitle(locationName), [locationName])
-  const locationNameHelper = locationNameErr
-    ? locationNameErr
-    : `${Math.min(locationName.length, locationTextMax)}/${locationTextMax} characters`
+  }, [])
+  const openCharacterSheet = useCallback(() => {
+    setSheetMode("character")
+    sheetRef.current?.expand()
+  }, [])
+  const closeLocationSheet = useCallback(() => sheetRef.current?.close(), [])
 
-  const onSaveLocationImage = () => {
-    const payload = {
-      image: locationImage as string,
-      isHideName: showLocationName,
-      name: locationName,
-    }
-    console.log(payload.image)
-    setLocationData([...locationData, payload])
-    // setDisableEditor(false)
-    // sheetRef.current?.close()
-    setLocationName("")
-    setLocationImage("")
+  const onSheetOpen = useCallback(() => {
+    // prevent caret entering editor while sheet is up
+    editorRef.current?.blurContentEditor?.()
+  }, [])
+
+  const onSheetClose = useCallback(() => {
     setIsAddLocation(false)
-  }
-  const LocationSeparator = () => <View style={{ height: 12 }} />
+    // focus back if needed
+    // focusEditor()
+  }, [focusEditor])
 
-  const RenderLocationItems = ({ uri, name }) => (
-    <View style={{}}>
-      <Image source={uri} />
-      <Text text={name} />
-    </View>
+  const onPickLocationImage = useCallback(() => {
+    pickerRef.current?.pickImage()
+  }, [])
+
+  const onRemoveLocationImage = useCallback(() => {
+    setLocationForm((f) => ({ ...f, image: null }))
+  }, [])
+
+  const onChangeLocationName = useCallback((v: string) => {
+    setLocationForm((f) => ({ ...f, name: v }))
+  }, [])
+
+  const onToggleHideName = useCallback((v: boolean) => {
+    setLocationForm((f) => ({ ...f, hideName: v }))
+  }, [])
+
+  const onSaveLocation = useCallback(() => {
+    if (!locationForm.image) {
+      Alert.alert("Add Location", "Please select an image first.")
+      return
+    }
+    const err = validateTitle(locationForm.name)
+    if (err) {
+      Alert.alert("Invalid Name", err)
+      return
+    }
+    setLocations((prev) => [
+      ...prev,
+      {
+        image: locationForm.image!,
+        name: locationForm.name.trim(),
+        hideName: locationForm.hideName,
+      },
+    ])
+    // reset form
+    setLocationForm({ image: null, name: "", hideName: false })
+    toggleSheetAddLocation(false)
+  }, [locationForm, toggleSheetAddLocation])
+
+  const onImageSelected = useCallback((uri: string) => {
+    setLocationForm((f) => ({ ...f, image: uri }))
+  }, [])
+
+  const onEditorMessage = useCallback((msg: string) => {
+    // react-native-pell-rich-editor posts strings; guard JSON parsing
+    try {
+      const data = JSON.parse(msg)
+      if (data?.type === "edit-dialogue") {
+        // open your modal and pass payload
+        Alert.alert("Edit dialogue", JSON.stringify(data?.payload ?? {}, null, 2))
+      }
+    } catch (e) {
+      // ignore non-JSON messages
+      console.log(e)
+    }
+  }, [])
+
+  // derived UI bits
+  const locationTextMax = 50
+  const nameError = validateTitle(locationForm.name)
+  const nameHelper = nameError
+    ? nameError
+    : `${Math.min(locationForm.name.length, locationTextMax)}/${locationTextMax} characters`
+
+  const sortedLocations = useMemo(() => {
+    if (currentTab === "asc") return [...locations].sort((a, b) => a.name.localeCompare(b.name))
+    if (currentTab === "des") return [...locations].sort((a, b) => b.name.localeCompare(a.name))
+    return locations // “last used”
+  }, [locations, currentTab])
+
+  // render helpers
+  const LocationSeparator = useCallback(() => <View style={{ height: 12 }} />, [])
+  const keyExtractor = useCallback(
+    (item: LocationItem, index: number) => `${item.name}-${index}`,
+    [],
   )
+
+  const RenderLocationItem = useCallback(
+    ({ uri, name, hideName }: { uri: string; name: string; hideName: boolean }) => (
+      <View style={{ gap: 6 }}>
+        <Image
+          source={{ uri }}
+          style={{
+            width: "100%",
+            aspectRatio: 1.5,
+            borderRadius: 12,
+            backgroundColor: colors.palette.neutral800,
+          }}
+          contentFit="cover"
+          transition={100}
+        />
+        {!hideName && <Text text={name} numberOfLines={1} />}
+      </View>
+    ),
+    [colors.palette.neutral800],
+  )
+
+  const onSaveDraft = useCallback(() => {
+    // send to backend as draft (not publish)
+    console.log("Saved part draft:", { title, htmlLength: html?.length ?? 0 })
+  }, [title, html])
 
   return (
     <View style={$styles}>
+      {/* Header */}
       <View style={themed($headerRow)}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <PressableIcon
-            icon="arrowLeft"
-            onPress={() => {
-              onBack()
-            }}
-          />
+          <PressableIcon icon="arrowLeft" onPress={onBack} hitSlop={10} />
           <Text preset="sectionHeader" weight="semiBold">
             Part 1
           </Text>
         </View>
-        <Pressable onPress={() => setShowQuota((s) => !s)} hitSlop={10} style={themed($ring)}>
-          {/* simple ring */}
+
+        {/* Quota ring */}
+        <Pressable onPress={onSaveDraft} hitSlop={10} style={themed($ring)}>
           <View style={themed($ringTrack)} />
           <View
             style={[themed($ringFill), { width: `${Math.min(100, Math.round(progress * 100))}%` }]}
           />
         </Pressable>
       </View>
+
+      {/* Title + Editor */}
       <View style={{ gap: 8, flex: 1 }}>
         <TextField
           value={title}
@@ -205,15 +285,14 @@ export const AddPart = (props: AddPartProps) => {
           placeholder="Add Part Title here"
           placeholderTextColor={colors.palette.secondary300}
           style={themed($titleInput)}
-          // inputAccessoryViewID={Platform.OS === "ios" ? TOOLBAR_ID : undefined}
           onSubmitEditing={focusEditor}
+          autoCorrect
+          returnKeyType="next"
         />
 
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={{
-            flex: 1,
-          }}
+          style={{ flex: 1 }}
         >
           <RichEditor
             ref={editorRef}
@@ -221,70 +300,73 @@ export const AddPart = (props: AddPartProps) => {
             editorStyle={$editorStyle(colors)}
             placeholder="Add some text, dialogue, or images here"
             onChange={setHtml}
-            disabled={disableEditor}
             useContainer={false}
             onFocus={() => setEditorFocused(true)}
             onBlur={() => setEditorFocused(false)}
             style={{ flex: 1, minHeight: 0, paddingHorizontal: 24 }}
-            onMessage={(msg) => {
-              try {
-                console.log({ msg })
-                const data = JSON.parse(msg)
-                if (data?.type === "edit-dialogue") Alert.alert(data) // open modal with this data
-              } catch {}
-            }}
+            onMessage={onEditorMessage}
           />
 
           <KeyboardToolbar
             editorRef={editorRef}
             visible={editorFocused}
-            onLocation={openlocationSheet}
+            onLocation={openLocationSheet}
           />
         </KeyboardAvoidingView>
       </View>
+
+      {/* Location Sheet */}
       <AppBottomSheet
         controllerRef={sheetRef}
         snapPoints={["95%"]}
         style={{ zIndex: 40, pointerEvents: "auto", flex: 1 }}
+        onOpen={onSheetOpen}
+        onClose={onSheetClose}
       >
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
           <ImagePickerWithCropping
-            ref={locationImageRef}
-            onImageSelected={handleCoverImageSelected}
-            aspect={[16, 9]} // wide ratio for background
+            ref={pickerRef}
+            onImageSelected={onImageSelected}
+            aspect={[16, 9]}
           />
+
           <View style={$bottomSheetHeaderContainer}>
             <Text text={isAddLocation ? "Add Location" : "Select Location"} preset="titleHeading" />
-            <Text text={`${locationData.length}/${quota.location.limit}`} />
+            <Text text={`${locations.length}/${quota.location.limit}`} />
           </View>
+
           {!isAddLocation ? (
             <>
               <Tabs
                 value={currentTab}
                 items={TAB_ITEMS}
-                onChange={(k) => setCurrentTab(k as typeof currentTab)}
-                containerStyle={themed({ marginBottom: 20 })} // optional
-                tabStyle={themed({})}
-                activeTabStyle={themed({})}
-                tabTextStyle={themed({})}
-                activeTabTextStyle={themed({})}
+                onChange={(k) => setCurrentTab(k as TabKey)}
+                containerStyle={themed({ marginBottom: 20 })}
                 fullWidth
                 gap={8}
               />
-              <ListView<{ image: string; name: string; isHideName: boolean }>
-                data={locationData || []}
-                extraData={locationData}
-                estimatedItemSize={locationData.length}
+
+              <ListView<LocationItem>
+                data={sortedLocations}
+                extraData={sortedLocations}
+                estimatedItemSize={sortedLocations.length || 1}
                 ItemSeparatorComponent={LocationSeparator}
-                ListEmptyComponent={<View />}
+                ListEmptyComponent={
+                  <View style={{ paddingVertical: spacing.lg, alignItems: "center" }}>
+                    <Text preset="description" text="No locations yet. Add one to get started." />
+                  </View>
+                }
                 numColumns={2}
-                renderItem={({ item }) => <RenderLocationItems uri={item.image} name={item.name} />}
+                keyExtractor={keyExtractor}
+                renderItem={({ item }) => (
+                  <RenderLocationItem uri={item.image} name={item.name} hideName={item.hideName} />
+                )}
               />
+
               <Pressable
                 style={themed($addDashed)}
-                onPress={() => {
-                  setIsAddLocation(true)
-                }}
+                onPress={() => toggleSheetAddLocation(true)}
+                hitSlop={10}
               >
                 <Icon icon="plus" size={24} />
                 <Text weight="medium">Add Location</Text>
@@ -293,35 +375,34 @@ export const AddPart = (props: AddPartProps) => {
           ) : (
             <View>
               <ImageUploader
-                coverImage={locationImage}
+                coverImage={locationForm.image}
                 uploadText="Upload Location Image"
-                onPressUpload={() => {
-                  locationImageRef.current?.pickImage()
-                }}
-                onPressRemove={() => {
-                  setLocationImage(null)
-                }}
+                onPressUpload={onPickLocationImage}
+                onPressRemove={onRemoveLocationImage}
               />
+
               <TextField
-                value={locationName}
-                onChangeText={setLocationName}
+                value={locationForm.name}
+                onChangeText={onChangeLocationName}
                 placeholder="Enter Location name"
                 label="Location Name"
-                helper={locationNameHelper}
-                status={locationNameErr ? "error" : undefined}
+                helper={nameHelper}
+                status={nameError ? "error" : undefined}
                 maxLength={locationTextMax}
+                autoCapitalize="words"
               />
 
               <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                 <View style={themed($toggleContainer)}>
                   <Text text="Hide Location Name" style={$locationTitle} />
                   <Text preset="description" style={$description}>
-                    Enable to hide the location name from {"\n"}displaying it in your script
+                    Enable to hide the location name from {"\n"}displaying in your script
                   </Text>
                 </View>
-                <Switch value={showLocationName} onValueChange={setShowLocationName} />
+                <Switch value={locationForm.hideName} onValueChange={onToggleHideName} />
               </View>
-              <Button text="Save" style={themed($saveBtn)} onPress={onSaveLocationImage} />
+
+              <Button text="Save" style={themed($saveBtn)} onPress={onSaveLocation} />
             </View>
           )}
         </KeyboardAvoidingView>
@@ -330,9 +411,7 @@ export const AddPart = (props: AddPartProps) => {
   )
 }
 
-const $container: ViewStyle = {
-  flex: 1,
-}
+const $container: ViewStyle = { flex: 1 }
 
 const $headerRow: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
@@ -342,6 +421,7 @@ const $headerRow: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   gap: spacing.xs,
   paddingHorizontal: 24,
 })
+
 const $ring: ThemedStyle<ViewStyle> = ({ colors }) => ({
   width: 26,
   height: 26,
@@ -353,9 +433,7 @@ const $ring: ThemedStyle<ViewStyle> = ({ colors }) => ({
   borderColor: colors.success,
 })
 
-const $ringTrack: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  backgroundColor: "transparent",
-})
+const $ringTrack: ThemedStyle<ViewStyle> = () => ({ backgroundColor: "transparent" })
 
 const $ringFill: ThemedStyle<ViewStyle> = ({ colors }) => ({
   position: "absolute",
@@ -371,15 +449,13 @@ const $titleInput: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   color: colors.text,
   borderWidth: 0,
 })
-const $titleInputContainer: ViewStyle = {
-  borderWidth: 0,
-  paddingHorizontal: 24,
-}
-const $editorStyle = (colors) => ({
+const $titleInputContainer: ViewStyle = { borderWidth: 0, paddingHorizontal: 24 }
+
+const $editorStyle = (colors: any) => ({
   backgroundColor: "transparent",
   placeholderColor: colors.palette.secondary300,
   contentCSSText: `font-size:16px; line-height:24px; ${DIALOGUE_CSS}`,
-  color: colors.palette.secondary300,
+  color: colors.text, // use text color for better contrast
 })
 
 const $bottomSheetHeaderContainer: ViewStyle = {
@@ -388,20 +464,14 @@ const $bottomSheetHeaderContainer: ViewStyle = {
   marginBottom: 20,
   alignItems: "center",
 }
-const $toggleContainer: ViewStyle = {
-  marginTop: 20,
-}
-const $locationTitle: TextStyle = {
-  fontSize: 14,
-  fontWeight: 500,
-}
-const $description: TextStyle = {
-  fontSize: 14,
-  fontWeight: 300,
-  textAlign: "left",
-}
 
-const $addDashed: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+const $toggleContainer: ViewStyle = { marginTop: 20 }
+
+const $locationTitle: TextStyle = { fontSize: 14, fontWeight: "500" as const }
+
+const $description: TextStyle = { fontSize: 14, fontWeight: "300" as const, textAlign: "left" }
+
+const $addDashed: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   borderWidth: 1,
   borderStyle: "dashed",
   borderColor: "rgba(197, 206, 250, 0.50)",
@@ -414,7 +484,4 @@ const $addDashed: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   flexDirection: "row",
 })
 
-const $saveBtn: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  height: 44,
-  marginTop: 70,
-})
+const $saveBtn: ThemedStyle<ViewStyle> = () => ({ height: 44, marginTop: 70 })

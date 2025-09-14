@@ -16,11 +16,12 @@ type Props = {
   editorRef: React.RefObject<RichEditor | null>
   visible: boolean
   onLocation: () => void
+  onCharacter: () => void
 }
 
 const BAR_HEIGHT = Platform.OS === "ios" ? 64 : 110
 
-export function KeyboardToolbar({ editorRef, visible, onLocation }: Props) {
+export function KeyboardToolbar({ editorRef, visible, onLocation, onCharacter }: Props) {
   const kb = useKeyboardHeight()
   const insets = useSafeAreaInsets()
   const { themed } = useAppTheme()
@@ -80,23 +81,7 @@ export function KeyboardToolbar({ editorRef, visible, onLocation }: Props) {
             <Pill onPress={onLocation} icon="gps" />
             <Pill onPress={() => run(() => coverImageRef?.current?.pickImage())} icon="image" />
 
-            <Pill
-              onPress={() =>
-                insertDialogue(editorRef, {
-                  id: "char-obiwan",
-                  name: "Obi Wan Kenobi",
-                  message:
-                    "I felt a great disturbance in the Force, as if millions of voices suddenly cried out in terror…",
-                  avatarUrl: "https://randomuser.me/api/portraits/men/46.jpg",
-                  bubbleColor: "#E5D1FF", // match your palette (light purple)
-                  textColor: "#201A3A",
-                  nameColor: "#3D2A8A",
-                  playIconColor: "#6B5BFF",
-                })
-              }
-              icon="chatBubble"
-            />
-            <Pill onPress={() => run(() => editor?.setUnderline?.())} icon="person" />
+            <Pill onPress={onCharacter} icon="chatBubble" />
             <Pill onPress={() => run(() => editor?.setUnderline?.())} icon="text" />
           </View>
           <View>

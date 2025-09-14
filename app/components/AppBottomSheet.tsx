@@ -41,6 +41,7 @@ export interface AppBottomSheetProps {
    * Fired when the sheet index changes.
    */
   onChange?: (index: number) => void
+  onClose?: () => void
 }
 
 export const AppBottomSheet = (props: AppBottomSheetProps) => {
@@ -52,6 +53,7 @@ export const AppBottomSheet = (props: AppBottomSheetProps) => {
     controllerRef,
     initialIndex = -1,
     onChange,
+    onClose,
   } = props
 
   const { themed } = useAppTheme()
@@ -106,6 +108,7 @@ export const AppBottomSheet = (props: AppBottomSheetProps) => {
         onChange={handleChange}
         handleIndicatorStyle={themed($handleIndicator)}
         backgroundStyle={themed($background)}
+        onClose={onClose}
       >
         <BottomSheetView style={$styles}>{children}</BottomSheetView>
       </BottomSheet>

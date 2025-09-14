@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react"
-import { Alert, KeyboardAvoidingView, Platform, Pressable, View } from "react-native"
-import { Image } from "expo-image"
+import { Alert, KeyboardAvoidingView, Platform, Pressable, View, ViewStyle } from "react-native"
+import { Image, ImageStyle } from "expo-image"
 
 import { Button } from "@/components/Button"
 import { Icon } from "@/components/Icon"
@@ -27,7 +27,7 @@ type Props = {
   setName: (name: string) => void
   setHideName: (hide: boolean) => void
   addLocation: (item: LocationItem) => void
-  onSelect: (item: LocationItem) => void
+  onConfirm: (item: LocationItem) => void
 }
 
 export function LocationSheet({
@@ -40,9 +40,8 @@ export function LocationSheet({
   setName,
   setHideName,
   addLocation,
-  onSelect,
+  onConfirm,
 }: Props) {
-  console.log(onSelect)
   const {
     themed,
     theme: { spacing, colors },
@@ -50,6 +49,8 @@ export function LocationSheet({
 
   const pickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const [isAddLocation, setIsAddLocation] = useState(false)
+
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
   const onPick = useCallback(() => pickerRef.current?.pickImage(), [])
   const onRemove = useCallback(() => setImage(null), [setImage])
@@ -74,38 +75,35 @@ export function LocationSheet({
     ? nameError
     : `${Math.min(form.name.length, locationTextMax)}/${locationTextMax} characters`
 
-  const LocationSeparator = useCallback(() => <View style={{ height: 12, width: 12 }} />, [])
+  const LocationSeparator = useCallback(() => <View style={{ height: 12 }} />, [])
   const keyExtractor = useCallback(
     (item: LocationItem, index: number) => `${item.name}-${index}`,
     [],
   )
 
   const RenderItem = useCallback(
-    ({ uri, name, hideName }: { uri: string; name: string; hideName: boolean }) => (
-      <Pressable
-        style={{ gap: 6, width: "96%" }}
-        onPress={() => {
-          onSelect({ image: uri, name, hideName })
-        }}
-        hitSlop={6}
-      >
-        <Image
-          source={{ uri }}
-          style={{
-            width: "100%",
-            aspectRatio: 1.5,
-            borderRadius: 12,
-            marginRight: 8,
-            backgroundColor: colors.palette.neutral800,
-          }}
-          contentFit="cover"
-          transition={100}
-        />
-        {!hideName && <Text text={name} numberOfLines={1} />}
-      </Pressable>
-    ),
-    [colors.palette.neutral800],
+    ({ item, index }: { item: LocationItem; index: number }) => {
+      const isSelected = selectedIndex === index
+      return (
+        <Pressable
+          onPress={() => setSelectedIndex((cur) => (cur === index ? null : index))}
+          hitSlop={6}
+          style={[{ flex: 1, margin: 6 }]}
+        >
+          <Image
+            source={{ uri: item.image }}
+            style={[themed($imageStyle), isSelected && themed($imageSelectedStyle)]}
+            contentFit="cover"
+            transition={100}
+          />
+          {!item.hideName && <Text text={item.name} numberOfLines={1} />}
+        </Pressable>
+      )
+    },
+    [colors.palette.neutral800, colors.tint, selectedIndex],
   )
+
+  const selectedItem = selectedIndex != null ? locations[selectedIndex] : null
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
@@ -129,7 +127,7 @@ export function LocationSheet({
 
           <ListView<LocationItem>
             data={locations}
-            extraData={locations}
+            extraData={{ locations, selectedIndex }} // re-render on selection
             estimatedItemSize={locations.length || 1}
             ItemSeparatorComponent={LocationSeparator}
             ListEmptyComponent={
@@ -139,18 +137,23 @@ export function LocationSheet({
             }
             numColumns={2}
             keyExtractor={keyExtractor}
-            renderItem={({ item }) => (
-              <RenderItem uri={item.image} name={item.name} hideName={item.hideName} />
-            )}
+            renderItem={({ item, index }) => <RenderItem item={item} index={index} />}
           />
 
+          {/* Add new location button */}
           <View style={themed($addDashed)}>
             <Icon icon="plus" size={24} />
             <Text weight="medium" onPress={() => setIsAddLocation(true)}>
               Add Location
             </Text>
           </View>
-          <Button text="Confirm" style={{ marginTop: 16 }} />
+
+          <Button
+            text="Confirm"
+            disabled={!selectedItem}
+            onPress={() => selectedItem && onConfirm(selectedItem)}
+            style={[themed($confirmBtn), !selectedItem && { opacity: 0.6 }]}
+          />
         </>
       ) : (
         <View>
@@ -214,4 +217,22 @@ const $addDashed: ThemedStyle<any> = ({ spacing }) => ({
   flexDirection: "row",
 })
 
+const $confirmBtn: ThemedStyle<ViewStyle> = () => ({
+  minWidth: 120,
+  height: 44,
+  marginTop: 14,
+})
+
 const $saveBtn: ThemedStyle<any> = () => ({ height: 44, marginTop: 70 })
+
+const $imageSelectedStyle: ThemedStyle<ImageStyle> = ({ colors }) => ({
+  borderWidth: 2,
+  borderColor: colors.palette.primary200,
+  padding: 2,
+  borderRadius: 4,
+})
+const $imageStyle: ThemedStyle<ImageStyle> = ({ colors }) => ({
+  width: "100%",
+  aspectRatio: 1.5,
+  backgroundColor: colors.palette.neutral800,
+})

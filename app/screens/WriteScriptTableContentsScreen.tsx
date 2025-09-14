@@ -12,8 +12,8 @@ import { Text } from "@/components/Text"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { spacing } from "@/theme/spacing"
-import { AddPart } from "@/components/AddPart"
+import AddPart from "./AddScripts/AddPart"
+
 // import { useNavigation } from "@react-navigation/native"
 
 type Part = {

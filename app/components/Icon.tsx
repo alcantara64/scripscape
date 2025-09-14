@@ -165,6 +165,7 @@ export const iconRegistry = {
   chatBubble: require("@assets/icons/chat-bubble.png"),
   text: require("@assets/icons/text.png"),
   keyboardDown: require("@assets/icons/keyboard-down.png"),
+  audio: require("@assets/icons/speaker-filled-audio-tool.png"),
 }
 
 const $imageStyleBase: ImageStyle = {
