@@ -5,6 +5,7 @@ import { RichEditor } from "react-native-pell-rich-editor"
 import { AppBottomSheet, type BottomSheetController } from "@/components/AppBottomSheet"
 import { PressableIcon } from "@/components/Icon"
 import { KeyboardToolbar } from "@/components/KeyboardToolbar"
+import { ProgressRing } from "@/components/ProgressRing"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { useAppTheme } from "@/theme/context"
@@ -19,8 +20,8 @@ import {
   type TabKey,
 } from "./AddParts/editorConstant"
 import { LocationSheet } from "./AddParts/locationSheet"
-import { useLocations } from "./AddParts/useLocation"
 import { useDialogue } from "./AddParts/useDialogue"
+import { useLocations } from "./AddParts/useLocation"
 
 export interface AddPartProps {
   style?: StyleProp<ViewStyle>
@@ -136,87 +137,6 @@ export default function AddPart({ style, onBack }: AddPartProps) {
     bindDialogueClick(editorRef) // reuse your util if it adds extra guards
   }
 
-  // simple inline form (put it above the return)
-  function CharacterForm({
-    isPro,
-    onSave,
-  }: {
-    isPro: boolean
-    onSave: (r: CharacterResult) => void
-  }) {
-    const [state, setState] = useState<CharacterResult>({
-      name: "",
-      avatarUri: undefined,
-      bubbleBg: "#2C1A67",
-      textColor: "#FFFFFF",
-      dialogue: "",
-      audioUri: undefined,
-    })
-
-    const pickAvatar = async () => {
-      const { launchImageLibraryAsync, MediaTypeOptions } = await import("expo-image-picker")
-      const res = await launchImageLibraryAsync({
-        allowsEditing: true,
-        mediaTypes: MediaTypeOptions.Images,
-        quality: 0.9,
-      })
-      // @ts-ignore expo type
-      if (!res?.canceled) setState((s) => ({ ...s, avatarUri: res.assets[0].uri }))
-    }
-
-    const pickAudio = async () => {
-      if (!isPro) return
-      const { getDocumentAsync } = await import("expo-document-picker")
-      const res = await getDocumentAsync({ type: "audio/*", copyToCacheDirectory: true })
-      if (res.type === "success") setState((s) => ({ ...s, audioUri: res.uri }))
-    }
-
-    return (
-      <View style={{ padding: 16, gap: 12 }}>
-        <Text preset="subheading">Add Character</Text>
-
-        <PressableIcon icon="image" onPress={pickAvatar} />
-        <TextField
-          value={state.name}
-          onChangeText={(name) => setState((s) => ({ ...s, name }))}
-          placeholder="Character name"
-        />
-
-        <View style={{ flexDirection: "row", gap: 12 }}>
-          <TextField
-            value={state.bubbleBg}
-            onChangeText={(bubbleBg) => setState((s) => ({ ...s, bubbleBg }))}
-            placeholder="#2C1A67"
-            containerStyle={{ flex: 1 }}
-          />
-          <TextField
-            value={state.textColor}
-            onChangeText={(textColor) => setState((s) => ({ ...s, textColor }))}
-            placeholder="#FFFFFF"
-            containerStyle={{ flex: 1 }}
-          />
-        </View>
-
-        <TextField
-          value={state.dialogue}
-          onChangeText={(dialogue) => setState((s) => ({ ...s, dialogue }))}
-          placeholder="Enter dialogue…"
-          multiline
-          inputWrapperStyle={{ minHeight: 100 }}
-        />
-
-        <PressableIcon
-          icon={state.audioUri ? "check" : "music"}
-          onPress={pickAudio}
-          disabled={!isPro}
-          label={state.audioUri ? "Audio selected" : isPro ? "Add audio" : "Unlock audio (PRO)"}
-        />
-
-        <PressableIcon icon="addScript" onPress={() => onSave(state)} label="Save" />
-      </View>
-    )
-  }
-
   return (
     <View style={$styles}>
       {/* Header */}
@@ -227,21 +147,14 @@ export default function AddPart({ style, onBack }: AddPartProps) {
             Part 1
           </Text>
         </View>
-
-        {/* Progress ring (tap to save draft, if you want) */}
-        <View style={themed($ring)}>
-          <View style={themed($ringTrack)} />
-          <View
-            style={[themed($ringFill), { width: `${Math.min(100, Math.round(progress * 100))}%` }]}
-          />
-        </View>
+        <ProgressRing value={10} total={40} size={27} />
       </View>
 
       {/* Title + Editor */}
       <View style={{ gap: 8, flex: 1 }}>
         <TextField
           value={title}
-          containerStyle={$titleInputContainer}
+          inputWrapperStyle={$titleInputContainer}
           onChangeText={setTitle}
           placeholder="Add Part Title here"
           placeholderTextColor={colors.palette.secondary300}
@@ -390,9 +303,9 @@ const $ringFill: ThemedStyle<ViewStyle> = ({ colors }) => ({
 })
 
 const $titleInput: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  paddingHorizontal: spacing.md,
-  paddingVertical: Platform.select({ ios: spacing.md, android: spacing.sm }),
-  color: colors.text,
-  borderWidth: 0,
+  // paddingHorizontal: spacing.md,
+  // paddingVertical: Platform.select({ ios: spacing.md, android: spacing.sm }),
+  // color: colors.text,
+  // borderWidth: 0,
 })
 const $titleInputContainer: ViewStyle = { borderWidth: 0, paddingHorizontal: 24 }
