@@ -1,6 +1,6 @@
 import { Platform, Pressable, View, type ViewStyle } from "react-native"
 import * as FileSystem from "expo-file-system"
-import { RichEditor } from "react-native-pell-rich-editor"
+import { actions, RichEditor, RichToolbar } from "react-native-pell-rich-editor"
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
@@ -8,7 +8,7 @@ import { Icon } from "@/components/Icon"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { useKeyboardHeight } from "@/utils/useKeyboardHeight"
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import { ImagePickerWithCropping } from "./ImagePickerWithCroping"
 import { insertDialogue } from "@/utils/insertDialogueBubble"
 
@@ -27,6 +27,7 @@ export function KeyboardToolbar({ editorRef, visible, onLocation, onCharacter }:
   const { themed } = useAppTheme()
   const coverImageRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const bottom = Math.max(0, kb - (Platform.OS === "ios" ? insets.bottom : 0))
+  const [showFormatBar, setShowFormatBar] = useState(false)
 
   const aStyle = useAnimatedStyle(() => {
     const shown = visible && kb > 0
@@ -65,6 +66,20 @@ export function KeyboardToolbar({ editorRef, visible, onLocation, onCharacter }:
       ]}
       pointerEvents={visible && kb > 0 ? "auto" : "none"}
     >
+      {showFormatBar && (
+        <RichToolbar
+          style={{ position: "absolute", bottom: 80, left: 80, right: 80, borderRadius: 12 }}
+          editor={editorRef.current}
+          actions={[
+            actions.setBold,
+            actions.setItalic,
+            actions.setUnderline,
+            actions.alignLeft,
+            actions.alignCenter,
+            actions.alignRight,
+          ]}
+        />
+      )}
       <ImagePickerWithCropping
         ref={coverImageRef}
         onImageSelected={handleCoverImageSelected}
@@ -79,13 +94,36 @@ export function KeyboardToolbar({ editorRef, visible, onLocation, onCharacter }:
             }}
           >
             <Pill onPress={onLocation} icon="gps" />
-            <Pill onPress={() => run(() => coverImageRef?.current?.pickImage())} icon="image" />
+            <Pill
+              onPress={() => {
+                setShowFormatBar(false)
+                run(() => coverImageRef?.current?.pickImage())
+              }}
+              icon="image"
+            />
 
-            <Pill onPress={onCharacter} icon="chatBubble" />
-            <Pill onPress={() => run(() => editor?.setUnderline?.())} icon="text" />
+            <Pill
+              onPress={() => {
+                setShowFormatBar(false)
+                onCharacter()
+              }}
+              icon="chatBubble"
+            />
+            <Pill
+              onPress={() => {
+                setShowFormatBar(true)
+              }}
+              icon="text"
+            />
           </View>
           <View>
-            <Pill onPress={() => run(() => editor?.dismissKeyboard())} icon="keyboardDown" />
+            <Pill
+              onPress={() => {
+                setShowFormatBar(false)
+                run(() => editor?.dismissKeyboard())
+              }}
+              icon="keyboardDown"
+            />
           </View>
         </Row>
       </View>
