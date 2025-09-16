@@ -17,6 +17,9 @@ export function useDialogue() {
     name: "",
     textBackgroundColor: "",
     textColor: "",
+    dialogue: "",
+    audioUri: undefined,
+    avatarUri: undefined,
   })
   const [selectedBackgroundColor, setSelectedBackgroundColor] =
     useState<BackgroundColorType>("#E9CDFD")

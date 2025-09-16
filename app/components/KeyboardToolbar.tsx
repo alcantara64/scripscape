@@ -17,11 +17,24 @@ type Props = {
   visible: boolean
   onLocation: () => void
   onCharacter: () => void
+  embeddedImageUsed: number
+  setEmbeddedImageUsed: (x: number) => void
+  embeddedImageLimit: number
+  onLimitReached: () => void
 }
 
 const BAR_HEIGHT = Platform.OS === "ios" ? 64 : 110
 
-export function KeyboardToolbar({ editorRef, visible, onLocation, onCharacter }: Props) {
+export function KeyboardToolbar({
+  editorRef,
+  visible,
+  onLocation,
+  onCharacter,
+  embeddedImageLimit,
+  embeddedImageUsed,
+  setEmbeddedImageUsed,
+  onLimitReached,
+}: Props) {
   const kb = useKeyboardHeight()
   const insets = useSafeAreaInsets()
   const { themed } = useAppTheme()
@@ -41,20 +54,25 @@ export function KeyboardToolbar({ editorRef, visible, onLocation, onCharacter }:
   const run = (fn?: () => void) => fn?.()
 
   const handleCoverImageSelected = async (uri: string, mimeType?: string) => {
-    const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    })
+    if (embeddedImageUsed >= embeddedImageLimit) {
+      onLimitReached()
+    } else {
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      })
 
-    const mime = guessMime(uri, mimeType)
-    const dataUri = `data:${mime};base64,${base64}`
+      const mime = guessMime(uri, mimeType)
+      const dataUri = `data:${mime};base64,${base64}`
 
-    editorRef.current?.focusContentEditor?.()
-    editorRef.current?.insertHTML?.(`
+      editorRef.current?.focusContentEditor?.()
+      editorRef.current?.insertHTML?.(`
     <figure style="margin:12px 0;">
       <img src="${dataUri}" alt="${null ?? "image"}"
            style="max-width:100%;height:auto;display:block;border-radius:12px;" />
     </figure>
   `)
+      setEmbeddedImageUsed(embeddedImageUsed + 1)
+    }
   }
 
   return (

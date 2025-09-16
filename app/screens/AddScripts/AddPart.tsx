@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { View, Platform, KeyboardAvoidingView, StyleProp, ViewStyle, TextStyle } from "react-native"
 import { RichEditor } from "react-native-pell-rich-editor"
 
@@ -22,12 +22,13 @@ import {
 import { LocationSheet } from "./AddParts/locationSheet"
 import { useDialogue } from "./AddParts/useDialogue"
 import { useLocations } from "./AddParts/useLocation"
+import { Button } from "@/components/Button"
 
 export interface AddPartProps {
   style?: StyleProp<ViewStyle>
   onBack: () => void
 }
-type SheetMode = "location" | "character"
+type SheetMode = "location" | "character" | "upload-details"
 
 export default function AddPart({ style, onBack }: AddPartProps) {
   const $styles = [$container, style, Platform.OS === "android" && { marginTop: 24 }]
@@ -38,6 +39,7 @@ export default function AddPart({ style, onBack }: AddPartProps) {
   const [sheetMode, setSheetMode] = useState<SheetMode>("location")
   const editorRef = useRef<RichEditor>(null)
   const sheetRef = useRef<BottomSheetController>(null)
+  const isPro = false
 
   const [title, setTitle] = useState("")
   const [html, setHtml] = useState(
@@ -46,13 +48,12 @@ export default function AddPart({ style, onBack }: AddPartProps) {
   const [editorFocused, setEditorFocused] = useState(false)
   const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
   const charRef = useRef<CharacterSheetHandle>(null)
+  const [embeddedImageUsed, setEmbeddedImageUsed] = useState(0)
 
   const {
     locations,
     addLocation,
     sortedLocations,
-    quota,
-    progress,
     locationForm,
     setImage,
     setName,
@@ -68,8 +69,28 @@ export default function AddPart({ style, onBack }: AddPartProps) {
     setSelectedTextColor,
     additionalImages,
     addCharacter,
+    characterForm,
     onAddMoreImages,
   } = useDialogue()
+
+  const quota = useMemo(() => {
+    const limits = isPro
+      ? { poster: 1, embedded: 50, location: 50, character: 50 }
+      : { poster: 1, embedded: 10, location: 15, character: 15 }
+
+    return {
+      poster: { used: 1, limit: limits.poster },
+      embedded: { used: embeddedImageUsed, limit: limits.embedded },
+      location: { used: locations.length, limit: limits.location },
+      character: { used: characters.length, limit: limits.character },
+    }
+  }, [isPro, locations.length, characters.length, embeddedImageUsed])
+
+  const progress = useMemo(() => {
+    const total = Object.values(quota).reduce((sum, q) => sum + q.limit, 0)
+    const used = Object.values(quota).reduce((sum, q) => sum + q.used, 0)
+    return { used, total, pct: used / total }
+  }, [quota])
 
   useEffect(() => {
     bindDialogueClick(editorRef)
@@ -114,15 +135,15 @@ export default function AddPart({ style, onBack }: AddPartProps) {
     // persist a lightweight record if you want to support re-edit later
     // cacheDialogueData({ id, ...res })
 
-    const html = buildCharacterDialogueHTML({
-      id,
-      name: res.name,
-      avatar: res.avatarUri,
-      bubbleBg: res.bubbleBg ?? "#2C1A67",
-      textColor: res.textColor ?? "#FFFFFF",
-      dialogue: res.dialogue ?? "",
-      audioSrc: res.audioUri, // only set when PRO selected audio
-    })
+    // const html = buildCharacterDialogueHTML({
+    //   id,
+    //   name: res.name,
+    //   avatar: res.avatarUri,
+    //   bubbleBg: res.bubbleBg ?? "#2C1A67",
+    //   textColor: res.textColor ?? "#FFFFFF",
+    //   dialogue: res.dialogue ?? "",
+    //   audioSrc: res.audioUri, // only set when PRO selected audio
+    // })
     insertDialogue(editorRef, {
       name: res.name,
       nameColor: res.textColor,
@@ -137,6 +158,40 @@ export default function AddPart({ style, onBack }: AddPartProps) {
     bindDialogueClick(editorRef) // reuse your util if it adds extra guards
   }
 
+  const UploadDetail = () => {
+    const uploadItems: Array<{ label: string; key: keyof typeof quota }> = [
+      { label: "Poster Image", key: "poster" },
+      { label: "Embedded Images", key: "embedded" },
+      { label: "Location Images", key: "location" },
+      { label: "Character Images", key: "character" },
+    ]
+    return (
+      <View>
+        <View style={themed($headerRow)}>
+          <View>
+            <Text preset="sectionHeader" weight="semiBold">
+              Uploads Remaining
+            </Text>
+          </View>
+          <ProgressRing value={progress.used} total={progress.total} size={27} />
+        </View>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+          {uploadItems.map((item) => (
+            <View style={{ width: "48%" }} key={item.key}>
+              <Text text={item.label} />
+              <Text text={`${quota[item.key].used}/${quota[item.key].limit}`} />
+            </View>
+          ))}
+        </View>
+        <Button>Upgrade to </Button>
+      </View>
+    )
+  }
+
+  const showUPloadDetail = () => {
+    sheetRef.current?.expand()
+    setSheetMode("upload-details")
+  }
   return (
     <View style={$styles}>
       {/* Header */}
@@ -147,7 +202,12 @@ export default function AddPart({ style, onBack }: AddPartProps) {
             Part 1
           </Text>
         </View>
-        <ProgressRing value={10} total={40} size={27} />
+        <ProgressRing
+          value={progress.used}
+          total={progress.total}
+          size={27}
+          onPress={showUPloadDetail}
+        />
       </View>
 
       {/* Title + Editor */}
@@ -218,6 +278,10 @@ export default function AddPart({ style, onBack }: AddPartProps) {
             visible={editorFocused}
             onLocation={openLocationSheet}
             onCharacter={openCharacterSheet}
+            embeddedImageUsed={embeddedImageUsed}
+            setEmbeddedImageUsed={setEmbeddedImageUsed}
+            embeddedImageLimit={quota.embedded.limit}
+            onLimitReached={showUPloadDetail}
           />
         </KeyboardAvoidingView>
       </View>
@@ -233,7 +297,9 @@ export default function AddPart({ style, onBack }: AddPartProps) {
         }}
         onClose={onSheetClose}
       >
-        {sheetMode === "location" ? (
+        {sheetMode === "upload-details" ? (
+          <UploadDetail />
+        ) : sheetMode === "location" ? (
           <LocationSheet
             currentTab={currentTab}
             setCurrentTab={setCurrentTab}
@@ -248,9 +314,11 @@ export default function AddPart({ style, onBack }: AddPartProps) {
               resetForm()
             }}
             onConfirm={onConfirmLocation}
+            onLimitReached={showUPloadDetail}
           />
         ) : (
           <CharacterSheet
+            quota={quota.character}
             isPro={true}
             onSave={(res) => {
               onCharacterSave(res)
@@ -264,6 +332,11 @@ export default function AddPart({ style, onBack }: AddPartProps) {
             additionalImages={additionalImages}
             onAddAdditionalImages={onAddMoreImages}
             addCharacter={addCharacter}
+            onConfirm={() => {}}
+            form={characterForm}
+            setCharacterImage={() => {}}
+            setCharacterName={() => {}}
+            onLimitReached={showUPloadDetail}
           />
         )}
       </AppBottomSheet>
@@ -281,25 +354,6 @@ const $headerRow: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   marginBottom: 8,
   gap: spacing.xs,
   paddingHorizontal: 24,
-})
-
-const $ring: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  width: 26,
-  height: 26,
-  borderRadius: 13,
-  position: "relative",
-  overflow: "hidden",
-  backgroundColor: "transparent",
-  borderWidth: 4,
-  borderColor: colors.success,
-})
-const $ringTrack: ThemedStyle<ViewStyle> = () => ({ backgroundColor: "transparent" })
-const $ringFill: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  position: "absolute",
-  left: 0,
-  top: 0,
-  bottom: 0,
-  backgroundColor: colors.tint,
 })
 
 const $titleInput: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({

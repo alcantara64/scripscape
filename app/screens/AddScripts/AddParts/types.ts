@@ -20,6 +20,9 @@ export type CharacterForm = {
   name: string
   textBackgroundColor: string
   textColor: string
+  dialogue?: string
+  audioUri?: string
+  avatarUri?: string
 }
 
 export type TextColorType = (typeof TEXT_COLOR)[number]

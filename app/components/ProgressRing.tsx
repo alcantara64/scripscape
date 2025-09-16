@@ -1,4 +1,4 @@
-import { StyleProp, TextStyle, View, ViewStyle } from "react-native"
+import { Pressable, StyleProp, TextStyle, View, ViewStyle } from "react-native"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { Text } from "@/components/Text"
@@ -20,6 +20,7 @@ export interface ProgressRingProps {
   duration?: number // ms animation
   showLabel?: boolean // center label
   lineCap?: "butt" | "round"
+  onPress?: () => void
 }
 
 /**
@@ -37,6 +38,7 @@ export const ProgressRing = (props: ProgressRingProps) => {
     duration = 800,
     showLabel,
     lineCap = "butt",
+    onPress,
   } = props
   const $styles = [$container, style]
   const { themed } = useAppTheme()
@@ -55,7 +57,7 @@ export const ProgressRing = (props: ProgressRingProps) => {
   }, [percent, duration])
 
   return (
-    <View style={$styles}>
+    <Pressable style={$styles} onPress={onPress}>
       <AnimatedCircularProgress
         ref={ref}
         size={size}
@@ -71,7 +73,7 @@ export const ProgressRing = (props: ProgressRingProps) => {
           ? () => <Text style={{ fontWeight: "700" }}>{Math.round(percent)}%</Text>
           : undefined}
       </AnimatedCircularProgress>
-    </View>
+    </Pressable>
   )
 }
 

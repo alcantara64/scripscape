@@ -28,6 +28,7 @@ type Props = {
   setHideName: (hide: boolean) => void
   addLocation: (item: LocationItem) => void
   onConfirm: (item: LocationItem) => void
+  onLimitReached: () => void
 }
 
 export function LocationSheet({
@@ -41,6 +42,7 @@ export function LocationSheet({
   setHideName,
   addLocation,
   onConfirm,
+  onLimitReached,
 }: Props) {
   const {
     themed,
@@ -104,7 +106,7 @@ export function LocationSheet({
   )
 
   const selectedItem = selectedIndex != null ? locations[selectedIndex] : null
-
+  const haReachedLimit = locations.length >= quotaLimit
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ImagePickerWithCropping ref={pickerRef} onImageSelected={setImage} aspect={[16, 9]} />
@@ -141,12 +143,21 @@ export function LocationSheet({
           />
 
           {/* Add new location button */}
-          <View style={themed($addDashed)}>
+
+          <Pressable
+            disabled={haReachedLimit}
+            style={[themed($addDashed), haReachedLimit && { opacity: 0.6 }]}
+            onPress={() => {
+              if (haReachedLimit) {
+                onLimitReached()
+              } else {
+                setIsAddLocation(true)
+              }
+            }}
+          >
             <Icon icon="plus" size={24} />
-            <Text weight="medium" onPress={() => setIsAddLocation(true)}>
-              Add Location
-            </Text>
-          </View>
+            <Text weight="medium">Add Location</Text>
+          </Pressable>
 
           <Button
             text="Confirm"

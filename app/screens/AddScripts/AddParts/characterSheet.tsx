@@ -37,7 +37,6 @@ export type CharacterResult = {
 }
 
 type Props = {
-  quotaLimit: number
   characters: CharacterItem[]
   form: CharacterForm
   isPro: boolean
@@ -52,6 +51,8 @@ type Props = {
   onAddAdditionalImages: (uri: string) => void
   additionalImages: Array<{ imageUri: string }>
   onSave: (res: CharacterResult) => void
+  quota: { used: number; limit: number }
+  onLimitReached: () => void
 }
 
 type Mode = "add-character" | "add-dialogue" | "choose-character"
@@ -62,7 +63,6 @@ export type CharacterSheetHandle = BottomSheetController & {
 
 export const CharacterSheet = ({
   isPro,
-  quotaLimit,
   characters,
   form,
   setCharacterImage,
@@ -75,6 +75,8 @@ export const CharacterSheet = ({
   onAddAdditionalImages,
   addCharacter,
   onSave,
+  quota,
+  onLimitReached,
 }: Props) => {
   const ctrl = useRef<BottomSheetController>(null)
   const {
@@ -170,6 +172,7 @@ export const CharacterSheet = ({
           <Text preset="titleHeading">
             {mode === "choose-character" ? "Add Dialogue" : "Add Character"}
           </Text>
+          {mode === "add-character" && <Text text={`${characters.length}/${quota.limit}`} />}
         </View>
         {(mode === "add-dialogue" || mode === "choose-character") && (
           <View style={themed($subTitleContainer)}>
@@ -227,12 +230,19 @@ export const CharacterSheet = ({
               renderItem={({ item, index }) => <RenderItem item={item} index={index} />}
             />
             <View style={{ gap: 12 }}>
-              <View style={themed($addDashed)}>
+              <Pressable
+                style={themed($addDashed)}
+                onPress={() => {
+                  if (quota.used >= quota.limit) {
+                    onLimitReached()
+                  } else {
+                    setMode("add-character")
+                  }
+                }}
+              >
                 <Icon icon="plus" size={24} />
-                <Text weight="medium" onPress={() => setMode("add-character")}>
-                  Add Character
-                </Text>
-              </View>
+                <Text weight="medium">Add Character</Text>
+              </Pressable>
 
               <Button text="Continue" onPress={() => setMode("add-dialogue")} />
             </View>
@@ -497,6 +507,7 @@ export const CharacterSheet = ({
 const $headerRow: ViewStyle = {
   flexDirection: "row",
   marginBottom: 20,
+  justifyContent: "space-between",
 }
 const $subTitleContainer: ThemedStyle<ViewStyle> = ({ colors }) => ({
   flexDirection: "row",
