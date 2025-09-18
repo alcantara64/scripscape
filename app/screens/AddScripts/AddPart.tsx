@@ -3,6 +3,7 @@ import { View, Platform, KeyboardAvoidingView, StyleProp, ViewStyle, TextStyle }
 import { RichEditor } from "react-native-pell-rich-editor"
 
 import { AppBottomSheet, type BottomSheetController } from "@/components/AppBottomSheet"
+import { Button } from "@/components/Button"
 import { PressableIcon } from "@/components/Icon"
 import { KeyboardToolbar } from "@/components/KeyboardToolbar"
 import { ProgressRing } from "@/components/ProgressRing"
@@ -20,17 +21,28 @@ import {
   type TabKey,
 } from "./AddParts/editorConstant"
 import { LocationSheet } from "./AddParts/locationSheet"
+import { Part } from "./AddParts/types"
 import { useDialogue } from "./AddParts/useDialogue"
 import { useLocations } from "./AddParts/useLocation"
-import { Button } from "@/components/Button"
 
 export interface AddPartProps {
   style?: StyleProp<ViewStyle>
   onBack: () => void
+  nextPartNumber: number
+  selectedPart: (Part & { currentIndex: number }) | null
+  onUpdate?: (id: string, payload: Omit<Part, "id">) => void | Promise<void>
+  onSave?: (draft: Omit<Part, "id">) => void | Promise<void>
 }
 type SheetMode = "location" | "character" | "upload-details"
 
-export default function AddPart({ style, onBack }: AddPartProps) {
+export default function AddPart({
+  style,
+  onBack,
+  nextPartNumber,
+  selectedPart,
+  onSave,
+  onUpdate,
+}: AddPartProps) {
   const $styles = [$container, style, Platform.OS === "android" && { marginTop: 24 }]
   const {
     themed,
@@ -40,10 +52,11 @@ export default function AddPart({ style, onBack }: AddPartProps) {
   const editorRef = useRef<RichEditor>(null)
   const sheetRef = useRef<BottomSheetController>(null)
   const isPro = false
-
-  const [title, setTitle] = useState("")
+  const isEdit = !!selectedPart
+  const [title, setTitle] = useState(selectedPart?.title || "")
   const [html, setHtml] = useState(
-    `<p>Tucked between misty hills and a quiet shoreline, the village felt untouched by time…</p>`,
+    selectedPart?.html ||
+      `<p>Tucked between misty hills and a quiet shoreline, the village felt untouched by time…</p>`,
   )
   const [editorFocused, setEditorFocused] = useState(false)
   const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
@@ -129,7 +142,11 @@ export default function AddPart({ style, onBack }: AddPartProps) {
     },
     [closeLocationSheet],
   )
-
+  const handlePrimary = () => {
+    const payload = { title: title.trim(), blurb: blurb.trim() || undefined, html }
+    if (isEdit && selectedPart) onUpdate?.(selectedPart.id, payload)
+    else onSave?.(payload)
+  }
   const onCharacterSave = (res: CharacterResult) => {
     const id = Date.now().toString()
     // persist a lightweight record if you want to support re-edit later
@@ -199,7 +216,7 @@ export default function AddPart({ style, onBack }: AddPartProps) {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <PressableIcon icon="arrowLeft" onPress={onBack} hitSlop={10} />
           <Text preset="sectionHeader" weight="semiBold">
-            Part 1
+            Part {isEdit ? selectedPart.currentIndex : nextPartNumber}
           </Text>
         </View>
         <ProgressRing

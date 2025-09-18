@@ -4,6 +4,7 @@ export enum ScriptStatus {
 }
 
 export interface IScript {
+  script_id: string
   title: string
   descriptions: string
   image: string
@@ -13,4 +14,14 @@ export interface IScript {
   likes: number
   comments: number
   id: string
+}
+
+export interface ScriptResponse {
+  script_id: number
+}
+
+export type CreateScript = {
+  title: string
+  summary?: string
+  postalImage?: File | { uri: string; name: string; type: string } | null
 }

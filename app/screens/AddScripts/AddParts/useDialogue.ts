@@ -1,14 +1,7 @@
 import { useMemo, useState } from "react"
 
 import type { TabKey, TEXT_COLOR, TEXT_BACKGROUND_COLORS } from "./editorConstant"
-import type {
-  LocationItem,
-  LocationForm,
-  CharacterItem,
-  CharacterForm,
-  BackgroundColorType,
-  TextColorType,
-} from "./types"
+import type { CharacterItem, CharacterForm, BackgroundColorType, TextColorType } from "./types"
 
 export function useDialogue() {
   const [characters, setCharacters] = useState<CharacterItem[]>([])

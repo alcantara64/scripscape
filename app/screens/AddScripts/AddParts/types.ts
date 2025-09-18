@@ -27,3 +27,9 @@ export type CharacterForm = {
 
 export type TextColorType = (typeof TEXT_COLOR)[number]
 export type BackgroundColorType = (typeof TEXT_BACKGROUND_COLORS)[number]
+export type Part = {
+  id: string
+  title: string
+  blurb?: string
+  html: string
+}

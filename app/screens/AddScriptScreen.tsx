@@ -9,6 +9,7 @@ import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { useCreateScript } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 
@@ -19,7 +20,8 @@ const validateTitle = (v: string) =>
 
 export const AddScriptScreen: FC<AddScriptScreenProps> = () => {
   const navigation = useNavigation()
-  const { themed, theme } = useAppTheme()
+  const { themed } = useAppTheme()
+  const { mutate } = useCreateScript()
 
   // Title
   const [scriptTitle, setScriptTitle] = useState("")
@@ -44,6 +46,16 @@ export const AddScriptScreen: FC<AddScriptScreenProps> = () => {
 
   const handleCoverImageSelected = (uri: string) => {
     setCoverImage(uri)
+  }
+  const createScript = () => {
+    mutate(
+      { title: scriptTitle || "Untitled", summary: overview },
+      {
+        onSuccess: (response) => {
+          navigation.navigate("WriteScriptTableContents", { scriptId: response.script_id })
+        },
+      },
+    )
   }
 
   return (
@@ -90,16 +102,11 @@ export const AddScriptScreen: FC<AddScriptScreenProps> = () => {
           />
         </View>
         <View style={{ marginTop: 50 }}>
-          <Pressable onPress={() => {}} style={themed($cta)}>
+          <Pressable onPress={createScript} style={themed($cta)}>
             <Text style={themed($ctaText)}>Start Writing</Text>
           </Pressable>
 
-          <Pressable
-            onPress={() => {
-              navigation.navigate("WriteScriptTableContents")
-            }}
-            style={themed($cabtn)}
-          >
+          <Pressable onPress={createScript} style={themed($cabtn)}>
             <Text style={themed($skipTxt)}>Skip For Now</Text>
           </Pressable>
         </View>

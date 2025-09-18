@@ -1,37 +1,33 @@
 import { FC, useCallback, useMemo, useState } from "react"
 import { Platform, Pressable, SafeAreaView, TextStyle, View, ViewStyle } from "react-native"
 import { useNavigation } from "@react-navigation/native"
-import DraggableFlatList, {
-  RenderItemParams,
-  ScaleDecorator,
-} from "react-native-draggable-flatlist"
+import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist"
 
 import { Icon, PressableIcon } from "@/components/Icon"
-import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+
 import AddPart from "./AddScripts/AddPart"
+import { Part } from "./AddScripts/AddParts/types"
 
 // import { useNavigation } from "@react-navigation/native"
-
-type Part = {
-  id: string
-  title: string
-  blurb?: string
-}
 
 interface WriteScriptTableContentsScreenProps
   extends AppStackScreenProps<"WriteScriptTableContents"> {}
 
-export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenProps> = () => {
+export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenProps> = ({
+  route,
+}) => {
   // Pull in navigation via hook
   const navigation = useNavigation()
   const {
     themed,
     theme: { spacing, colors },
   } = useAppTheme()
+  const scriptId = route?.params?.scriptId
+  console.log({ scriptId })
   const [parts, setParts] = useState<Part[]>([
     { id: "p1", title: "A Chance Encounter", blurb: "Tucked between misty hills and a quiet…" },
     {
@@ -45,6 +41,7 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
   const [showAdd, setShowAdd] = useState(false)
   const [newTitle, setNewTitle] = useState("")
   const [newBlurb, setNewBlurb] = useState("")
+  const [selectedPart, setSelectedPart] = useState<(Part & { currentIndex: number }) | null>(null)
 
   const confirmAdd = () => {
     if (!newTitle.trim()) return
@@ -63,10 +60,25 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
 
   const publishDisabled = useMemo(() => pendingParts.length === 0, [pendingParts.length])
 
+  const handleSave = (draft: Omit<Part, "id">) => {
+    const id = `p_${Date.now()}`
+    setParts((prev) => [...prev, { id, ...draft }])
+    setShowAdd(false)
+  }
+
+  const handleUpdate = (id: string, patch: Omit<Part, "id">) => {
+    setParts((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)))
+    setShowAdd(false)
+  }
+
   const renderItem = useCallback(
     ({ item, getIndex, drag, isActive }: RenderItemParams<Part>) => (
       <Pressable
         onLongPress={drag}
+        onPress={() => {
+          setSelectedPart({ ...item, currentIndex: getIndex()! + 1 })
+          setShowAdd(true)
+        }}
         disabled={isActive}
         style={[themed($card), isActive && { opacity: 0.9 }]}
       >
@@ -127,15 +139,28 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
               onDragEnd={onDragEnd}
               renderItem={renderItem}
               containerStyle={{ gap: spacing.sm }}
+              extraData={parts}
               contentContainerStyle={{ gap: spacing.sm }}
             />
-            <Pressable style={themed($addDashed)} onPress={() => setShowAdd(true)}>
+            <Pressable
+              style={themed($addDashed)}
+              onPress={() => {
+                setSelectedPart(null)
+                setShowAdd(true)
+              }}
+            >
               <Icon icon="plus" size={24} />
               <Text weight="medium">Add New Part</Text>
             </Pressable>
           </View>
         ) : (
-          <AddPart onBack={() => setShowAdd(false)} />
+          <AddPart
+            onBack={() => setShowAdd(false)}
+            nextPartNumber={parts.length + 1}
+            selectedPart={selectedPart}
+            onSave={handleSave}
+            onUpdate={handleUpdate}
+          />
         )}
       </View>
     </SafeAreaView>

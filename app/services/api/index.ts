@@ -44,12 +44,16 @@ export class Api {
       timeout: this.config.timeout,
       headers: {
         Accept: "application/json",
+        Authorization: "",
       },
     })
 
-    this.apisauce.addRequestTransform(async (request) => {
+    this.apisauce.addAsyncRequestTransform(async (request) => {
       const { accessToken, tokenType } = await readTokens()
-      this.apisauce.headers.Authorization = `${tokenType} ${accessToken}`
+      if (request.headers) {
+        request.headers.Authorization = `${tokenType} ${accessToken}`
+        console.log(request.headers)
+      }
     })
   }
 
