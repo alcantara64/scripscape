@@ -1,7 +1,7 @@
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { TextStyle, ViewStyle } from "react-native"
 import { BottomTabScreenProps, createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import { CompositeScreenProps } from "@react-navigation/native"
+import { CompositeScreenProps, useNavigation } from "@react-navigation/native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { Icon } from "@/components/Icon"
@@ -17,6 +17,7 @@ import type { ThemedStyle } from "@/theme/types"
 
 import { AppStackParamList, AppStackScreenProps } from "./AppNavigator"
 import { DrawerNavigation } from "./DrawerNavigation"
+import { useAuth } from "@/context/AuthContext"
 
 export type DemoTabParamList = {
   MyScripts: undefined
@@ -49,7 +50,8 @@ const Tab = createBottomTabNavigator<DemoTabParamList>()
 export function DemoNavigator() {
   const { bottom } = useSafeAreaInsets()
   const drawerRef = useRef(null)
-
+  const { requireAuth, isAuthenticated } = useAuth()
+  const nav = useNavigation()
   const {
     themed,
     theme: { colors },
@@ -97,6 +99,19 @@ export function DemoNavigator() {
               />
             ),
           }}
+          listeners={({ navigation }) => ({
+            tabPress: async (e) => {
+              if (!isAuthenticated) {
+                e.preventDefault()
+                try {
+                  await requireAuth()
+                  navigation.navigate("MyScripts" as never)
+                } catch {
+                  // user canceled auth
+                }
+              }
+            },
+          })}
         />
         <Tab.Screen
           name="AddScript"
@@ -107,6 +122,19 @@ export function DemoNavigator() {
             tabBarLabel: () => null,
             tabBarIcon: () => <PlusIcon />,
           }}
+          listeners={({ navigation }) => ({
+            tabPress: async (e) => {
+              if (!isAuthenticated) {
+                e.preventDefault()
+                try {
+                  await requireAuth()
+                  navigation.navigate("AddScript" as never)
+                } catch {
+                  // user canceled auth
+                }
+              }
+            },
+          })}
         />
 
         <Tab.Screen
@@ -123,6 +151,19 @@ export function DemoNavigator() {
               />
             ),
           }}
+          listeners={({ navigation }) => ({
+            tabPress: async (e) => {
+              if (!isAuthenticated) {
+                e.preventDefault()
+                try {
+                  await requireAuth()
+                  navigation.navigate("Activity" as never)
+                } catch {
+                  // user canceled auth
+                }
+              }
+            },
+          })}
         />
 
         <Tab.Screen
@@ -138,6 +179,19 @@ export function DemoNavigator() {
               />
             ),
           }}
+          listeners={({ navigation }) => ({
+            tabPress: async (e) => {
+              if (!isAuthenticated) {
+                e.preventDefault()
+                try {
+                  await requireAuth()
+                  navigation.navigate("Settings" as never)
+                } catch {
+                  // user canceled auth
+                }
+              }
+            },
+          })}
         />
       </Tab.Navigator>
     </DrawerNavigation>
