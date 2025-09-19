@@ -1,4 +1,4 @@
-import { CreatePart, Part, ScriptResponse } from "@/interface/script"
+import { CreatePart, Part, ScriptPartLocationImage, ScriptResponse } from "@/interface/script"
 
 import { Api } from "./api"
 import { ApiResult } from "./api/types"
@@ -43,6 +43,25 @@ export class ScriptService {
     }
 
     return this.httpClient.patch<Part>(`/script/parts/${part_id}`, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+  }
+  createScriptPartLocation(
+    part_id: number,
+    payload: Omit<ScriptPartLocationImage, "id">,
+  ): Promise<ApiResult<ScriptPartLocationImage>> {
+    const fd = new FormData()
+    if (payload.image) {
+      fd.append("image", payload.image)
+    }
+    if (payload.name) {
+      fd.append("name", payload.name)
+    }
+    if (payload.hideName) {
+      fd.append("hideName", payload.hideName)
+    }
+
+    return this.httpClient.post<ScriptPartLocationImage>(`/script/parts/${part_id}/locations`, fd, {
       headers: { "Content-Type": "multipart/form-data" },
     })
   }

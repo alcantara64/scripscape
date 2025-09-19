@@ -2,11 +2,11 @@ import { useMemo, useState } from "react"
 
 import type { TabKey } from "./editorConstant"
 import type { LocationItem, LocationForm } from "./types"
+import { ScriptPartLocationImage } from "@/interface/script"
 
-type Options = { currentTab: TabKey }
+type Options = { currentTab: TabKey; locations: Array<ScriptPartLocationImage> }
 
-export function useLocations({ currentTab }: Options) {
-  const [locations, setLocations] = useState<LocationItem[]>([])
+export function useLocations({ currentTab, locations }: Options) {
   const [locationForm, setLocationForm] = useState<LocationForm>({
     image: null,
     name: "",
@@ -37,7 +37,6 @@ export function useLocations({ currentTab }: Options) {
     return locations
   }, [locations, currentTab])
 
-  const addLocation = (item: LocationItem) => setLocations((prev) => [...prev, item])
   const resetForm = () => setLocationForm({ image: null, name: "", hideName: false })
   const setImage = (uri: string | null) => setLocationForm((f) => ({ ...f, image: uri }))
   const setName = (name: string) => setLocationForm((f) => ({ ...f, name }))
@@ -45,7 +44,6 @@ export function useLocations({ currentTab }: Options) {
 
   return {
     locations,
-    addLocation,
     sortedLocations,
     quota,
     progress,

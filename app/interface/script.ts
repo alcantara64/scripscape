@@ -32,9 +32,17 @@ export type Part = {
   index: number
   title: string
   content: string
-  partLocation: Array<{}>
+  partLocations: Array<ScriptPartLocationImage>
   partDialogues: Array<{}>
   postalImage?: string
 }
 
 export type CreatePart = Pick<Part, "script_id" | "index" | "content" | "title">
+
+export type ScriptPartLocationImage = {
+  id: number
+  name: string
+  hideName: boolean
+  image?: string
+  createdAt?: string
+}

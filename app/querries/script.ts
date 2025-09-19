@@ -1,10 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { CreatePart, CreateScript, Part } from "@/interface/script"
+import { CreatePart, CreateScript, Part, ScriptPartLocationImage } from "@/interface/script"
 import { scriptService } from "@/services/scriptService"
 import { getOrThrow } from "@/utils/query"
 type ReorderVars = { script_id: number; parts: Part[] }
 type UpdateVars = { part_id: number; part: Partial<Omit<Part, "part_id">> }
+type CreateLocationVars = {
+  part_id: number
+  script_id: number
+  Loc: Omit<ScriptPartLocationImage, "id">
+}
 async function createScript(payload: CreateScript) {
   const form = buildFormData(payload)
   return getOrThrow(scriptService.create(form))
@@ -69,6 +74,20 @@ export const useUpdateScriptPart = () => {
     mutationFn: updatePart,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["get-parts"] })
+    },
+  })
+}
+
+async function createLocationPart(vars: CreateLocationVars) {
+  return getOrThrow(scriptService.createScriptPartLocation(vars.part_id, vars.Loc))
+}
+
+export const useScriptPartLocation = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createLocationPart,
+    onSuccess: (response, variables) => {
+      qc.invalidateQueries({ queryKey: ["get-parts", variables.script_id] })
     },
   })
 }

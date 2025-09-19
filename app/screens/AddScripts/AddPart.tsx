@@ -9,6 +9,7 @@ import { KeyboardToolbar } from "@/components/KeyboardToolbar"
 import { ProgressRing } from "@/components/ProgressRing"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
+import { Part } from "@/interface/script"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { bindDialogueClick, insertDialogue } from "@/utils/insertDialogueBubble"
@@ -21,7 +22,6 @@ import {
   type TabKey,
 } from "./AddParts/editorConstant"
 import { LocationSheet } from "./AddParts/locationSheet"
-import { Part } from "./AddParts/types"
 import { useDialogue } from "./AddParts/useDialogue"
 import { useLocations } from "./AddParts/useLocation"
 
@@ -58,19 +58,10 @@ export default function AddPart({
   const [html, setHtml] = useState(selectedPart?.content || "")
   const [editorFocused, setEditorFocused] = useState(false)
   const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
-  const charRef = useRef<CharacterSheetHandle>(null)
   const [embeddedImageUsed, setEmbeddedImageUsed] = useState(0)
 
-  const {
-    locations,
-    addLocation,
-    sortedLocations,
-    locationForm,
-    setImage,
-    setName,
-    setHideName,
-    resetForm,
-  } = useLocations({ currentTab })
+  const { locations, sortedLocations, locationForm, setImage, setName, setHideName, resetForm } =
+    useLocations({ currentTab, locations: selectedPart?.partLocations || [] })
 
   const {
     characters,
@@ -118,7 +109,9 @@ export default function AddPart({
   }, [])
 
   useEffect(() => {
-    onUpdate(selectedPart.part_id, { title: title.trim(), content: html, order: nextPartNumber })
+    if (selectedPart?.part_id) {
+      onUpdate(selectedPart.part_id, { title: title.trim(), content: html, order: nextPartNumber })
+    }
   }, [title, html])
 
   const focusEditor = useCallback(() => editorRef.current?.focusContentEditor?.(), [])
@@ -298,7 +291,7 @@ export default function AddPart({
             }}
           />
           <KeyboardToolbar
-            partId={selectedPart.part_id}
+            partId={selectedPart?.part_id}
             editorRef={editorRef}
             visible={editorFocused}
             onLocation={openLocationSheet}
@@ -326,6 +319,7 @@ export default function AddPart({
           <UploadDetail />
         ) : sheetMode === "location" ? (
           <LocationSheet
+            script_id={selectedPart?.script_id as number}
             currentTab={currentTab}
             setCurrentTab={setCurrentTab}
             quotaLimit={quota.location.limit}
@@ -335,11 +329,11 @@ export default function AddPart({
             setName={setName}
             setHideName={setHideName}
             addLocation={(item) => {
-              addLocation(item)
               resetForm()
             }}
             onConfirm={onConfirmLocation}
             onLimitReached={showUPloadDetail}
+            partId={selectedPart?.part_id as number}
           />
         ) : (
           <CharacterSheet
