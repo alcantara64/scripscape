@@ -1,3 +1,4 @@
+import { useRef, useState } from "react"
 import { Platform, Pressable, View, type ViewStyle } from "react-native"
 import * as FileSystem from "expo-file-system"
 import { actions, RichEditor, RichToolbar } from "react-native-pell-rich-editor"
@@ -7,10 +8,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Icon } from "@/components/Icon"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
-import { useKeyboardHeight } from "@/utils/useKeyboardHeight"
-import { useRef, useState } from "react"
-import { ImagePickerWithCropping } from "./ImagePickerWithCroping"
+import { compressImage, toRNFile } from "@/utils/image"
 import { insertDialogue } from "@/utils/insertDialogueBubble"
+import { useKeyboardHeight } from "@/utils/useKeyboardHeight"
+
+import { ImagePickerWithCropping } from "./ImagePickerWithCroping"
+import { useUpdateScriptPart } from "@/querries/script"
 
 type Props = {
   editorRef: React.RefObject<RichEditor | null>
@@ -21,6 +24,7 @@ type Props = {
   setEmbeddedImageUsed: (x: number) => void
   embeddedImageLimit: number
   onLimitReached: () => void
+  partId: number
 }
 
 const BAR_HEIGHT = Platform.OS === "ios" ? 64 : 110
@@ -34,10 +38,13 @@ export function KeyboardToolbar({
   embeddedImageUsed,
   setEmbeddedImageUsed,
   onLimitReached,
+  partId,
 }: Props) {
   const kb = useKeyboardHeight()
   const insets = useSafeAreaInsets()
   const { themed } = useAppTheme()
+  const updateScriptPart = useUpdateScriptPart()
+
   const coverImageRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const bottom = Math.max(0, kb - (Platform.OS === "ios" ? insets.bottom : 0))
   const [showFormatBar, setShowFormatBar] = useState(false)
@@ -57,21 +64,25 @@ export function KeyboardToolbar({
     if (embeddedImageUsed >= embeddedImageLimit) {
       onLimitReached()
     } else {
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      })
-
-      const mime = guessMime(uri, mimeType)
-      const dataUri = `data:${mime};base64,${base64}`
-
-      editorRef.current?.focusContentEditor?.()
-      editorRef.current?.insertHTML?.(`
+      const img = await compressImage(uri)
+      updateScriptPart.mutate(
+        {
+          part_id: partId,
+          part: { postalImage: toRNFile(img.uri, "poster-image.jpg") as any },
+        },
+        {
+          onSuccess: (response) => {
+            editorRef.current?.focusContentEditor?.()
+            editorRef.current?.insertHTML?.(`
     <figure style="margin:12px 0;">
-      <img src="${dataUri}" alt="${null ?? "image"}"
+      <img src="${response.poster_image}" alt="${null ?? "image"}"
            style="max-width:100%;height:auto;display:block;border-radius:12px;" />
     </figure>
   `)
-      setEmbeddedImageUsed(embeddedImageUsed + 1)
+            setEmbeddedImageUsed(embeddedImageUsed + 1)
+          },
+        },
+      )
     }
   }
 

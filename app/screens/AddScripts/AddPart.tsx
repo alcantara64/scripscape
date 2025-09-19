@@ -29,9 +29,9 @@ export interface AddPartProps {
   style?: StyleProp<ViewStyle>
   onBack: () => void
   nextPartNumber: number
-  selectedPart: (Part & { currentIndex: number }) | null
-  onUpdate?: (id: string, payload: Omit<Part, "id">) => void | Promise<void>
-  onSave?: (draft: Omit<Part, "id">) => void | Promise<void>
+  selectedPart: Part | null
+  onUpdate: (id: number, payload: Omit<Part, "part_id">) => void | Promise<void>
+  onSave: (draft: Omit<Part, "id" | "script_id">) => void | Promise<void>
 }
 type SheetMode = "location" | "character" | "upload-details"
 
@@ -53,11 +53,9 @@ export default function AddPart({
   const sheetRef = useRef<BottomSheetController>(null)
   const isPro = false
   const isEdit = !!selectedPart
+
   const [title, setTitle] = useState(selectedPart?.title || "")
-  const [html, setHtml] = useState(
-    selectedPart?.html ||
-      `<p>Tucked between misty hills and a quiet shoreline, the village felt untouched by time…</p>`,
-  )
+  const [html, setHtml] = useState(selectedPart?.content || "")
   const [editorFocused, setEditorFocused] = useState(false)
   const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
   const charRef = useRef<CharacterSheetHandle>(null)
@@ -109,6 +107,20 @@ export default function AddPart({
     bindDialogueClick(editorRef)
   }, [])
 
+  useEffect(() => {
+    if (isEdit) return
+    ;(async () => {
+      if (title || html) {
+        await onSave({ title, content: html, order: nextPartNumber })
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    onUpdate(selectedPart.part_id, { title: title.trim(), content: html, order: nextPartNumber })
+  }, [title, html])
+
   const focusEditor = useCallback(() => editorRef.current?.focusContentEditor?.(), [])
 
   const onEditorMessage = useCallback((msg: string) => {
@@ -142,11 +154,7 @@ export default function AddPart({
     },
     [closeLocationSheet],
   )
-  const handlePrimary = () => {
-    const payload = { title: title.trim(), blurb: blurb.trim() || undefined, html }
-    if (isEdit && selectedPart) onUpdate?.(selectedPart.id, payload)
-    else onSave?.(payload)
-  }
+
   const onCharacterSave = (res: CharacterResult) => {
     const id = Date.now().toString()
     // persist a lightweight record if you want to support re-edit later
@@ -216,7 +224,7 @@ export default function AddPart({
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <PressableIcon icon="arrowLeft" onPress={onBack} hitSlop={10} />
           <Text preset="sectionHeader" weight="semiBold">
-            Part {isEdit ? selectedPart.currentIndex : nextPartNumber}
+            Part {isEdit ? selectedPart.index : nextPartNumber}
           </Text>
         </View>
         <ProgressRing
@@ -289,8 +297,8 @@ export default function AddPart({
               mediaPlaybackRequiresUserAction: false,
             }}
           />
-
           <KeyboardToolbar
+            partId={selectedPart.part_id}
             editorRef={editorRef}
             visible={editorFocused}
             onLocation={openLocationSheet}

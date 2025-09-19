@@ -42,7 +42,7 @@ export type AppStackParamList = {
   Settings: undefined
   Subscription: undefined
   Search: undefined
-  WriteScriptTableContents: { scriptId: string }
+  WriteScriptTableContents: { scriptId: number }
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 

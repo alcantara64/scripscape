@@ -25,3 +25,16 @@ export type CreateScript = {
   summary?: string
   postalImage?: File | { uri: string; name: string; type: string } | null
 }
+
+export type Part = {
+  part_id: number
+  script_id: number
+  index: number
+  title: string
+  content: string
+  partLocation: Array<{}>
+  partDialogues: Array<{}>
+  postalImage?: string
+}
+
+export type CreatePart = Pick<Part, "script_id" | "index" | "content" | "title">

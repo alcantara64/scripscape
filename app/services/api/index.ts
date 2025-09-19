@@ -52,7 +52,6 @@ export class Api {
       const { accessToken, tokenType } = await readTokens()
       if (request.headers) {
         request.headers.Authorization = `${tokenType} ${accessToken}`
-        console.log(request.headers)
       }
     })
   }
@@ -124,6 +123,14 @@ export class Api {
     cfg?: AxiosRequestConfig,
   ): Promise<ApiResult<T>> {
     const res = await this.apisauce.put<T>(url, payload, cfg)
+    return this.normalize(res)
+  }
+  async patch<T>(
+    url: string,
+    payload?: JsonBody | FormData,
+    cfg?: AxiosRequestConfig,
+  ): Promise<ApiResult<T>> {
+    const res = await this.apisauce.patch<T>(url, payload, cfg)
     return this.normalize(res)
   }
 

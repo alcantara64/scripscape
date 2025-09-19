@@ -8,7 +8,7 @@ import {
   ViewStyle,
 } from "react-native"
 import { ImageBackground } from "expo-image"
-import { RouteProp, useNavigation } from "@react-navigation/native"
+import { useNavigation } from "@react-navigation/native"
 
 import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
 import { AvatarEditor } from "@/components/AvatarEditor"
@@ -24,13 +24,14 @@ import { ScriptList } from "@/components/ScriptList"
 import { ProfileScreenSkeleton } from "@/components/skeleton/screens/ProfileScreenSkeleton"
 import { Text } from "@/components/Text"
 import { mock_scripts } from "@/mockups/script"
-import type { AppStackParamList, AppStackScreenProps } from "@/navigators/AppNavigator"
+import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useUpdateProfile, useUser } from "@/querries/user"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
 import { formatNumber } from "@/utils/formatDate"
+import { toRNFile } from "@/utils/image"
 import { followers } from "@/utils/mock"
 import { toast } from "@/utils/toast"
 
@@ -75,19 +76,6 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ route }) => {
   const toggleScriptFollowerTab = (type: "followers" | "script") => {
     setCurrentTab(type)
   }
-
-  const mimeFromUri = (uri: string) => {
-    const ext = uri.split("?")[0].split(".").pop()?.toLowerCase()
-    if (ext === "png") return "image/png"
-    if (ext === "jpg" || ext === "jpeg") return "image/jpeg"
-    if (ext === "webp") return "image/webp"
-    return "application/octet-stream"
-  }
-  const toRNFile = (uri: string, fallbackName: string) => ({
-    uri,
-    name: fallbackName,
-    type: mimeFromUri(uri),
-  })
 
   const openUsernameEditor = () => {
     setEditorConfig({
@@ -511,15 +499,6 @@ const $profileDescription: TextStyle = {
   fontSize: 14,
   lineHeight: 20,
 }
-const $fieldTitle: ViewStyle = {
-  gap: 20,
-}
-
-const $buttonStyle: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  backgroundColor: colors.buttonBackground,
-  borderRadius: 12,
-  borderWidth: 0,
-})
 const $listContainer: ViewStyle = {
   paddingHorizontal: spacing.sm,
 }

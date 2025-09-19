@@ -1,4 +1,4 @@
-import { ScriptResponse } from "@/interface/script"
+import { CreatePart, Part, ScriptResponse } from "@/interface/script"
 
 import { Api } from "./api"
 import { ApiResult } from "./api/types"
@@ -10,7 +10,41 @@ export class ScriptService {
     return this.httpClient.post<ScriptResponse>("/script", payload)
   }
   getScript(scriptId: number): Promise<ApiResult<ScriptResponse>> {
-    return this.httpClient.post<ScriptResponse>(`/script/${scriptId}`)
+    return this.httpClient.get<ScriptResponse>(`/script/${scriptId}`)
+  }
+  getPartsByScript(scriptId: number): Promise<ApiResult<Array<Part>>> {
+    return this.httpClient.get<Array<Part>>(`/script/${scriptId}/parts`)
+  }
+  createScriptParts(scriptId: number, payload: CreatePart): Promise<ApiResult<Part>> {
+    return this.httpClient.post<Part>(`/script/${scriptId}/parts`, payload)
+  }
+  reorderScriptParts(
+    scriptId: number,
+    payload: Array<Pick<Part, "part_id">>,
+  ): Promise<ApiResult<Part>> {
+    const order = payload.map((p) => p.part_id)
+
+    return this.httpClient.put<Part>(`/script/${scriptId}/parts/reorder`, { order })
+  }
+
+  updateScriptPart(
+    part_id: number,
+    payload: Partial<Omit<Part, "part_id">>,
+  ): Promise<ApiResult<Part>> {
+    const fd = new FormData()
+    if (payload.postalImage) {
+      fd.append("postalImage", payload.postalImage)
+    }
+    if (payload.title) {
+      fd.append("title", payload.title)
+    }
+    if (payload.content) {
+      fd.append("content", payload.content)
+    }
+
+    return this.httpClient.patch<Part>(`/script/parts/${part_id}`, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
   }
 }
 

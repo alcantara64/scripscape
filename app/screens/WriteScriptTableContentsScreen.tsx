@@ -5,12 +5,18 @@ import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flat
 
 import { Icon, PressableIcon } from "@/components/Icon"
 import { Text } from "@/components/Text"
+import { Part } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import {
+  useCreateScriptPart,
+  useGetPartsByScript,
+  useOrderScriptParts,
+  useUpdateScriptPart,
+} from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 
 import AddPart from "./AddScripts/AddPart"
-import { Part } from "./AddScripts/AddParts/types"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -26,49 +32,39 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
     themed,
     theme: { spacing, colors },
   } = useAppTheme()
+  const { mutate } = useCreateScriptPart()
+  const orderMutation = useOrderScriptParts()
+  const updateScriptPart = useUpdateScriptPart()
   const scriptId = route?.params?.scriptId
-  console.log({ scriptId })
-  const [parts, setParts] = useState<Part[]>([
-    { id: "p1", title: "A Chance Encounter", blurb: "Tucked between misty hills and a quiet…" },
-    {
-      id: "p2",
-      title: "A Chance Encounter 2",
-      blurb: "Tucked between misty hills and a quiet… 333",
-    },
-  ])
+  const { data: parts } = useGetPartsByScript(scriptId)
+
   const pendingParts = parts
 
   const [showAdd, setShowAdd] = useState(false)
   const [newTitle, setNewTitle] = useState("")
-  const [newBlurb, setNewBlurb] = useState("")
-  const [selectedPart, setSelectedPart] = useState<(Part & { currentIndex: number }) | null>(null)
+  const [selectedPart, setSelectedPart] = useState<Part | null>(null)
 
-  const confirmAdd = () => {
+  const confirmAdd = (index: number, content: string) => {
     if (!newTitle.trim()) return
-    setParts((prev) => [
-      ...prev,
-      { id: `p${Date.now()}`, title: newTitle.trim(), blurb: newBlurb.trim() || undefined },
-    ])
+
     setNewTitle("")
-    setNewBlurb("")
     setShowAdd(false)
   }
 
   const onDragEnd = useCallback(({ data }: { data: Part[] }) => {
-    setParts(data)
+    orderMutation.mutate({ script_id: scriptId, parts: data })
   }, [])
 
-  const publishDisabled = useMemo(() => pendingParts.length === 0, [pendingParts.length])
+  const publishDisabled = useMemo(() => pendingParts?.length === 0, [pendingParts?.length])
 
-  const handleSave = (draft: Omit<Part, "id">) => {
-    const id = `p_${Date.now()}`
-    setParts((prev) => [...prev, { id, ...draft }])
-    setShowAdd(false)
+  const handleSave = (draft: Omit<Part, "id" | "script_id">) => {
+    mutate({ script_id: scriptId, title: newTitle, index: draft.index, content: draft.content })
+    setShowAdd(true)
   }
 
-  const handleUpdate = (id: string, patch: Omit<Part, "id">) => {
-    setParts((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)))
-    setShowAdd(false)
+  const handleUpdate = (part_id: number, patch: Omit<Part, "part_id">) => {
+    updateScriptPart.mutate({ part_id, part: patch })
+    setShowAdd(true)
   }
 
   const renderItem = useCallback(
@@ -76,7 +72,7 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
       <Pressable
         onLongPress={drag}
         onPress={() => {
-          setSelectedPart({ ...item, currentIndex: getIndex()! + 1 })
+          setSelectedPart(item)
           setShowAdd(true)
         }}
         disabled={isActive}
@@ -96,11 +92,6 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
             <Text preset="subheading" weight="semiBold">
               {item.title}
             </Text>
-            {!!item.blurb && (
-              <Text size="xs" numberOfLines={1} style={themed($dim)}>
-                {item.blurb}
-              </Text>
-            )}
           </View>
 
           <Icon icon="caretRight" size={24} color={colors.palette.neutral300} />
@@ -134,8 +125,8 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
             </View>
 
             <DraggableFlatList
-              data={parts}
-              keyExtractor={(i) => i.id}
+              data={parts || []}
+              keyExtractor={(i) => i.part_id.toString()}
               onDragEnd={onDragEnd}
               renderItem={renderItem}
               containerStyle={{ gap: spacing.sm }}
@@ -155,8 +146,9 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
           </View>
         ) : (
           <AddPart
+            partId={selectedPart?.part_id}
             onBack={() => setShowAdd(false)}
-            nextPartNumber={parts.length + 1}
+            nextPartNumber={parts?.length || 0 + 1}
             selectedPart={selectedPart}
             onSave={handleSave}
             onUpdate={handleUpdate}
@@ -213,7 +205,7 @@ const $dim: ThemedStyle<TextStyle> = ({ colors }) => ({
   color: colors.palette.accentActive,
 })
 
-const $addDashed: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+const $addDashed: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   borderWidth: 1,
   borderStyle: "dashed",
   borderColor: "rgba(197, 206, 250, 0.50)",
@@ -233,46 +225,4 @@ const $publishBtn: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   alignItems: "center",
   justifyContent: "center",
   marginTop: spacing.lg,
-})
-
-const $publishTxt: ThemedStyle<TextStyle> = ({ colors }) => ({
-  color: colors.palette.neutral100,
-  fontSize: 16,
-})
-
-const $modalCard: ThemedStyle<ViewStyle> = ({ colors, spacing, radii }) => ({
-  width: "90%",
-  borderRadius: radii.lg,
-  backgroundColor: colors.background,
-  padding: spacing.lg,
-  gap: spacing.sm,
-})
-
-const $input: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  borderWidth: 1,
-  borderColor: colors.border,
-  borderRadius: spacing.md,
-  paddingHorizontal: spacing.md,
-  paddingVertical: Platform.select({ ios: spacing.md, android: spacing.sm }),
-  color: colors.text,
-})
-
-const $btnOutlined: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  borderWidth: 1,
-  borderColor: colors.border,
-  borderRadius: spacing.md,
-  height: 44,
-  alignItems: "center",
-  justifyContent: "center",
-  marginTop: spacing.sm,
-  marginRight: spacing.sm,
-})
-
-const $btnFilled: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  backgroundColor: colors.tint,
-  borderRadius: spacing.md,
-  height: 44,
-  alignItems: "center",
-  justifyContent: "center",
-  marginTop: spacing.sm,
 })
