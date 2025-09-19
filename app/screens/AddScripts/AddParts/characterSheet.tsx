@@ -1,5 +1,5 @@
 // CharacterSheet.tsx
-import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from "react"
+import { useCallback, useState } from "react"
 import {
   View,
   Pressable,
@@ -13,19 +13,20 @@ import * as DocumentPicker from "expo-document-picker"
 import { Image, ImageStyle } from "expo-image"
 import * as ImagePicker from "expo-image-picker"
 
-import { AppBottomSheet, type BottomSheetController } from "@/components/AppBottomSheet"
+import { type BottomSheetController } from "@/components/AppBottomSheet"
 import { Button } from "@/components/Button"
 import { Icon } from "@/components/Icon"
 import { ListView } from "@/components/ListView"
+import { ProBadge } from "@/components/ProBadge"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
+import { ScriptPartCharacter } from "@/interface/script"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 
 import { TEXT_BACKGROUND_COLORS, TEXT_COLOR } from "./editorConstant"
 import { BackgroundColorType, CharacterForm, CharacterItem, TextColorType } from "./types"
-import { ProBadge } from "@/components/ProBadge"
 
 export type CharacterResult = {
   name: string
@@ -37,14 +38,14 @@ export type CharacterResult = {
 }
 
 type Props = {
-  characters: CharacterItem[]
+  characters: ScriptPartCharacter[]
   form: CharacterForm
   isPro: boolean
   setCharacterImage: (uri: string | null) => void
   setCharacterName: (name: string) => void
   setCharacterTextColor: (color: TextColorType) => void
   setCharacterTextBackgroundColor: (color: BackgroundColorType) => void
-  addCharacter: (item: CharacterItem) => void
+  addCharacter: (item: Omit<ScriptPartCharacter, "id" | "part">) => void
   onConfirm: (item: CharacterItem) => void
   selectedCharacterTextColor: TextColorType
   selectedCharacterTextBackgroundColor: BackgroundColorType
@@ -78,7 +79,6 @@ export const CharacterSheet = ({
   quota,
   onLimitReached,
 }: Props) => {
-  const ctrl = useRef<BottomSheetController>(null)
   const {
     themed,
     theme: { colors, spacing },
@@ -215,7 +215,7 @@ export const CharacterSheet = ({
         )}
         {mode === "choose-character" && (
           <>
-            <ListView<CharacterItem>
+            <ListView<ScriptPartCharacter>
               data={characters}
               extraData={{ characters }} // re-render on selection
               estimatedItemSize={characters.length || 1}
@@ -315,19 +315,7 @@ export const CharacterSheet = ({
                 />
                 <View>
                   <Text style={themed($labelStyle)}>Choose Text Background Color</Text>
-                  {/* <TextField
-                  value={state.bubbleBg}
-                  onChangeText={(bubbleBg) => setState((s) => ({ ...s, bubbleBg }))}
-                  placeholder="#2C1A67"
-                  autoCapitalize="none"
-                  style={{
-                    padding: 12,
-                    backgroundColor: "#1C1147",
-                    borderRadius: 12,
-                    color: "white",
-                  }}
-                  helper="20/50 Character"
-                /> */}
+
                   <View style={{ flexDirection: "row", gap: 8, justifyContent: "space-between" }}>
                     {TEXT_BACKGROUND_COLORS.map((color) => (
                       <Pressable key={color} onPress={() => setCharacterTextBackgroundColor(color)}>
@@ -343,18 +331,6 @@ export const CharacterSheet = ({
                 </View>
                 <View>
                   <Text style={themed($labelStyle)}>Choose Text Color</Text>
-                  {/* <TextField
-                value={state.textColor}
-                onChangeText={(textColor) => setState((s) => ({ ...s, textColor }))}
-                placeholder="#FFFFFF"
-                autoCapitalize="none"
-                style={{
-                  padding: 12,
-                  backgroundColor: "#1C1147",
-                  borderRadius: 12,
-                  color: "white",
-                }}
-              /> */}
                   <View style={{ flexDirection: "row", gap: 8, justifyContent: "space-between" }}>
                     {TEXT_COLOR.map((color) => (
                       <Pressable key={color} onPress={() => setCharacterTextColor(color)}>
@@ -431,8 +407,8 @@ export const CharacterSheet = ({
                 addCharacter({
                   image: state.avatarUri!,
                   name: state.name,
-                  textBackgroundColor: selectedCharacterTextBackgroundColor,
-                  textColor: selectedCharacterTextColor,
+                  text_background_color: selectedCharacterTextBackgroundColor,
+                  text_color: selectedCharacterTextColor,
                 })
                 setMode("choose-character")
               }}

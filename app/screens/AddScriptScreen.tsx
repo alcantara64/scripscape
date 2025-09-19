@@ -48,15 +48,15 @@ export const AddScriptScreen: FC<AddScriptScreenProps> = () => {
     setCoverImage(uri)
   }
   const createScript = () => {
-    // mutate(
-    //   { title: scriptTitle || "Untitled", summary: overview },
-    //   {
-    //     onSuccess: (response) => {
-    //       navigation.navigate("WriteScriptTableContents", { scriptId: response.script_id })
-    //     },
-    //   },
-    // )
-    navigation.navigate("WriteScriptTableContents", { scriptId: 9 })
+    mutate(
+      { title: scriptTitle || "Untitled", summary: overview },
+      {
+        onSuccess: (response) => {
+          navigation.navigate("WriteScriptTableContents", { scriptId: 1 })
+        },
+      },
+    )
+    // navigation.navigate("WriteScriptTableContents", { scriptId: 3 })
   }
 
   return (

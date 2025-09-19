@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react"
 
-import type { TabKey, TEXT_COLOR, TEXT_BACKGROUND_COLORS } from "./editorConstant"
-import type { CharacterItem, CharacterForm, BackgroundColorType, TextColorType } from "./types"
+import { ScriptPartCharacter } from "@/interface/script"
+import { useGetCharactersByParts, useScriptCreatePartCharacter } from "@/querries/script"
 
-export function useDialogue() {
-  const [characters, setCharacters] = useState<CharacterItem[]>([])
+import type { CharacterForm, BackgroundColorType, TextColorType } from "./types"
+
+export function useDialogue({ partId }: { partId: number }) {
+  const { data: characters = [] } = useGetCharactersByParts(partId)
+  const { mutate } = useScriptCreatePartCharacter()
   const [characterForm, setCharacterForm] = useState<CharacterForm>({
     image: null,
     name: "",
@@ -37,7 +40,9 @@ export function useDialogue() {
     return used / total
   }, [quota])
 
-  const addCharacter = (item: CharacterItem) => setCharacters((prev) => [...prev, item])
+  const addCharacter = (item: ScriptPartCharacter) => {
+    mutate({ part_id: partId, character: item })
+  }
   const resetCharacterForm = () =>
     setCharacterForm({ image: null, name: "", textBackgroundColor: "", textColor: "" })
   const setCharacterImage = (uri: string | null) => setCharacterForm((f) => ({ ...f, image: uri }))

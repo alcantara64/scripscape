@@ -37,7 +37,7 @@ export const ScriptList = (props: ScriptListProps) => {
     <ListView<IScript>
       contentContainerStyle={themed([$container, $listContentContainer])}
       data={data}
-      extraData={data.length}
+      extraData={data}
       refreshing={refreshing}
       estimatedItemSize={177}
       ItemSeparatorComponent={Separator}
@@ -68,11 +68,11 @@ export const ScriptList = (props: ScriptListProps) => {
           imageSource={{ uri: item.image }}
           title={item.title}
           status={item.status}
-          numberOfParts={item.parts}
+          numberOfParts={item.partsCount}
           viewsCount={item.views}
           likedCount={item.likes}
           commentsCount={item.comments}
-          description={item.descriptions}
+          description={item.summary}
         />
       )}
     />

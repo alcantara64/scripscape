@@ -1,4 +1,10 @@
-import { CreatePart, Part, ScriptPartLocationImage, ScriptResponse } from "@/interface/script"
+import {
+  CreatePart,
+  Part,
+  ScriptPartCharacter,
+  ScriptPartLocationImage,
+  ScriptResponse,
+} from "@/interface/script"
 
 import { Api } from "./api"
 import { ApiResult } from "./api/types"
@@ -64,6 +70,36 @@ export class ScriptService {
     return this.httpClient.post<ScriptPartLocationImage>(`/script/parts/${part_id}/locations`, fd, {
       headers: { "Content-Type": "multipart/form-data" },
     })
+  }
+
+  getCharactersByPart(partId: number): Promise<ApiResult<Array<ScriptPartCharacter>>> {
+    return this.httpClient.get<Array<ScriptPartCharacter>>(`/script/dialogues/${partId}/characters`)
+  }
+  createPartCharacters(
+    part_id: number,
+    payload: Omit<ScriptPartCharacter, "id" | "part">,
+  ): Promise<ApiResult<ScriptPartCharacter>> {
+    const fd = new FormData()
+    if (payload.image) {
+      fd.append("image", payload.image)
+    }
+    if (payload.text_background_color) {
+      fd.append("text_background_color", payload.text_background_color)
+    }
+    if (payload.text_color) {
+      fd.append("text_color", payload.text_color)
+    }
+    if (payload.name) {
+      fd.append("name", payload.name)
+    }
+
+    return this.httpClient.post<ScriptPartCharacter>(
+      `/script/dialogues/${part_id}/characters`,
+      fd,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    )
   }
 }
 

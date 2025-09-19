@@ -13,6 +13,7 @@ export interface IScript {
   views: number
   likes: number
   comments: number
+  summary: string
   id: string
 }
 
@@ -35,6 +36,8 @@ export type Part = {
   partLocations: Array<ScriptPartLocationImage>
   partDialogues: Array<{}>
   postalImage?: string
+  created_at: string
+  updated_at: string
 }
 
 export type CreatePart = Pick<Part, "script_id" | "index" | "content" | "title">
@@ -45,4 +48,15 @@ export type ScriptPartLocationImage = {
   hideName: boolean
   image?: string
   createdAt?: string
+}
+
+export type ScriptPartCharacter = {
+  id: number
+  text_color: string
+  text_background_color: string
+  image?: string
+  additional_images?: Array<string>
+  created_at?: string
+  part: Part
+  name: string
 }

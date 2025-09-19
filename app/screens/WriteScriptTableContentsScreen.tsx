@@ -1,5 +1,5 @@
 import { FC, useCallback, useMemo, useState } from "react"
-import { Platform, Pressable, SafeAreaView, TextStyle, View, ViewStyle } from "react-native"
+import { Pressable, SafeAreaView, TextStyle, View, ViewStyle } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist"
 

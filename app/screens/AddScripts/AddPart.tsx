@@ -24,6 +24,7 @@ import {
 import { LocationSheet } from "./AddParts/locationSheet"
 import { useDialogue } from "./AddParts/useDialogue"
 import { useLocations } from "./AddParts/useLocation"
+import { useGetCharactersByParts } from "@/querries/script"
 
 export interface AddPartProps {
   style?: StyleProp<ViewStyle>
@@ -48,6 +49,7 @@ export default function AddPart({
     themed,
     theme: { colors },
   } = useAppTheme()
+
   const [sheetMode, setSheetMode] = useState<SheetMode>("location")
   const editorRef = useRef<RichEditor>(null)
   const sheetRef = useRef<BottomSheetController>(null)
@@ -73,7 +75,7 @@ export default function AddPart({
     addCharacter,
     characterForm,
     onAddMoreImages,
-  } = useDialogue()
+  } = useDialogue({ partId: selectedPart?.part_id })
 
   const quota = useMemo(() => {
     const limits = isPro
@@ -101,7 +103,7 @@ export default function AddPart({
   useEffect(() => {
     if (isEdit) return
     ;(async () => {
-      if (title || html) {
+      if (!isEdit) {
         await onSave({ title, content: html, order: nextPartNumber })
       }
     })()

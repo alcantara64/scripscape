@@ -341,7 +341,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ route }) => {
           </View>
         ) : (
           <View style={$listContainer}>
-            <ScriptList data={mock_scripts} />
+            <ScriptList data={data?.scripts.items || []} />
           </View>
         )}
       </Screen>
