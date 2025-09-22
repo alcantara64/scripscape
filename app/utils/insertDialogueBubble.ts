@@ -18,6 +18,7 @@ export type DialogueData = {
   textColor?: string
   nameColor?: string
   playIconColor?: string
+  audioUrl?: string
 }
 
 const genId = () => `dlg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
@@ -28,42 +29,48 @@ export function dialogueHtml(d: DialogueData) {
   const textColor = d.textColor ?? "#1D1B3A"
   const nameColor = d.nameColor ?? "#3B2A8C"
   const playIconColor = d.playIconColor ?? "#5E46F8"
+  const audioUrl = d.audioUrl ? esc(d.audioUrl) : ""
 
-  const onClick =
-    `event.preventDefault();event.stopPropagation();` +
-    `window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(` +
-    `'{"type":"edit-dialogue","id":"${id}"}'` +
-    `);`
-
+  // in dialogueHtml()
   const bubble = `
-    <!--ss-dialogue-start:${id}-->
-    <div class="ss-dialogue-wrap"
-         contenteditable="false"
-         role="button" aria-label="Edit dialogue"
-         data-ss-id="${id}"
-         onclick="${onClick}"
-         onmousedown="event.preventDefault();"
-         onmouseup="event.preventDefault();"
-         onfocus="event.preventDefault();"
-         tabindex="-1">
-      <div class="ss-dialogue">
-        <div class="ss-avatar">
-          ${d.avatarUrl ? `<img src="${esc(d.avatarUrl)}" alt="${esc(d.name)}" />` : ""}
-        </div>
-        <div class="ss-bubble" style="background:${bubbleColor}">
-          <div class="ss-name" style="color:${nameColor}">${esc(d.name)}</div>
-          <div class="ss-text" style="color:${textColor}">${esc(d.message)}</div>
-          <div class="ss-play" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="${playIconColor}" stroke-width="2" opacity="0.6"/>
-              <path d="M10 8L16 12L10 16V8Z" fill="${playIconColor}" />
-            </svg>
-          </div>
-        </div>
-      </div>
+<!--ss-dialogue-start:${id}-->
+<div class="ss-dialogue-wrap"
+     contenteditable="false"
+     role="button" aria-label="Edit dialogue"
+     data-ss-id="${id}"
+     tabindex="-1">
+
+  <!-- explicit overlay just for edit -->
+  <button class="ss-dialogue-tap" type="button" aria-label="Edit dialogue"></button>
+
+  <div class="ss-dialogue">
+    <div class="ss-avatar">
+      ${d.avatarUrl ? `<img src="${esc(d.avatarUrl)}" alt="${esc(d.name)}" />` : ""}
     </div>
-    <!--ss-dialogue-end:${id}-->
-  `.trim()
+
+    <div class="ss-bubble" style="background:${bubbleColor}">
+      <div class="ss-name" style="color:${nameColor}">${esc(d.name)}</div>
+      <div class="ss-text" style="color:${textColor}">${esc(d.message)}</div>
+
+      ${
+        audioUrl
+          ? `<div class="ss-play" aria-hidden="true">
+               <button type="button" class="ss-play-btn" data-ss-id="${id}" aria-label="Play">
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                   <circle cx="12" cy="12" r="10" stroke="${playIconColor}" stroke-width="2" opacity="0.6"/>
+                   <path d="M10 8L16 12L10 16V8Z" fill="${playIconColor}" style="pointer-events:none"/>
+                 </svg>
+               </button>
+             </div>`
+          : ""
+      }
+
+      ${audioUrl ? `<audio id="ss-audio-${id}" preload="none" playsinline src="${audioUrl}"></audio>` : ""}
+    </div>
+  </div>
+</div>
+<!--ss-dialogue-end:${id}-->
+`.trim()
 
   return {
     id,
@@ -80,28 +87,50 @@ export function insertDialogue(editorRef: React.RefObject<RichEditor>, data: Dia
 }
 
 export function bindDialogueClick(editorRef: React.RefObject<RichEditor>) {
-  // inject a script to the editor document
-  editorRef.current?.insertHTML?.(`
-    <script>
-      (function(){
-        if (window.__ss_dialogue_edit_bound) return; window.__ss_dialogue_edit_bound = true;
-        document.addEventListener("click", function(e){
-          var root = e.target.closest && e.target.closest(".ss-dialogue");
-          if(!root) return;
-          var id = root.getAttribute("data-ss-id") || "";
-          var name = (root.querySelector(".ss-name")||{}).textContent || "";
-          var textEl = root.querySelector(".ss-text");
-          var message = textEl ? textEl.textContent : "";
-          var bubble = (root.querySelector(".ss-bubble")||{}).style.background || "";
-          var nameColor = (root.querySelector(".ss-name")||{}).style.color || "";
-          var textColor = textEl ? textEl.style.color : "";
-          var img = root.querySelector(".ss-avatar img");
-          var avatarUrl = img ? img.getAttribute("src") : "";
-          var payload = { type:"edit-dialogue", id, name, message, bubbleColor:bubble, nameColor, textColor, avatarUrl };
-          window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(payload));
-        }, true);
-      })();
-    </script>
+  editorRef.current?.injectJavascript?.(`
+(function(){
+  if (window.__ss_bound) return; window.__ss_bound = true;
+  function post(msg){
+    if (window.ReactNativeWebView?.postMessage)
+      window.ReactNativeWebView.postMessage(JSON.stringify(msg));
+  }
+
+  function kill(e){
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+  }
+
+  // PLAY — block the editor early, toggle only on click
+  ['pointerdown','touchstart','mousedown','click'].forEach(function(type){
+    document.addEventListener(type, function(e){
+      var t = e.target && e.target.closest && e.target.closest('.ss-play-btn');
+      if (!t) return;
+      kill(e);
+      if (type === 'click') {
+        var id = t.getAttribute('data-ss-id');
+        if (id) toggleAudio(id);
+      }
+    }, true); // capture
+  });
+
+  // EDIT — hit the overlay button only
+  document.addEventListener('click', function(e){
+    var tap = e.target && e.target.closest && e.target.closest('.ss-dialogue-tap');
+    if (!tap) return;
+    kill(e);
+    var wrap = tap.closest('.ss-dialogue-wrap');
+    var id = (wrap && wrap.getAttribute('data-ss-id')) || '';
+    post({ type: 'edit-dialogue', id: id });
+  }, true);
+
+  function toggleAudio(id){
+    var a = document.getElementById('ss-audio-'+id);
+    if (!a) return;
+    if (a.paused) a.play(); else a.pause();
+  }
+})();
+true;
   `)
 }
 
@@ -113,12 +142,12 @@ export async function getBubbleData(id: string, editorRef: React.RefObject<RichE
   const m = html.match(new RegExp(`${start}([\\s\\S]*?)${end}`))
   if (!m) return null
   const block = m[1]
-  // quick extractions:
   const name = /<div class="ss-name"[^>]*>([\s\S]*?)<\/div>/.exec(block)?.[1] ?? ""
   const message = /<div class="ss-text"[^>]*>([\s\S]*?)<\/div>/.exec(block)?.[1] ?? ""
   const avatarUrl = /<img src="([^"]+)"/.exec(block)?.[1] ?? ""
   const bubbleColor = /class="ss-bubble" style="background:([^";]+)[^"]*"/.exec(block)?.[1] ?? ""
   const nameColor = /class="ss-name" style="color:([^";]+)[^"]*"/.exec(block)?.[1] ?? ""
   const textColor = /class="ss-text" style="color:([^";]+)[^"]*"/.exec(block)?.[1] ?? ""
-  return { id, name, message, avatarUrl, bubbleColor, nameColor, textColor }
+  const audioUrl = /<audio[^>]*src="([^"]+)"/.exec(block)?.[1] ?? ""
+  return { id, name, message, avatarUrl, bubbleColor, nameColor, textColor, audioUrl }
 }

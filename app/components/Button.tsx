@@ -130,6 +130,7 @@ export function Button(props: ButtonProps) {
       themed($viewPresets[preset]),
       $viewStyleOverride,
       !!pressed && themed([$pressedViewPresets[preset], $pressedViewStyleOverride]),
+      !!disabled && $disableState,
       !!disabled && $disabledViewStyleOverride,
     ]
   }
@@ -244,4 +245,7 @@ const $pressedTextPresets: Record<Presets, ThemedStyle<TextStyle>> = {
   default: () => ({ opacity: 0.9 }),
   filled: () => ({ opacity: 0.9 }),
   reversed: () => ({ opacity: 0.9 }),
+}
+const $disableState: ViewStyle = {
+  opacity: 0.6,
 }

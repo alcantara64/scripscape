@@ -42,10 +42,6 @@ export class Api {
     this.apisauce = create({
       baseURL: this.config.url,
       timeout: this.config.timeout,
-      headers: {
-        Accept: "application/json",
-        Authorization: "",
-      },
     })
 
     this.apisauce.addAsyncRequestTransform(async (request) => {

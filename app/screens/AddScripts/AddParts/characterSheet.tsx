@@ -20,7 +20,7 @@ import { ListView } from "@/components/ListView"
 import { ProBadge } from "@/components/ProBadge"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
-import { ScriptPartCharacter } from "@/interface/script"
+import { Dialogue, ScriptPartCharacter } from "@/interface/script"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
@@ -33,8 +33,8 @@ export type CharacterResult = {
   avatarUri?: string
   bubbleBg?: string
   textColor?: string
-  dialogue?: string
-  audioUri?: string
+  dialogue: string
+  audioFile?: DocumentPicker.DocumentPickerAsset | null
 }
 
 type Props = {
@@ -51,7 +51,11 @@ type Props = {
   selectedCharacterTextBackgroundColor: BackgroundColorType
   onAddAdditionalImages: (uri: string) => void
   additionalImages: Array<{ imageUri: string }>
-  onSave: (res: CharacterResult) => void
+  onSave: (
+    res: Omit<Dialogue, "id" | "part_id" | "created_at" | "dialogueCharacter"> & {
+      audioFiLe?: DocumentPicker.DocumentPickerAsset | null
+    },
+  ) => void
   quota: { used: number; limit: number }
   onLimitReached: () => void
 }
@@ -65,9 +69,6 @@ export type CharacterSheetHandle = BottomSheetController & {
 export const CharacterSheet = ({
   isPro,
   characters,
-  form,
-  setCharacterImage,
-  setCharacterName,
   selectedCharacterTextBackgroundColor,
   selectedCharacterTextColor,
   setCharacterTextColor,
@@ -89,7 +90,7 @@ export const CharacterSheet = ({
     bubbleBg: "#2C1A67",
     textColor: "#FFFFFF",
     dialogue: "",
-    audioUri: undefined,
+    audioFile: null,
   })
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
@@ -124,25 +125,21 @@ export const CharacterSheet = ({
       type: "audio/*",
       multiple: false,
     })
-    if (res.type === "success") {
-      setState((s) => ({ ...s, audioUri: res.uri }))
+    if (res.assets) {
+      setState((s) => ({ ...s, audioFile: res.assets[0] }))
     }
   }
 
   const save = () => {
     onSave({
-      avatarUri: selectedItem?.image as string,
-      name: selectedItem?.name as string,
-      bubbleBg: selectedCharacterTextBackgroundColor,
-      textColor: selectedCharacterTextColor,
       dialogue: state.dialogue,
-      //todo remove uri
-      audioUri: "hrrrrppp",
+      character_id: selectedItem?.id as number,
+      audioFiLe: state.audioFile,
     })
     // onSave(state)
   }
   const RenderItem = useCallback(
-    ({ item, index }: { item: CharacterItem; index: number }) => {
+    ({ item, index }: { item: ScriptPartCharacter; index: number }) => {
       const isSelected = selectedIndex === index
       return (
         <Pressable
@@ -244,7 +241,11 @@ export const CharacterSheet = ({
                 <Text weight="medium">Add Character</Text>
               </Pressable>
 
-              <Button text="Continue" onPress={() => setMode("add-dialogue")} />
+              <Button
+                disabled={!selectedItem}
+                text="Continue"
+                onPress={() => setMode("add-dialogue")}
+              />
             </View>
           </>
         )}
@@ -454,22 +455,26 @@ export const CharacterSheet = ({
               >
                 <View style={{ flexDirection: "row", gap: 8, alignSelf: "center" }}>
                   <Icon icon="audio" size={24} />
-                  <Text>{state.audioUri ? "Audio Selected ✔︎" : "Add Audio"}</Text>
+                  <Text numberOfLines={1}>
+                    {state.audioFile ? state.audioFile.name : "Add Audio"}
+                  </Text>
                 </View>
-                <View
-                  style={{
-                    backgroundColor: "#3997B4",
-                    alignItems: "center",
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    padding: 12,
-                    borderRadius: 12,
-                    gap: 4,
-                  }}
-                >
-                  <Text text="Unlock Feature with" />
-                  <ProBadge style={{ borderWidth: 1, borderColor: "#fff" }} />
-                </View>
+                {!isPro && (
+                  <View
+                    style={{
+                      backgroundColor: "#3997B4",
+                      alignItems: "center",
+                      flexDirection: "row",
+                      justifyContent: "center",
+                      padding: 12,
+                      borderRadius: 12,
+                      gap: 4,
+                    }}
+                  >
+                    <Text text="Unlock Feature with" />
+                    <ProBadge style={{ borderWidth: 1, borderColor: "#fff" }} />
+                  </View>
+                )}
               </Pressable>
             </View>
             <Button text="Save" onPress={save} />

@@ -60,3 +60,13 @@ export type ScriptPartCharacter = {
   part: Part
   name: string
 }
+
+export type Dialogue = {
+  id: number
+  part_id: number
+  audio_uri?: string
+  character_id: number
+  created_at: string
+  dialogue: string
+  dialogueCharacter: ScriptPartCharacter
+}

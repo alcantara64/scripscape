@@ -1,14 +1,17 @@
+import * as DocumentPicker from "expo-document-picker"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import {
   CreatePart,
   CreateScript,
+  Dialogue,
   Part,
   ScriptPartCharacter,
   ScriptPartLocationImage,
 } from "@/interface/script"
 import { scriptService } from "@/services/scriptService"
 import { getOrThrow } from "@/utils/query"
+
 type ReorderVars = { script_id: number; parts: Part[] }
 type UpdateVars = { part_id: number; part: Partial<Omit<Part, "part_id">> }
 type CreateLocationVars = {
@@ -19,6 +22,12 @@ type CreateLocationVars = {
 type CreatePartCharactersVars = {
   part_id: number
   character: Omit<ScriptPartCharacter, "id">
+}
+type CreatePartDialogueVars = {
+  part_id: number
+  dialogue: Omit<Dialogue, "id" | "part_id" | "created_at" | "dialogueCharacter"> & {
+    audioFile?: DocumentPicker.DocumentPickerAsset
+  }
 }
 async function createScript(payload: CreateScript) {
   const form = buildFormData(payload)
@@ -120,5 +129,14 @@ export const useScriptCreatePartCharacter = () => {
     onSuccess: (response, variables) => {
       qc.invalidateQueries({ queryKey: ["get-get-part-characters", variables.part_id] })
     },
+  })
+}
+async function createPartDialogue(vars: CreatePartDialogueVars) {
+  return getOrThrow(scriptService.createDialogue(vars.part_id, vars.dialogue))
+}
+
+export const useScriptCreateDialoguePart = () => {
+  return useMutation({
+    mutationFn: createPartDialogue,
   })
 }

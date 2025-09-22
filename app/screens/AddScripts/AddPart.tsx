@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { View, Platform, KeyboardAvoidingView, StyleProp, ViewStyle, TextStyle } from "react-native"
+import * as DocumentPicker from "expo-document-picker"
 import { RichEditor } from "react-native-pell-rich-editor"
 
 import { AppBottomSheet, type BottomSheetController } from "@/components/AppBottomSheet"
@@ -9,7 +10,8 @@ import { KeyboardToolbar } from "@/components/KeyboardToolbar"
 import { ProgressRing } from "@/components/ProgressRing"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
-import { Part } from "@/interface/script"
+import { Dialogue, Part } from "@/interface/script"
+import { useGetCharactersByParts, useScriptCreateDialoguePart } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { bindDialogueClick, insertDialogue } from "@/utils/insertDialogueBubble"
@@ -24,7 +26,6 @@ import {
 import { LocationSheet } from "./AddParts/locationSheet"
 import { useDialogue } from "./AddParts/useDialogue"
 import { useLocations } from "./AddParts/useLocation"
-import { useGetCharactersByParts } from "@/querries/script"
 
 export interface AddPartProps {
   style?: StyleProp<ViewStyle>
@@ -55,6 +56,7 @@ export default function AddPart({
   const sheetRef = useRef<BottomSheetController>(null)
   const isPro = false
   const isEdit = !!selectedPart
+  const createDialogue = useScriptCreateDialoguePart()
 
   const [title, setTitle] = useState(selectedPart?.title || "")
   const [html, setHtml] = useState(selectedPart?.content || "")
@@ -118,14 +120,15 @@ export default function AddPart({
 
   const focusEditor = useCallback(() => editorRef.current?.focusContentEditor?.(), [])
 
-  const onEditorMessage = useCallback((msg: string) => {
+  const onEditorMessage = useCallback((msg: any) => {
     try {
-      const data = JSON.parse(msg)
-      if (data?.type === "dialogue") {
+      const data: { id: string; type: string } = msg
+
+      if (data?.type === "edit-dialogue") {
         // TODO: open your dialogue modal/sheet and pass data.payload
-        console.log("edit-dialogue payload:", data?.payload)
+        console.log("edit-dialogue payload:", data?.type)
       }
-    } catch {}
+    } catch (e) {}
   }, [])
 
   const openLocationSheet = useCallback(() => {
@@ -150,8 +153,11 @@ export default function AddPart({
     [closeLocationSheet],
   )
 
-  const onCharacterSave = (res: CharacterResult) => {
-    const id = Date.now().toString()
+  const onCharacterSave = async (
+    res: Omit<Dialogue, "id" | "part_id" | "created_at" | "dialogueCharacter"> & {
+      audioFile?: DocumentPicker.DocumentPickerAsset
+    },
+  ) => {
     // persist a lightweight record if you want to support re-edit later
     // cacheDialogueData({ id, ...res })
 
@@ -164,14 +170,24 @@ export default function AddPart({
     //   dialogue: res.dialogue ?? "",
     //   audioSrc: res.audioUri, // only set when PRO selected audio
     // })
-    insertDialogue(editorRef, {
-      name: res.name,
-      nameColor: res.textColor,
-      bubbleColor: res.bubbleBg,
-      textColor: res.textColor,
-      message: res.dialogue,
-      avatarUrl: res.audioUri,
+    const result = await createDialogue.mutateAsync({
+      part_id: selectedPart?.part_id as number,
+      dialogue: res,
     })
+    if (result) {
+      insertDialogue(editorRef, {
+        id: result.id,
+        name: result.dialogueCharacter.name,
+        nameColor: result.dialogueCharacter.text_color, //res.textColor,
+        bubbleColor: result.dialogueCharacter.text_background_color,
+        textColor: result.dialogueCharacter.text_color,
+        message: result.dialogue,
+        avatarUrl: result.dialogueCharacter.image,
+        audioUrl:
+          "https://scripscape-assets-prod.s3.us-west-2.amazonaws.com/users/1/scripts/1/parts/1/dialogues/audio/9d2d9356-54e7-4ed0-88e5-ed7e3d80a52f.mp3", //result.audio_uri,
+      })
+    }
+
     // Insert and add a blank line after
     // editorRef.current?.insertHTML(html + "<p><br/></p>")
     // Keep caret outside and clicks routed to modal
@@ -212,6 +228,58 @@ export default function AddPart({
     sheetRef.current?.expand()
     setSheetMode("upload-details")
   }
+  // call after the editor initializes
+  function wireDialogueBridges(editorRef: React.RefObject<RichEditor>) {
+    const js = `
+    (function(){
+      if (window.__ss_bound) return; window.__ss_bound = true;
+
+      function RNPost(msg){
+        try {
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(JSON.stringify(msg));
+          } else if (window.postMessage) {
+            window.postMessage(JSON.stringify(msg));
+          }
+        } catch(e){}
+      }
+
+      // Edit container click (but ignore the play button)
+      document.addEventListener('click', function(e){
+        if (e.target && e.target.closest && e.target.closest('.ss-play-btn')) {
+          e.stopPropagation();
+          }
+        var wrap = e.target.closest && e.target.closest('.ss-dialogue-wrap');
+        if (!wrap) return;
+        if (e.target.closest && e.target.closest('.ss-play-btn')) return; // play handled elsewhere
+        var id = wrap.getAttribute('data-ss-id') || '';
+        RNPost({ type:'edit-dialogue', id:id });
+      }, true);
+
+      // Play/pause toggle (called by the button)
+      window.__ss_play = function(e,id){
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        var a = document.getElementById('ss-audio-'+id);
+        if (!a) return;
+        if (a.paused) a.play(); else a.pause();
+        // (optional) toggle your SVG path here
+      };
+
+      // Reset icon when audio ends (optional)
+      document.addEventListener('ended', function(ev){
+        if (!(ev.target && ev.target.id && ev.target.id.indexOf('ss-audio-')===0)) return;
+        var id = ev.target.id.replace('ss-audio-','');
+        // reset icon if you changed it
+      }, true);
+    })();
+    true; // keep Android WebView happy
+  `
+    editorRef.current?.injectJavascript?.(js)
+  }
+  const onEditorReady = useCallback(() => {
+    bindDialogueClick(editorRef) // <- IMPORTANT
+  }, [])
+
   return (
     <View style={$styles}>
       {/* Header */}
@@ -259,37 +327,10 @@ export default function AddPart({
             onBlur={() => setEditorFocused(false)}
             style={{ flex: 1, minHeight: 0, paddingHorizontal: 24 }}
             onMessage={onEditorMessage}
-            editorInitializedCallback={() => {
-              editorRef.current?.injectJavascript(`
-      (function(){
-        const root = document.body;
-        // Play/Pause
-        root.addEventListener('click', function(e){
-          const btn = e.target.closest('.audio-btn');
-          if (btn) {
-            const id = btn.getAttribute('data-id');
-            const audio = document.getElementById('audio-' + id);
-            if (!audio) return;
-            if (audio.paused) { audio.play(); btn.textContent = '⏸︎ Pause'; }
-            else { audio.pause(); btn.textContent = '▶︎ Play'; }
-            return;
-          }
-          // Open editor modal when bubble is tapped
-          const bubble = e.target.closest('.dlg');
-          if (bubble) {
-            window.ReactNativeWebView?.postMessage(JSON.stringify({
-              type: 'open-dialogue',
-              id: bubble.getAttribute('data-id')
-            }));
-          }
-        }, true);
-      })();
-      true;
-    `)
-            }}
+            editorInitializedCallback={onEditorReady}
             editorProps={{
               allowsInlineMediaPlayback: true,
-              mediaPlaybackRequiresUserAction: false,
+              mediaPlaybackRequiresUserAction: true,
             }}
           />
           <KeyboardToolbar
@@ -341,8 +382,8 @@ export default function AddPart({
           <CharacterSheet
             quota={quota.character}
             isPro={true}
-            onSave={(res) => {
-              onCharacterSave(res)
+            onSave={async (res) => {
+              await onCharacterSave(res)
               sheetRef.current?.close()
             }}
             selectedCharacterTextBackgroundColor={selectedBackgroundColor}

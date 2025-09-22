@@ -6,24 +6,56 @@ export const TAB_ITEMS: Array<{ label: string; key: TabKey }> = [
 ]
 
 export const DIALOGUE_CSS = `
-  .ss-dialogue-wrap{
-    position:relative; margin:10px 0;
-    -webkit-user-select:none; user-select:none;
-    -webkit-user-modify:read-only;
-    caret-color: transparent;
-  }
-  .ss-dialogue-tap{
-    position:absolute; inset:0; background:transparent; border:0; padding:0; margin:0;
-    z-index:2; cursor:pointer;
-  }
-  .ss-dialogue{ pointer-events:none; display:flex; align-items:flex-start; gap:10px; }
-  .ss-avatar{ width:28px; height:28px; border-radius:50%; overflow:hidden; flex:0 0 28px; background:#2B2A45; }
-  .ss-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .ss-bubble{ position:relative; flex:1; border-radius:14px; padding:10px 44px 10px 12px; box-shadow:0 2px 8px rgba(0,0,0,.18); }
-  .ss-name{ font-weight:700; font-size:13px; line-height:16px; margin-bottom:2px; }
-  .ss-text{ font-size:14px; line-height:20px; white-space:pre-wrap; }
-  .ss-play{ position:absolute; right:8px; top:50%; transform:translateY(-50%); width:36px; height:28px; border-radius:14px;
-            background:rgba(255,255,255,.75); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; }
+  /* --- keep these --- */
+.ss-dialogue-wrap{
+  position:relative; margin:10px 0;
+  -webkit-user-select:none; user-select:none;
+  -webkit-user-modify:read-only;
+  caret-color: transparent;
+}
+
+/* The overlay that turns the whole bubble into an edit target */
+.ss-dialogue-tap{
+  position:absolute; inset:0; background:transparent; border:0; padding:0; margin:0;
+  z-index:1;               /* BELOW the play control */
+  cursor:pointer;
+  pointer-events:auto;     /* clickable */
+}
+
+/* Render-only content shouldn't intercept clicks */
+.ss-dialogue{ pointer-events:none; display:flex; align-items:flex-start; gap:10px; }
+.ss-avatar{ width:28px; height:28px; border-radius:50%; overflow:hidden; flex:0 0 28px; background:#2B2A45; }
+.ss-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+.ss-bubble{ position:relative; flex:1; border-radius:14px; padding:10px 44px 10px 12px; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.ss-name{ font-weight:700; font-size:13px; line-height:16px; margin-bottom:2px; }
+.ss-text{ font-size:14px; line-height:20px; white-space:pre-wrap; }
+
+/* --- PLAY CONTROL --- */
+.ss-play{
+  position:absolute; right:8px; top:50%; transform:translateY(-50%);
+  width:36px; height:28px; border-radius:14px;
+  background:rgba(255,255,255,.75); backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  z-index:2;                 /* ABOVE the tap overlay */
+  pointer-events:auto;       /* clickable area restored */
+}
+
+.ss-play-btn{   all: unset;           /* removes all UA default button styles */
+  display: inline-flex; /* keep it a flex container */
+  cursor: pointer;      /* show hand cursor */
+  line-height: 0;       /* prevent extra inline spacing */
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none; }
+
+/* Make inner SVG ignore events so the <button> is the hit target */
+.ss-play-btn svg,
+.ss-play-btn * { pointer-events:none; }
+
+/* 🚫 REMOVE THIS RULE
+.ss-dialogue-wrap * { pointer-events: none; }
+*/
 `.trim()
 
 export const LOCATION_CSS = `
