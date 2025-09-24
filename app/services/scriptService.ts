@@ -5,6 +5,7 @@ import * as FileSystem from "expo-file-system"
 import {
   CreatePart,
   Dialogue,
+  IScript,
   Part,
   ScriptPartCharacter,
   ScriptPartLocationImage,
@@ -32,6 +33,12 @@ export class ScriptService {
   }
   getScript(scriptId: number): Promise<ApiResult<ScriptResponse>> {
     return this.httpClient.get<ScriptResponse>(`/script/${scriptId}`)
+  }
+  getScripts(): Promise<ApiResult<ScriptResponse>> {
+    return this.httpClient.get<ScriptResponse>(`/script/`)
+  }
+  getMyScripts(): Promise<ApiResult<Array<IScript>>> {
+    return this.httpClient.get<Array<IScript>>(`/script/me`)
   }
   getPartsByScript(scriptId: number): Promise<ApiResult<Array<Part>>> {
     return this.httpClient.get<Array<Part>>(`/script/${scriptId}/parts`)

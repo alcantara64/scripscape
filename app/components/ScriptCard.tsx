@@ -1,12 +1,12 @@
 import { useState } from "react"
 import {
-  ImageSourcePropType,
   ImageStyle,
   StyleProp,
   TextStyle,
   TouchableOpacity,
   View,
   ViewStyle,
+  StyleSheet,
 } from "react-native"
 
 import { Text } from "@/components/Text"
@@ -36,6 +36,8 @@ export interface ScriptCardProps {
   viewsCount: number
   likedCount: number
   isVertical?: boolean
+  script_id: number
+  writerStatus: ScriptStatus
 }
 
 /**
@@ -53,8 +55,13 @@ export const ScriptCard = (props: ScriptCardProps) => {
     commentsCount,
     likedCount,
     isVertical,
+    writerStatus,
   } = props
-  const $styles = [$container, style, { flexDirection: isVertical ? "column" : "row" } as ViewStyle]
+  const $styles = [
+    $container(isVertical),
+    style,
+    { flexDirection: isVertical ? "column" : "row" } as ViewStyle,
+  ]
   const { themed } = useAppTheme()
   const [currentImageSource, setCurrentImageSource] = useState(imageSource)
   const [hasError, setHasError] = useState(false)
@@ -71,20 +78,29 @@ export const ScriptCard = (props: ScriptCardProps) => {
 
   return (
     <TouchableOpacity style={$styles}>
-      <View>
+      <View style={{ position: "relative" }}>
         <SmartImage
           style={$imageContainer}
           imageStyle={$imageStyle}
           image={currentImageSource}
           onError={handleImageError}
         />
+        <View pointerEvents="none" style={$overlay} />
       </View>
 
       <View style={$contentContainer}>
-        <Text style={themed($titleText)} numberOfLines={1} text={title} />
+        <View style={$titleContainer}>
+          <Text style={themed($titleText)} numberOfLines={1} text={title} />
+          {status !== "published" && (
+            <View style={themed($draft)}>
+              <Icon icon="write" color="#FFC773" size={11} />
+              <Text text={status} style={themed($draftText)} />
+            </View>
+          )}
+        </View>
         <View style={$partContainer}>
-          <View style={$statusContainer(status)}>
-            <Text text={status} style={themed($statusText)} />
+          <View style={$statusContainer(writerStatus)}>
+            <Text text={writerStatus} style={themed($statusText)} />
           </View>
           <View style={{ flexDirection: "row", gap: 4, alignItems: "center", marginBottom: 4 }}>
             <Icon icon="part" color="#C8D0FF" />
@@ -127,15 +143,27 @@ export const ScriptCard = (props: ScriptCardProps) => {
   )
 }
 
-const $container: ViewStyle = {
+const $container = (isVertical: boolean): ViewStyle => ({
   flexDirection: "row",
   gap: spacing.xs,
   flex: 1,
-}
-const $imageContainer: ImageStyle = { height: 92 }
-const $imageStyle: ImageStyle = { height: 92, width: 180, maxWidth: 180 }
+  maxHeight: isVertical ? "auto" : 98,
+})
+const $imageContainer: ImageStyle = { maxHeight: 98 }
+const $imageStyle: ImageStyle = { height: 98, width: 180, maxWidth: 180 }
 const $contentContainer: ViewStyle = {
   flex: 1,
+}
+const $overlay: ViewStyle = {
+  ...StyleSheet.absoluteFillObject,
+  // backgroundColor: "rgba(0,0,0,0.30)",
+}
+
+const $titleContainer: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  marginBottom: 5,
+  gap: 8,
 }
 
 const $titleText: ThemedStyle<TextStyle> = ({ colors, spacing, typography }) => ({
@@ -144,7 +172,6 @@ const $titleText: ThemedStyle<TextStyle> = ({ colors, spacing, typography }) => 
   color: colors.palette.neutral100,
   fontWeight: 500,
   lineHeight: 20,
-  marginBottom: 2,
 })
 
 const $partContainer: ViewStyle = {
@@ -160,6 +187,24 @@ const $statusContainer = (status: ScriptStatus): ViewStyle => ({
   paddingVertical: 4,
   paddingHorizontal: 8,
   alignItems: "center",
+})
+const $draft: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  borderRadius: 5,
+  borderWidth: 1,
+  borderColor: "#FFC773",
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 4,
+})
+
+const $draftText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: "#FFC773",
+  paddingHorizontal: 4,
+  textAlign: "center",
+  fontSize: 12,
+  fontWeight: 600,
+  lineHeight: 19,
+  textTransform: "capitalize",
 })
 
 const $statusText: ThemedStyle<TextStyle> = ({ colors, typography, spacing }) => ({

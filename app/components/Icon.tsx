@@ -166,6 +166,7 @@ export const iconRegistry = {
   text: require("@assets/icons/text.png"),
   keyboardDown: require("@assets/icons/keyboard-down.png"),
   audio: require("@assets/icons/speaker-filled-audio-tool.png"),
+  write: require("@assets/icons/write.png"),
 }
 
 const $imageStyleBase: ImageStyle = {

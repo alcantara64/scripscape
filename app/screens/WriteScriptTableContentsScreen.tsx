@@ -58,7 +58,16 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
   const publishDisabled = useMemo(() => pendingParts?.length === 0, [pendingParts?.length])
 
   const handleSave = (draft: Omit<Part, "id" | "script_id">) => {
-    mutate({ script_id: scriptId, title: newTitle, index: draft.index, content: draft.content })
+    mutate(
+      { script_id: scriptId, title: newTitle, index: draft.index, content: draft.content },
+      {
+        onSuccess(data, variables, context) {
+          if (data) {
+            setSelectedPart(data)
+          }
+        },
+      },
+    )
     setShowAdd(true)
   }
 

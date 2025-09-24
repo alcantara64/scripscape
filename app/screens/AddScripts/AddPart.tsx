@@ -10,19 +10,15 @@ import { KeyboardToolbar } from "@/components/KeyboardToolbar"
 import { ProgressRing } from "@/components/ProgressRing"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
+import { UpgradeProPopup } from "@/components/UprogradePropPup"
 import { Dialogue, Part } from "@/interface/script"
-import { useGetCharactersByParts, useScriptCreateDialoguePart } from "@/querries/script"
+import { useScriptCreateDialoguePart } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { bindDialogueClick, insertDialogue } from "@/utils/insertDialogueBubble"
 
-import { CharacterResult, CharacterSheet, CharacterSheetHandle } from "./AddParts/characterSheet"
-import {
-  buildCharacterDialogueHTML,
-  buildLocationHTML,
-  editorContentStyle,
-  type TabKey,
-} from "./AddParts/editorConstant"
+import { CharacterSheet } from "./AddParts/characterSheet"
+import { buildLocationHTML, editorContentStyle, type TabKey } from "./AddParts/editorConstant"
 import { LocationSheet } from "./AddParts/locationSheet"
 import { useDialogue } from "./AddParts/useDialogue"
 import { useLocations } from "./AddParts/useLocation"
@@ -228,54 +224,6 @@ export default function AddPart({
     sheetRef.current?.expand()
     setSheetMode("upload-details")
   }
-  // call after the editor initializes
-  function wireDialogueBridges(editorRef: React.RefObject<RichEditor>) {
-    const js = `
-    (function(){
-      if (window.__ss_bound) return; window.__ss_bound = true;
-
-      function RNPost(msg){
-        try {
-          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-            window.ReactNativeWebView.postMessage(JSON.stringify(msg));
-          } else if (window.postMessage) {
-            window.postMessage(JSON.stringify(msg));
-          }
-        } catch(e){}
-      }
-
-      // Edit container click (but ignore the play button)
-      document.addEventListener('click', function(e){
-        if (e.target && e.target.closest && e.target.closest('.ss-play-btn')) {
-          e.stopPropagation();
-          }
-        var wrap = e.target.closest && e.target.closest('.ss-dialogue-wrap');
-        if (!wrap) return;
-        if (e.target.closest && e.target.closest('.ss-play-btn')) return; // play handled elsewhere
-        var id = wrap.getAttribute('data-ss-id') || '';
-        RNPost({ type:'edit-dialogue', id:id });
-      }, true);
-
-      // Play/pause toggle (called by the button)
-      window.__ss_play = function(e,id){
-        if (e) { e.preventDefault(); e.stopPropagation(); }
-        var a = document.getElementById('ss-audio-'+id);
-        if (!a) return;
-        if (a.paused) a.play(); else a.pause();
-        // (optional) toggle your SVG path here
-      };
-
-      // Reset icon when audio ends (optional)
-      document.addEventListener('ended', function(ev){
-        if (!(ev.target && ev.target.id && ev.target.id.indexOf('ss-audio-')===0)) return;
-        var id = ev.target.id.replace('ss-audio-','');
-        // reset icon if you changed it
-      }, true);
-    })();
-    true; // keep Android WebView happy
-  `
-    editorRef.current?.injectJavascript?.(js)
-  }
   const onEditorReady = useCallback(() => {
     bindDialogueClick(editorRef) // <- IMPORTANT
   }, [])
@@ -333,6 +281,7 @@ export default function AddPart({
               mediaPlaybackRequiresUserAction: true,
             }}
           />
+          <UpgradeProPopup visible={false} onClose={() => {}} />
           <KeyboardToolbar
             partId={selectedPart?.part_id}
             editorRef={editorRef}

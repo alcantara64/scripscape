@@ -1,12 +1,12 @@
-import { View, ViewStyle, ScrollView, TextStyle, ImageStyle } from "react-native"
+import { View, ViewStyle } from "react-native"
 
+import { Screen } from "@/components/Screen"
 import { Skeleton } from "@/components/skeleton/Skeleton"
 import { SkeletonCircle } from "@/components/skeleton/SkeletonCircle"
 import { SkeletonRow } from "@/components/skeleton/SkeletonRow"
 import { SkeletonTag } from "@/components/skeleton/SkeletonTag"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
-import { Screen } from "@/components/Screen"
 
 export const HomeScreenSkeleton = () => {
   const {

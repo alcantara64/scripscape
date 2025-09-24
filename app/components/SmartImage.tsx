@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { StyleProp, View, ViewStyle, StyleSheet, ActivityIndicator } from "react-native"
 import { Image, ImageSource, ImageStyle } from "expo-image"
 
@@ -14,11 +14,23 @@ export interface SmartImageProps {
   image: ImageSource
   placeholderImage?: ImageSource
   blurhash?: string
+  onError?: () => void
 }
 
 /**
  * Describe your component here
  */
+
+const isRemote = (src: ImageSource | undefined): boolean => {
+  if (!src) return false
+  if (Array.isArray(src)) return true // array of URIs
+  const t = typeof src
+  if (t === "number") return false // require(...)
+  if (t === "string") return true // URI
+  // object with { uri }
+  // @ts-ignore - runtime check
+  return Boolean(src?.uri)
+}
 export const SmartImage = (props: SmartImageProps) => {
   const {
     style,
@@ -26,26 +38,42 @@ export const SmartImage = (props: SmartImageProps) => {
     image = { uri: "https://example.com/avatar.jpg" },
     blurhash,
     imageStyle,
+    onError,
   } = props
   const $styles = [$container, style]
   const [error, setError] = useState(false)
   const [loading, setLoading] = useState(true)
-  const { themed } = useAppTheme()
 
+  useEffect(() => {
+    setError(false)
+    setLoading(false)
+  }, [image])
+
+  const sourceToUse = useMemo(() => {
+    return error || !image.uri ? fallBackImage : image
+  }, [error, image, fallBackImage])
+
+  const remote = useMemo(() => isRemote(sourceToUse), [sourceToUse])
+  console.log(loading, remote)
   return (
     <View style={$styles}>
       <Image
         style={imageStyle}
-        source={error ? fallBackImage : image}
+        source={sourceToUse}
         placeholder={{ blurhash }} // 👈 local placeholder shown instantly
         contentFit="cover"
         transition={1000} // fade-in when loaded
-        onLoadStart={() => setLoading(true)}
+        onLoadStart={() => {
+          if (remote) setLoading(true)
+        }}
         onLoadEnd={() => setLoading(false)}
-        onError={() => setError(true)}
+        onError={() => {
+          onError?.()
+          setError(true)
+          setLoading(false)
+        }}
       />
-
-      {loading && (
+      {loading && remote && (
         <View style={$loader}>
           <ActivityIndicator size="small" color="#888" />
         </View>

@@ -1,6 +1,5 @@
 import { FC, useMemo, useRef, useState } from "react"
 import { ImageSourcePropType, Pressable, TextStyle, View, ViewStyle } from "react-native"
-import { ImageStyle } from "expo-image"
 import { useNavigation } from "@react-navigation/native"
 
 import { ImagePickerWithCropping } from "@/components/ImagePickerWithCroping"
@@ -52,11 +51,10 @@ export const AddScriptScreen: FC<AddScriptScreenProps> = () => {
       { title: scriptTitle || "Untitled", summary: overview },
       {
         onSuccess: (response) => {
-          navigation.navigate("WriteScriptTableContents", { scriptId: 1 })
+          navigation.navigate("WriteScriptTableContents", { scriptId: response.script_id })
         },
       },
     )
-    // navigation.navigate("WriteScriptTableContents", { scriptId: 3 })
   }
 
   return (

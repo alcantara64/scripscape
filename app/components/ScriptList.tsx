@@ -39,7 +39,7 @@ export const ScriptList = (props: ScriptListProps) => {
       data={data}
       extraData={data}
       refreshing={refreshing}
-      estimatedItemSize={177}
+      estimatedItemSize={data.length}
       ItemSeparatorComponent={Separator}
       onRefresh={refresh}
       ListEmptyComponent={
@@ -65,14 +65,18 @@ export const ScriptList = (props: ScriptListProps) => {
       }
       renderItem={({ item }) => (
         <ScriptCard
-          imageSource={{ uri: item.image }}
+          imageSource={{
+            uri: "https://scripscape-assets-prod.s3.us-west-2.amazonaws.com/users/1/scripts/1/parts/1/poster/a0414aa5-ec29-46ec-800a-a864fdb7707b.jpg",
+          }}
           title={item.title}
           status={item.status}
-          numberOfParts={item.partsCount}
-          viewsCount={item.views}
-          likedCount={item.likes}
-          commentsCount={item.comments}
+          numberOfParts={item.parts_count}
+          viewsCount={item.views_count}
+          likedCount={item.likes_count}
+          commentsCount={item.comments_count}
           description={item.summary}
+          writerStatus={item.writerStatus}
+          script_id={item.script_id}
         />
       )}
     />

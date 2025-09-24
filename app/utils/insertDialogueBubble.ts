@@ -90,6 +90,7 @@ export function bindDialogueClick(editorRef: React.RefObject<RichEditor>) {
   editorRef.current?.injectJavascript?.(`
 (function(){
   if (window.__ss_bound) return; window.__ss_bound = true;
+
   function post(msg){
     if (window.ReactNativeWebView?.postMessage)
       window.ReactNativeWebView.postMessage(JSON.stringify(msg));
@@ -99,6 +100,74 @@ export function bindDialogueClick(editorRef: React.RefObject<RichEditor>) {
     e.preventDefault();
     e.stopPropagation();
     if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+  }
+
+  // --- Icon helpers ----------------------------------------------------------
+  function getIconColor(btn){
+    // Try to read from existing SVG; fall back to default purple
+    var svg = btn && btn.querySelector('svg');
+    if (!svg) return '#5E46F8';
+    var path = svg.querySelector('path');
+    var circle = svg.querySelector('circle');
+    var c = (path && (path.getAttribute('fill') || path.style.fill)) ||
+            (circle && (circle.getAttribute('stroke') || circle.style.stroke));
+    return c || '#5E46F8';
+  }
+
+  function setPlayIcon(btn, color){
+    color = color || getIconColor(btn);
+    btn.innerHTML = ''
+      + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none">'
+      + '  <circle cx="12" cy="12" r="10" stroke="'+color+'" stroke-width="2" opacity="0.6"/>'
+      + '  <path d="M10 8L16 12L10 16V8Z" fill="'+color+'"/>'
+      + '</svg>';
+  }
+
+  function setPauseIcon(btn, color){
+    color = color || getIconColor(btn);
+    btn.innerHTML = ''
+      + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none">'
+      + '  <circle cx="12" cy="12" r="10" stroke="'+color+'" stroke-width="2" opacity="0.6"/>'
+      + '  <rect x="9" y="8" width="2" height="8" fill="'+color+'"/>'
+      + '  <rect x="13" y="8" width="2" height="8" fill="'+color+'"/>'
+      + '</svg>';
+  }
+
+  function btnForId(id){
+    return document.querySelector('.ss-play-btn[data-ss-id="'+id+'"]');
+  }
+
+  // --- Audio toggle ----------------------------------------------------------
+  function toggleAudio(id){
+    var a = document.getElementById('ss-audio-'+id);
+    if (!a) return;
+    var btn = btnForId(id);
+    if (!btn) return;
+
+    // Pause all other audios and restore their icons
+    document.querySelectorAll('audio[id^="ss-audio-"]').forEach(function(other){
+      if (other !== a) {
+        if (!other.paused) {
+          other.pause();
+          var oid = other.id.replace('ss-audio-','');
+          var obtn = btnForId(oid);
+          if (obtn) setPlayIcon(obtn);
+        }
+      }
+    });
+
+    if (a.paused) {
+      a.play();
+      setPauseIcon(btn);
+    } else {
+      a.pause();
+      setPlayIcon(btn);
+    }
+
+    // Keep icon in sync with media state
+    a.onplay = function(){ setPauseIcon(btn); };
+    a.onpause = function(){ setPlayIcon(btn); };
+    a.onended = function(){ setPlayIcon(btn); };
   }
 
   // PLAY — block the editor early, toggle only on click
@@ -124,11 +193,6 @@ export function bindDialogueClick(editorRef: React.RefObject<RichEditor>) {
     post({ type: 'edit-dialogue', id: id });
   }, true);
 
-  function toggleAudio(id){
-    var a = document.getElementById('ss-audio-'+id);
-    if (!a) return;
-    if (a.paused) a.play(); else a.pause();
-  }
 })();
 true;
   `)

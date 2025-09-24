@@ -69,6 +69,13 @@ export const useGetPartsByScript = (script_id: number) => {
   })
 }
 
+export const useGetMyScripts = () => {
+  return useQuery({
+    queryKey: ["get-my-scripts"],
+    queryFn: () => getOrThrow(scriptService.getMyScripts()),
+  })
+}
+
 async function reorderParts(vars: ReorderVars) {
   return getOrThrow(scriptService.reorderScriptParts(vars.script_id, vars.parts))
 }
@@ -77,8 +84,8 @@ export const useOrderScriptParts = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: reorderParts,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["get-parts"] })
+    onSuccess: (data, variable) => {
+      qc.invalidateQueries({ queryKey: ["get-parts", variable.script_id] })
     },
   })
 }
@@ -91,8 +98,8 @@ export const useUpdateScriptPart = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: updatePart,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["get-parts"] })
+    onSuccess: (data, variable) => {
+      qc.invalidateQueries({ queryKey: ["get-parts", `${data.script_id}`] })
     },
   })
 }

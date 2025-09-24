@@ -1,20 +1,29 @@
 export enum ScriptStatus {
+  draft = "draft",
+  published = "published",
+  acrchived = "archived",
+}
+export enum WriterStatus {
   inprogress = "Inprogress",
   completed = "Completed",
 }
 
 export interface IScript {
-  script_id: string
+  script_id: number
+  author_id: number
   title: string
-  descriptions: string
-  image: string
-  parts: number
+  writer_note: string
+  parts_count: number
   status: ScriptStatus
-  views: number
-  likes: number
-  comments: number
+  writerStatus: WriterStatus
+  views_count: number
+  likes_count: number
+  comments_count: number
   summary: string
-  id: string
+  cover_image_url: string
+  created_at: string
+  updated_at: string
+  contains_mature_content: boolean
 }
 
 export interface ScriptResponse {
