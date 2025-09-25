@@ -10,6 +10,7 @@ import type { ThemedStyle } from "@/theme/types"
 
 import { ListView } from "./ListView"
 import { ScriptCard } from "./ScriptCard"
+import { useNavigation } from "@react-navigation/native"
 
 export interface ScriptListProps {
   /**
@@ -27,12 +28,15 @@ export const ScriptList = (props: ScriptListProps) => {
   const { style, data, refresh } = props
   const $styles = [$container, style]
   const { themed } = useAppTheme()
+  const navigation = useNavigation()
 
   const [refreshing, setRefreshing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   const Separator = () => <View style={$separator} />
-
+  const gotoDetailScreen = () => {
+    navigation.navigate("ScriptDetail", { script_id: 42 })
+  }
   return (
     <ListView<IScript>
       contentContainerStyle={themed([$container, $listContentContainer])}
@@ -65,6 +69,7 @@ export const ScriptList = (props: ScriptListProps) => {
       }
       renderItem={({ item }) => (
         <ScriptCard
+          onPress={gotoDetailScreen}
           imageSource={{
             uri: "https://scripscape-assets-prod.s3.us-west-2.amazonaws.com/users/1/scripts/1/parts/1/poster/a0414aa5-ec29-46ec-800a-a864fdb7707b.jpg",
           }}

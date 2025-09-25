@@ -38,6 +38,7 @@ export interface ScriptCardProps {
   isVertical?: boolean
   script_id: number
   writerStatus: ScriptStatus
+  onPress?: (script_id: number) => void
 }
 
 /**
@@ -56,6 +57,8 @@ export const ScriptCard = (props: ScriptCardProps) => {
     likedCount,
     isVertical,
     writerStatus,
+    script_id,
+    onPress,
   } = props
   const $styles = [
     $container(isVertical),
@@ -77,7 +80,12 @@ export const ScriptCard = (props: ScriptCardProps) => {
   }
 
   return (
-    <TouchableOpacity style={$styles}>
+    <TouchableOpacity
+      style={$styles}
+      onPress={() => {
+        onPress?.(script_id)
+      }}
+    >
       <View style={{ position: "relative" }}>
         <SmartImage
           style={$imageContainer}

@@ -12,13 +12,14 @@ import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { ProfileScreen } from "@/screens/ProfileScreen"
+import { ScriptDetailScreen } from "@/screens/ScriptDetailScreen"
+import { SearchScreen } from "@/screens/SearchScreen"
+import { SubscriptionScreen } from "@/screens/SubscriptionScreen"
+import { WriteScriptTableContentsScreen } from "@/screens/WriteScriptTableContentsScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { DemoNavigator, DemoTabParamList } from "./DemoNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
-import { SubscriptionScreen } from "@/screens/SubscriptionScreen"
-import { SearchScreen } from "@/screens/SearchScreen"
-import { WriteScriptTableContentsScreen } from "@/screens/WriteScriptTableContentsScreen"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -43,6 +44,7 @@ export type AppStackParamList = {
   Subscription: undefined
   Search: undefined
   WriteScriptTableContents: { scriptId: number }
+  ScriptDetail: { scriptId: number }
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
@@ -89,6 +91,7 @@ const AppStack = () => {
         component={WriteScriptTableContentsScreen}
         options={{ keyboardHandlingEnabled: false }}
       />
+      <Stack.Screen name="ScriptDetail" component={ScriptDetailScreen} />
     </Stack.Navigator>
   )
 }
