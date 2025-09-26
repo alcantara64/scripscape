@@ -20,6 +20,7 @@ import { useAppTheme } from "@/theme/context"
 
 import { DemoNavigator, DemoTabParamList } from "./DemoNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
+import { EditOverviewScreen } from "@/screens/EditOverviewScreen"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -45,6 +46,7 @@ export type AppStackParamList = {
   Search: undefined
   WriteScriptTableContents: { scriptId: number }
   ScriptDetail: { scriptId: number }
+  EditOverview: { scriptId: number }
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
@@ -92,6 +94,7 @@ const AppStack = () => {
         options={{ keyboardHandlingEnabled: false }}
       />
       <Stack.Screen name="ScriptDetail" component={ScriptDetailScreen} />
+      <Stack.Screen name="EditOverview" component={EditOverviewScreen} />
     </Stack.Navigator>
   )
 }

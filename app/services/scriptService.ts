@@ -31,8 +31,11 @@ export class ScriptService {
   create(payload: FormData): Promise<ApiResult<ScriptResponse>> {
     return this.httpClient.post<ScriptResponse>("/script", payload)
   }
-  getScript(scriptId: number): Promise<ApiResult<ScriptResponse>> {
-    return this.httpClient.get<ScriptResponse>(`/script/${scriptId}`)
+  update(script_id: number, payload: FormData): Promise<ApiResult<ScriptResponse>> {
+    return this.httpClient.put<ScriptResponse>("/script", payload)
+  }
+  getScript(scriptId: number): Promise<ApiResult<IScript>> {
+    return this.httpClient.get<IScript>(`/script/${scriptId}`)
   }
   getScripts(): Promise<ApiResult<ScriptResponse>> {
     return this.httpClient.get<ScriptResponse>(`/script/`)

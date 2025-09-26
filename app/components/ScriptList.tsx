@@ -34,8 +34,8 @@ export const ScriptList = (props: ScriptListProps) => {
   const [isLoading, setIsLoading] = useState(false)
 
   const Separator = () => <View style={$separator} />
-  const gotoDetailScreen = () => {
-    navigation.navigate("ScriptDetail", { script_id: 42 })
+  const gotoDetailScreen = (script_id: number) => {
+    navigation.navigate("ScriptDetail", { script_id })
   }
   return (
     <ListView<IScript>
@@ -69,7 +69,9 @@ export const ScriptList = (props: ScriptListProps) => {
       }
       renderItem={({ item }) => (
         <ScriptCard
-          onPress={gotoDetailScreen}
+          onPress={() => {
+            gotoDetailScreen(item.script_id)
+          }}
           imageSource={{
             uri: "https://scripscape-assets-prod.s3.us-west-2.amazonaws.com/users/1/scripts/1/parts/1/poster/a0414aa5-ec29-46ec-800a-a864fdb7707b.jpg",
           }}

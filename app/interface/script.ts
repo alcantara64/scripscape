@@ -1,3 +1,5 @@
+import { User } from "./auth"
+
 export enum ScriptStatus {
   draft = "draft",
   published = "published",
@@ -24,6 +26,10 @@ export interface IScript {
   created_at: string
   updated_at: string
   contains_mature_content: boolean
+  parts: Array<Part>
+  author: User
+  tags: Array<Tags>
+  categories: Array<Category>
 }
 
 export interface ScriptResponse {
@@ -34,6 +40,10 @@ export type CreateScript = {
   title: string
   summary?: string
   postalImage?: File | { uri: string; name: string; type: string } | null
+  tags?: Array<Tags>
+  categories?: Array<Category>
+  isMatureContent?: boolean
+  writerStatus?: WriterStatus
 }
 
 export type Part = {
@@ -78,4 +88,20 @@ export type Dialogue = {
   created_at: string
   dialogue: string
   dialogueCharacter: ScriptPartCharacter
+}
+export type Tags = {
+  id: number
+  slug: string
+  name: string
+  created_at?: string
+  updated_at?: string
+}
+
+export type Category = {
+  id: number
+  slug: string
+  name: string
+  description: string
+  created_at: string
+  updated_at: string
 }

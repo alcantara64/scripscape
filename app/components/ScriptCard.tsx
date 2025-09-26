@@ -10,7 +10,7 @@ import {
 } from "react-native"
 
 import { Text } from "@/components/Text"
-import { ScriptStatus } from "@/interface/script"
+import { ScriptStatus, WriterStatus } from "@/interface/script"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
@@ -37,7 +37,7 @@ export interface ScriptCardProps {
   likedCount: number
   isVertical?: boolean
   script_id: number
-  writerStatus: ScriptStatus
+  writerStatus: WriterStatus
   onPress?: (script_id: number) => void
 }
 
@@ -61,7 +61,7 @@ export const ScriptCard = (props: ScriptCardProps) => {
     onPress,
   } = props
   const $styles = [
-    $container(isVertical),
+    $container(isVertical || false),
     style,
     { flexDirection: isVertical ? "column" : "row" } as ViewStyle,
   ]
@@ -187,8 +187,8 @@ const $partContainer: ViewStyle = {
   gap: spacing.xs,
   alignItems: "center",
 }
-const $statusContainer = (status: ScriptStatus): ViewStyle => ({
-  backgroundColor: status === ScriptStatus.completed ? colors.success : colors.palette.accent500,
+const $statusContainer = (status: WriterStatus): ViewStyle => ({
+  backgroundColor: status === WriterStatus.completed ? colors.success : colors.palette.accent500,
   gap: spacing.xs,
   borderRadius: 8,
   marginBottom: spacing.xxs,

@@ -68,7 +68,7 @@ export const AddScriptScreen: FC<AddScriptScreenProps> = () => {
         style={$root}
         preset="scroll"
         safeAreaEdges={["top"]}
-        gradientColors={["#4b276b", "#0e1636"]} // remove if your Screen doesn't support gradients
+        gradientColors={["#4b276b", "#0e1636"]}
       >
         <Text preset="sectionHeader" text="Create Script" />
 

@@ -14,7 +14,7 @@ import { HomeScreenSkeleton } from "@/components/skeleton/screens/HomeScreenSkel
 import { Text } from "@/components/Text"
 import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
-import { ScriptStatus } from "@/interface/script"
+import { ScriptStatus, WriterStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { drawerRef } from "@/navigators/Drawer"
 import { useBanners } from "@/querries/banner"
@@ -113,14 +113,16 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
       <View style={$sectionContainer}>
         <Text text="Featured" style={themed($sectionHeader)} />
         <ScriptCard
+          script_id={3}
           imageSource={require("../../assets/images/demo/script-image.png")}
           title="Love Knows No Boundaries"
           description="They came from different worlds—different languages, cultures, ..."
-          status={ScriptStatus.completed}
+          status={ScriptStatus.published}
           commentsCount={2400}
           viewsCount={1500000}
           likedCount={55800}
           numberOfParts={25}
+          writerStatus={WriterStatus.completed}
         />
       </View>
       <View style={$sectionContainer}>
@@ -152,29 +154,33 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
         <View style={$trendingContainers}>
           <View style={$cardWrapper}>
             <ScriptCard
+              script_id={1}
               imageSource={require("../../assets/images/demo/script-image.png")}
               title="Love Knows No Boundaries"
               description="They came from different worlds—different languages, cultures, ..."
-              status={ScriptStatus.completed}
+              status={ScriptStatus.published}
               commentsCount={2400}
               viewsCount={1500000}
               likedCount={55800}
               numberOfParts={25}
               isVertical
+              writerStatus={WriterStatus.completed}
             />
           </View>
           <View style={$cardWrapper}>
             <ScriptCard
+              script_id={1}
               imageSource={{ uri: "https://reactjs.org/logo-ogs.png" }}
               // imageSource={require("../../assets/images/demo/script-image.png")}
               title="Love Knows No Boundaries"
               description="They came from different worlds—different languages, cultures, ..."
-              status={ScriptStatus.inprogress}
+              status={ScriptStatus.published}
               commentsCount={2400}
               viewsCount={1500000}
               likedCount={55800}
               numberOfParts={25}
               isVertical
+              writerStatus={WriterStatus.inprogress}
             />
           </View>
         </View>

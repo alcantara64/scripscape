@@ -29,6 +29,8 @@ type CreatePartDialogueVars = {
     audioFile?: DocumentPicker.DocumentPickerAsset
   }
 }
+
+//Script
 async function createScript(payload: CreateScript) {
   const form = buildFormData(payload)
   return getOrThrow(scriptService.create(form))
@@ -52,6 +54,7 @@ export function useCreateScript() {
   })
 }
 
+//parts
 async function createPart(payload: CreatePart) {
   return getOrThrow(scriptService.createScriptParts(payload.script_id, payload))
 }
@@ -73,6 +76,13 @@ export const useGetMyScripts = () => {
   return useQuery({
     queryKey: ["get-my-scripts"],
     queryFn: () => getOrThrow(scriptService.getMyScripts()),
+  })
+}
+
+export const useGetScriptById = (scriptId: number) => {
+  return useQuery({
+    queryKey: ["get-script-by-id", scriptId],
+    queryFn: () => getOrThrow(scriptService.getScript(scriptId)),
   })
 }
 
