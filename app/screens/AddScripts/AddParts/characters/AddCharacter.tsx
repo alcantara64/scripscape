@@ -26,7 +26,7 @@ type Props = {
     audioFile?: DocumentPicker.DocumentPickerAsset | null
   }
   pickAvatar: (status: boolean) => void
-  additionalImages: Array<{ imageUri: string }>
+  additionalImages: Array<string>
   setCharacterTextBackgroundColor: (color: BackgroundColorType) => void
   setCharacterTextColor: (color: TextColorType) => void
   setState: (ubs: any) => void
@@ -62,6 +62,7 @@ export const AddCharacter = ({
         text_background_color: selectedCharacterTextBackgroundColor,
         text_color: selectedCharacterTextColor,
         id: state.id!,
+        additional_images: additionalImages,
       })
     } else {
       addCharacter({
@@ -106,8 +107,8 @@ export const AddCharacter = ({
             {additionalImages.map((additionalImage) => (
               <Image
                 style={themed($additionalImageItem)}
-                key={additionalImage.imageUri}
-                source={{ uri: additionalImage.imageUri }}
+                key={additionalImage}
+                source={{ uri: additionalImage }}
               />
             ))}
             {additionalImages.length < 5 && (

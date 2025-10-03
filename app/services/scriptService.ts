@@ -7,13 +7,14 @@ import {
   Dialogue,
   IScript,
   Part,
-  ScriptPartCharacter,
+  ScriptCharacter,
   ScriptPartLocationImage,
   ScriptResponse,
 } from "@/interface/script"
 
 import { Api } from "./api"
 import { ApiResult } from "./api/types"
+import { toRNFile } from "@/utils/image"
 
 export class ScriptService {
   constructor(private httpClient: Api) {}
@@ -101,15 +102,13 @@ export class ScriptService {
     })
   }
 
-  getCharactersByScript(scriptId: number): Promise<ApiResult<Array<ScriptPartCharacter>>> {
-    return this.httpClient.get<Array<ScriptPartCharacter>>(
-      `/script/dialogues/${scriptId}/characters`,
-    )
+  getCharactersByScript(scriptId: number): Promise<ApiResult<Array<ScriptCharacter>>> {
+    return this.httpClient.get<Array<ScriptCharacter>>(`/script/dialogues/${scriptId}/characters`)
   }
   createScriptCharacters(
-    part_id: number,
-    payload: Omit<ScriptPartCharacter, "id" | "part">,
-  ): Promise<ApiResult<ScriptPartCharacter>> {
+    script_id: number,
+    payload: Omit<ScriptCharacter, "id" | "part">,
+  ): Promise<ApiResult<ScriptCharacter>> {
     const fd = new FormData()
     if (payload.image) {
       fd.append("image", payload.image)
@@ -123,13 +122,40 @@ export class ScriptService {
     if (payload.name) {
       fd.append("name", payload.name)
     }
+    payload.additional_images?.forEach((p, i) => {
+      fd.append("additional_images", { uri: p, name: `extra-${i}.jpg`, type: "image/jpeg" } as any)
+    })
 
-    return this.httpClient.post<ScriptPartCharacter>(
-      `/script/dialogues/${part_id}/characters`,
+    return this.httpClient.post<ScriptCharacter>(`/script/dialogues/${script_id}/characters`, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+  }
+  updateScriptCharacters(
+    character_id: number,
+    script_id: number,
+    payload: Omit<ScriptCharacter, "id">,
+  ): Promise<ApiResult<ScriptCharacter>> {
+    const fd = new FormData()
+    if (payload.image) {
+      fd.append("image", toRNFile(payload.image, `${payload.name}.png`) as any)
+    }
+    if (payload.text_background_color) {
+      fd.append("text_background_color", payload.text_background_color)
+    }
+    if (payload.text_color) {
+      fd.append("text_color", payload.text_color)
+    }
+    if (payload.name) {
+      fd.append("name", payload.name)
+    }
+    payload.additional_images?.forEach((p, i) => {
+      fd.append("additional_images", toRNFile(p, `extra-${i}.jpg`) as any)
+    })
+
+    return this.httpClient.put<ScriptCharacter>(
+      `/script/${script_id}/characters/${character_id}`,
       fd,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      },
+      { headers: { "Content-Type": "multipart/form-data" }, transformRequest: (d) => d },
     )
   }
   async createDialogue(

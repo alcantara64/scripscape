@@ -74,7 +74,7 @@ export function KeyboardToolbar({
           onSuccess: (response) => {
             editorRef.current?.focusContentEditor?.()
             editorRef.current?.insertHTML?.(`
-    <figure style="margin:12px 0;">
+    <figure style="margin:12px 0;" id="embedded-image${response.id}">
       <img src="${response.poster_image}" alt="${null ?? "image"}"
            style="max-width:100%;height:auto;display:block;border-radius:12px;" />
     </figure>

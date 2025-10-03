@@ -18,20 +18,21 @@ import { Line } from "@/components/Line"
 import { ListView } from "@/components/ListView"
 import { Screen } from "@/components/Screen"
 import { ScriptCard } from "@/components/ScriptCard"
+import { ScriptOverviewSkeleton } from "@/components/skeleton/screens/ScriptOverviewSkeleton"
+import { SmartImage } from "@/components/SmartImage"
 import { Text } from "@/components/Text"
 import { IScript, ScriptStatus, WriterStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { useGetScriptById } from "@/querries/script"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
-import { useGetScriptById } from "@/querries/script"
-import { ScriptOverviewSkeleton } from "@/components/skeleton/screens/ScriptOverviewSkeleton"
 import { formatDate, formatNumber } from "@/utils/formatDate"
-import { SmartImage } from "@/components/SmartImage"
+import { useQuota } from "@/utils/useQuota"
+
 import { CharacterSheet } from "./AddScripts/AddParts/characterSheet"
 import { useDialogue } from "./AddScripts/AddParts/useDialogue"
-import { useQuota } from "@/utils/useQuota"
 
 interface ScriptDetailScreenProps extends AppStackScreenProps<"ScriptDetail"> {}
 
@@ -39,11 +40,7 @@ type Mode = "manage-location" | "manage-characters" | "manage-images" | "setting
 
 export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   const { script_id } = route.params
-  const insets = useSafeAreaInsets()
-  const {
-    themed,
-    theme: { spacing },
-  } = useAppTheme()
+  const { themed } = useAppTheme()
   const navigation = useNavigation()
 
   const sheetRef = useRef<BottomSheetController>(null)
@@ -62,9 +59,10 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
     addCharacter,
     characterForm,
     onAddMoreImages,
+    setAdditionalImages,
   } = useDialogue({ scriptId: script_id })
 
-  const { quota, progress } = useQuota({
+  const { quota } = useQuota({
     isPro: false,
     used: {
       embedded: 2,
@@ -109,6 +107,8 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   )
 
   const openBottomSheet = () => {
+    setSnaPoints("34%")
+    setMode("settings")
     sheetRef.current?.expand()
   }
   const goToEditOverview = () => {
@@ -273,8 +273,8 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
           </Text>
 
           <View style={$statsRow}>
-            <Stat icon="view" label={formatNumber(scriptData?.views_count)} />
-            <Stat icon="like" label={formatNumber(scriptData?.likes_count)} />
+            <Stat icon="view" label={formatNumber(scriptData?.views_count || 0)} />
+            <Stat icon="like" label={formatNumber(scriptData?.likes_count || 0)} />
           </View>
 
           <Pressable style={themed($cta)}>
@@ -392,7 +392,16 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
           />
         </View>
       </Screen>
-      <AppBottomSheet controllerRef={sheetRef} snapPoints={[snapPoints]}>
+      <AppBottomSheet
+        controllerRef={sheetRef}
+        snapPoints={[snapPoints]}
+        onChange={(index) => {
+          if (index < 1) {
+            // sheetRef.current?.collapse()
+            // sheetRef.current?.close()
+          }
+        }}
+      >
         <View style={{ gap: 20, marginTop: 10 }}>
           {mode === "settings" &&
             scriptManipulators.map((item) =>
@@ -420,6 +429,8 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
               setCharacterName={() => {}}
               onLimitReached={() => {}}
               isEditMode
+              setAdditionalImages={setAdditionalImages}
+              scriptId={script_id}
             />
           )}
         </View>

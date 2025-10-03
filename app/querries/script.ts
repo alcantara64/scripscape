@@ -6,7 +6,7 @@ import {
   CreateScript,
   Dialogue,
   Part,
-  ScriptPartCharacter,
+  ScriptCharacter,
   ScriptPartLocationImage,
 } from "@/interface/script"
 import { categoryService } from "@/services/categoryService"
@@ -22,7 +22,7 @@ type CreateLocationVars = {
 }
 type CreatePartCharactersVars = {
   part_id: number
-  character: Omit<ScriptPartCharacter, "id">
+  character: Omit<ScriptCharacter, "id">
 }
 type CreatePartDialogueVars = {
   part_id: number

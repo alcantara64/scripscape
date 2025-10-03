@@ -20,14 +20,15 @@ import { ProBadge } from "@/components/ProBadge"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { Dialogue, ScriptCharacter } from "@/interface/script"
-import { colors } from "@/theme/colors"
+
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 
 import { CharactersList } from "./characters/charactersList"
-import { TEXT_BACKGROUND_COLORS, TEXT_COLOR } from "./editorConstant"
 import { BackgroundColorType, CharacterForm, CharacterItem, TextColorType } from "./types"
 import { AddCharacter } from "./characters/AddCharacter"
+import { useScriptUpdateCharacter } from "@/querries/character"
+import { toast } from "@/utils/toast"
 
 export type CharacterResult = {
   id?: number
@@ -52,7 +53,7 @@ type Props = {
   selectedCharacterTextColor: TextColorType
   selectedCharacterTextBackgroundColor: BackgroundColorType
   onAddAdditionalImages: (uri: string) => void
-  additionalImages: Array<{ imageUri: string }>
+  additionalImages: Array<string>
   onSave: (
     res: Omit<Dialogue, "id" | "part_id" | "created_at" | "dialogueCharacter"> & {
       audioFiLe?: DocumentPicker.DocumentPickerAsset | null
@@ -61,6 +62,8 @@ type Props = {
   quota: { used: number; limit: number }
   onLimitReached: () => void
   isEditMode?: boolean
+  setAdditionalImages?: (images: Array<string>) => void
+  scriptId?: number
 }
 
 type Mode = "add-character" | "add-dialogue" | "choose-character"
@@ -83,6 +86,8 @@ export const CharacterSheet = ({
   quota,
   onLimitReached,
   isEditMode,
+  setAdditionalImages,
+  scriptId,
 }: Props) => {
   const { themed } = useAppTheme()
   const [state, setState] = useState<CharacterResult>({
@@ -97,6 +102,7 @@ export const CharacterSheet = ({
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [mode, setMode] = useState<Mode>("choose-character")
   const selectedItem = selectedIndex != null ? characters[selectedIndex] : null
+  const updateScriptCharacter = useScriptUpdateCharacter()
 
   useEffect(() => {
     if (isEditMode && selectedItem) {
@@ -108,6 +114,11 @@ export const CharacterSheet = ({
         dialogue: "",
         id: selectedItem.id,
       })
+      setCharacterTextColor(selectedItem.text_color)
+      setCharacterTextBackgroundColor(selectedItem.text_background_color)
+      if (selectedItem.additional_images) {
+        setAdditionalImages?.(selectedItem.additional_images)
+      }
     }
   }, [selectedIndex])
 
@@ -124,6 +135,22 @@ export const CharacterSheet = ({
         setState((s) => ({ ...s, avatarUri: res.assets[0].uri }))
       }
     }
+  }
+  const updateCharacter = (payload: ScriptCharacter) => {
+    console.log("script_id", scriptId, payload.id, payload)
+
+    updateScriptCharacter.mutate(
+      {
+        script_id: scriptId as number,
+        character_id: payload.id,
+        character: payload,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Character updated successfully ")
+        },
+      },
+    )
   }
 
   const pickAudio = async () => {
@@ -236,7 +263,7 @@ export const CharacterSheet = ({
             additionalImages={additionalImages}
             setCharacterTextBackgroundColor={setCharacterTextBackgroundColor}
             setCharacterTextColor={setCharacterTextColor}
-            onUpdate={() => {}}
+            onUpdate={updateCharacter}
             isEditMode={isEditMode}
           />
         )}

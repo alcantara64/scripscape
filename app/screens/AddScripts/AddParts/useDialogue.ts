@@ -20,7 +20,7 @@ export function useDialogue({ scriptId }: { scriptId: number }) {
   const [selectedBackgroundColor, setSelectedBackgroundColor] =
     useState<BackgroundColorType>("#E9CDFD")
   const [selectedTextColor, setSelectedTextColor] = useState<TextColorType>("#2C087F")
-  const [additionalImages, setAdditionalImages] = useState<Array<{ imageUri: string }>>([])
+  const [additionalImages, setAdditionalImages] = useState<Array<string>>([])
 
   const quota = useMemo(
     () => ({
@@ -40,7 +40,7 @@ export function useDialogue({ scriptId }: { scriptId: number }) {
     return used / total
   }, [quota])
 
-  const addCharacter = (item: ScriptPartCharacter) => {
+  const addCharacter = (item: ScriptCharacter) => {
     mutate({ part_id: partId, character: item })
   }
   const resetCharacterForm = () =>
@@ -51,8 +51,7 @@ export function useDialogue({ scriptId }: { scriptId: number }) {
     setCharacterForm((f) => ({ ...f, textBackgroundColor: color }))
   const setCharacterTextColor = (color: TextColorType) =>
     setCharacterForm((f) => ({ ...f, textColor: color }))
-  const onAddMoreImages = (uri: string) =>
-    setAdditionalImages((images) => [...images, { imageUri: uri }])
+  const onAddMoreImages = (uri: string) => setAdditionalImages((images) => [...images, uri])
 
   return {
     characters,
@@ -71,5 +70,6 @@ export function useDialogue({ scriptId }: { scriptId: number }) {
     characterForm,
     additionalImages,
     onAddMoreImages,
+    setAdditionalImages,
   }
 }

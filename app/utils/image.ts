@@ -16,8 +16,18 @@ export const mimeFromUri = (uri: string) => {
   if (ext === "webp") return "image/webp"
   return "application/octet-stream"
 }
-export const toRNFile = (uri: string, fallbackName: string) => ({
-  uri,
-  name: fallbackName,
-  type: mimeFromUri(uri),
-})
+export const toRNFile = (uri: string, fallbackName: string) => {
+  const mimeType = mimeFromUri(uri)
+  const ext = mimeType.split("/")[1] || "bin"
+
+  let safeName = fallbackName
+  if (!safeName.toLowerCase().endsWith(`.${ext}`)) {
+    safeName = `${fallbackName}.${ext}`
+  }
+
+  return {
+    uri,
+    name: safeName,
+    type: mimeType,
+  }
+}
