@@ -927,7 +927,6 @@ export const AuthSheet = (props: AuthSheetProps) => {
       try {
         const response = await authService.verifyCode(resetEmail, code)
         if (response.ok) {
-          console.log(response.data)
           const { message } = response.data
           toast.success(message)
           setMode("forgot:reset")

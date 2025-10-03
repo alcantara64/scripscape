@@ -1,5 +1,5 @@
 // CharacterSheet.tsx
-import { useCallback, useState } from "react"
+import { useEffect, useState } from "react"
 import {
   View,
   Pressable,
@@ -15,20 +15,22 @@ import * as ImagePicker from "expo-image-picker"
 
 import { type BottomSheetController } from "@/components/AppBottomSheet"
 import { Button } from "@/components/Button"
-import { Icon } from "@/components/Icon"
-import { ListView } from "@/components/ListView"
+import { Icon, PressableIcon } from "@/components/Icon"
 import { ProBadge } from "@/components/ProBadge"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
-import { Dialogue, ScriptPartCharacter } from "@/interface/script"
+import { Dialogue, ScriptCharacter } from "@/interface/script"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 
+import { CharactersList } from "./characters/charactersList"
 import { TEXT_BACKGROUND_COLORS, TEXT_COLOR } from "./editorConstant"
 import { BackgroundColorType, CharacterForm, CharacterItem, TextColorType } from "./types"
+import { AddCharacter } from "./characters/AddCharacter"
 
 export type CharacterResult = {
+  id?: number
   name: string
   avatarUri?: string
   bubbleBg?: string
@@ -38,14 +40,14 @@ export type CharacterResult = {
 }
 
 type Props = {
-  characters: ScriptPartCharacter[]
+  characters: ScriptCharacter[]
   form: CharacterForm
   isPro: boolean
   setCharacterImage: (uri: string | null) => void
   setCharacterName: (name: string) => void
   setCharacterTextColor: (color: TextColorType) => void
   setCharacterTextBackgroundColor: (color: BackgroundColorType) => void
-  addCharacter: (item: Omit<ScriptPartCharacter, "id" | "part">) => void
+  addCharacter: (item: Omit<ScriptCharacter, "id" | "part">) => void
   onConfirm: (item: CharacterItem) => void
   selectedCharacterTextColor: TextColorType
   selectedCharacterTextBackgroundColor: BackgroundColorType
@@ -58,6 +60,7 @@ type Props = {
   ) => void
   quota: { used: number; limit: number }
   onLimitReached: () => void
+  isEditMode?: boolean
 }
 
 type Mode = "add-character" | "add-dialogue" | "choose-character"
@@ -79,13 +82,11 @@ export const CharacterSheet = ({
   onSave,
   quota,
   onLimitReached,
+  isEditMode,
 }: Props) => {
-  const {
-    themed,
-    theme: { colors, spacing },
-  } = useAppTheme()
+  const { themed } = useAppTheme()
   const [state, setState] = useState<CharacterResult>({
-    name: "Queen Myrrh of the Glimmer",
+    name: "",
     avatarUri: undefined,
     bubbleBg: "#2C1A67",
     textColor: "#FFFFFF",
@@ -95,6 +96,20 @@ export const CharacterSheet = ({
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [mode, setMode] = useState<Mode>("choose-character")
+  const selectedItem = selectedIndex != null ? characters[selectedIndex] : null
+
+  useEffect(() => {
+    if (isEditMode && selectedItem) {
+      setState({
+        name: selectedItem?.name,
+        avatarUri: selectedItem.image,
+        textColor: selectedItem.text_color,
+        bubbleBg: selectedItem.text_background_color,
+        dialogue: "",
+        id: selectedItem.id,
+      })
+    }
+  }, [selectedIndex])
 
   const pickAvatar = async (isAdditionalImage?: boolean) => {
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -110,12 +125,6 @@ export const CharacterSheet = ({
       }
     }
   }
-
-  const LocationSeparator = useCallback(() => <View style={{ height: 12 }} />, [])
-  const keyExtractor = useCallback(
-    (item: CharacterItem, index: number) => `${item.name}-${index}`,
-    [],
-  )
 
   const pickAudio = async () => {
     // Gate for PRO
@@ -138,40 +147,33 @@ export const CharacterSheet = ({
     })
     // onSave(state)
   }
-  const RenderItem = useCallback(
-    ({ item, index }: { item: ScriptPartCharacter; index: number }) => {
-      const isSelected = selectedIndex === index
-      return (
-        <Pressable
-          onPress={() => setSelectedIndex((cur) => (cur === index ? null : index))}
-          hitSlop={6}
-          style={{ flex: 1, alignItems: "center" }}
-        >
-          <Image
-            source={{ uri: item.image }}
-            style={[themed($imageStyle), isSelected && themed($imageSelectedStyle)]}
-            contentFit="cover"
-            transition={100}
-          />
-          {<Text text={item.name} numberOfLines={1} />}
-        </Pressable>
-      )
-    },
-    [colors.palette.neutral800, colors.tint, selectedIndex],
-  )
-
-  const selectedItem = selectedIndex != null ? characters[selectedIndex] : null
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <View>
         <View style={$headerRow}>
-          <Text preset="titleHeading">
-            {mode === "choose-character" ? "Add Dialogue" : "Add Character"}
-          </Text>
-          {mode === "add-character" && <Text text={`${characters.length}/${quota.limit}`} />}
+          <View style={$titleContainer}>
+            <PressableIcon
+              icon="arrowLeft"
+              onPress={() => {
+                setMode("choose-character")
+              }}
+            />
+            <Text preset="titleHeading">
+              {mode === "choose-character"
+                ? isEditMode
+                  ? "Manage Characters"
+                  : "Add Dialogue"
+                : isEditMode
+                  ? "Edit Character"
+                  : "Add Character"}
+            </Text>
+          </View>
+          {(mode === "add-character" || isEditMode) && (
+            <Text text={`${characters.length}/${quota.limit}`} />
+          )}
         </View>
-        {(mode === "add-dialogue" || mode === "choose-character") && (
+        {(mode === "add-dialogue" || mode === "choose-character") && !isEditMode && (
           <View style={themed($subTitleContainer)}>
             <View style={themed($steps)}>
               <View style={themed($iconContainer)}>
@@ -211,210 +213,32 @@ export const CharacterSheet = ({
           </View>
         )}
         {mode === "choose-character" && (
-          <>
-            <ListView<ScriptPartCharacter>
-              data={characters}
-              extraData={{ characters }} // re-render on selection
-              estimatedItemSize={characters.length || 1}
-              ItemSeparatorComponent={LocationSeparator}
-              ListEmptyComponent={
-                <View style={{ paddingVertical: spacing.lg, alignItems: "center" }}>
-                  <Text preset="description" text="No character yet. Add one to get started." />
-                </View>
-              }
-              numColumns={3}
-              keyExtractor={keyExtractor}
-              renderItem={({ item, index }) => <RenderItem item={item} index={index} />}
-            />
-            <View style={{ gap: 12 }}>
-              <Pressable
-                style={themed($addDashed)}
-                onPress={() => {
-                  if (quota.used >= quota.limit) {
-                    onLimitReached()
-                  } else {
-                    setMode("add-character")
-                  }
-                }}
-              >
-                <Icon icon="plus" size={24} />
-                <Text weight="medium">Add Character</Text>
-              </Pressable>
-
-              <Button
-                disabled={!selectedItem}
-                text="Continue"
-                onPress={() => setMode("add-dialogue")}
-              />
-            </View>
-          </>
+          <CharactersList
+            selectedIndex={selectedIndex}
+            setMode={setMode}
+            selectedItem={selectedItem}
+            characters={characters}
+            quota={quota}
+            onLimitReached={onLimitReached}
+            setSelectedIndex={setSelectedIndex}
+            isEditMode={isEditMode}
+          />
         )}
         {mode === "add-character" && (
-          <>
-            <ScrollView style={{ marginBottom: 20 }}>
-              <Pressable
-                onPress={() => {
-                  pickAvatar(false)
-                }}
-                style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
-              >
-                {state.avatarUri ? (
-                  <Image
-                    source={{ uri: state.avatarUri }}
-                    style={{ width: 94, height: 94, borderRadius: 47 }}
-                  />
-                ) : (
-                  <View
-                    style={{ width: 94, height: 94, borderRadius: 47, backgroundColor: "#3A2A84" }}
-                  />
-                )}
-                <View>
-                  <Text style={themed($labelStyle)}>Upload Character Image</Text>
-                  <Button
-                    text="Browse Images"
-                    onPress={() => {
-                      pickAvatar(false)
-                    }}
-                  />
-                </View>
-              </Pressable>
-              <View style={{ marginVertical: 12 }}>
-                <Text style={themed($labelStyle)} text="Upload Additional Images" />
-                <View style={$additionalImageContainer}>
-                  {additionalImages.map((additionalImage) => (
-                    <Image
-                      style={themed($additionalImageItem)}
-                      key={additionalImage.imageUri}
-                      source={{ uri: additionalImage.imageUri }}
-                    />
-                  ))}
-                  {additionalImages.length < 5 && (
-                    <Pressable
-                      onPress={() => {
-                        pickAvatar(true)
-                      }}
-                      style={themed($additionalImageAddButton)}
-                    >
-                      <Icon icon="plus" size={16} />
-                    </Pressable>
-                  )}
-                </View>
-              </View>
-
-              <View style={{ gap: 24 }}>
-                <TextField
-                  label="Character Name"
-                  value={state.name}
-                  onChangeText={(name) => setState((s) => ({ ...s, name }))}
-                  placeholder="e.g., Queen Myrth of The Glimmer"
-                  style={{
-                    padding: 12,
-                    borderRadius: 12,
-                    color: "white",
-                  }}
-                  helper="20/50 Character"
-                />
-                <View>
-                  <Text style={themed($labelStyle)}>Choose Text Background Color</Text>
-
-                  <View style={{ flexDirection: "row", gap: 8, justifyContent: "space-between" }}>
-                    {TEXT_BACKGROUND_COLORS.map((color) => (
-                      <Pressable key={color} onPress={() => setCharacterTextBackgroundColor(color)}>
-                        <View
-                          style={[
-                            { height: 32, width: 32, borderRadius: 16, backgroundColor: color },
-                            selectedCharacterTextBackgroundColor === color && $selectedColor,
-                          ]}
-                        />
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-                <View>
-                  <Text style={themed($labelStyle)}>Choose Text Color</Text>
-                  <View style={{ flexDirection: "row", gap: 8, justifyContent: "space-between" }}>
-                    {TEXT_COLOR.map((color) => (
-                      <Pressable key={color} onPress={() => setCharacterTextColor(color)}>
-                        <View
-                          style={[
-                            { height: 32, width: 32, borderRadius: 16, backgroundColor: color },
-                            selectedCharacterTextColor === color && $selectedColor,
-                          ]}
-                        />
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-                <View>
-                  <Text style={themed($labelStyle)} text="Dialogue Color Examples" />
-                  <View style={$exampleDialogueContainer}>
-                    {state.avatarUri ? (
-                      <Image
-                        source={{ uri: state.avatarUri }}
-                        style={{ width: 36, height: 36, borderRadius: 18 }}
-                      />
-                    ) : (
-                      <View
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 18,
-                          backgroundColor: "#3A2A84",
-                          borderWidth: 0.5,
-                          borderColor: "#fff",
-                        }}
-                      />
-                    )}
-
-                    <View
-                      style={{
-                        gap: 4,
-                        paddingVertical: 8,
-                        paddingHorizontal: 12,
-                        backgroundColor: selectedCharacterTextBackgroundColor,
-                        borderRadius: 12,
-                        width: "88%",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: selectedCharacterTextColor,
-                          fontSize: 14,
-                          fontWeight: 600,
-                          lineHeight: 16,
-                        }}
-                        text={state.name || " Character Name"}
-                      />
-                      <Text
-                        numberOfLines={0}
-                        style={{
-                          color: selectedCharacterTextColor,
-                          fontSize: 14,
-                          fontWeight: 400,
-                          flexShrink: 1,
-                        }}
-                      >
-                        Tomorrow is booked. I’ve got a siege at dawn a famine at noon, and a public
-                        execution I’m morally opposed to but politically committed to by dusk
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </ScrollView>
-            <Button
-              text="Save"
-              onPress={() => {
-                addCharacter({
-                  image: state.avatarUri!,
-                  name: state.name,
-                  text_background_color: selectedCharacterTextBackgroundColor,
-                  text_color: selectedCharacterTextColor,
-                })
-                setMode("choose-character")
-              }}
-            />
-          </>
+          <AddCharacter
+            state={state}
+            setMode={setMode}
+            selectedCharacterTextBackgroundColor={selectedCharacterTextBackgroundColor}
+            selectedCharacterTextColor={selectedCharacterTextColor}
+            setState={setState}
+            pickAvatar={pickAvatar}
+            addCharacter={addCharacter}
+            additionalImages={additionalImages}
+            setCharacterTextBackgroundColor={setCharacterTextBackgroundColor}
+            setCharacterTextColor={setCharacterTextColor}
+            onUpdate={() => {}}
+            isEditMode={isEditMode}
+          />
         )}
         {mode === "add-dialogue" && (
           <View style={$step2Container}>
@@ -509,29 +333,6 @@ const $steps: ThemedStyle<ViewStyle> = ({ colors }) => ({
   gap: 8,
   alignItems: "center",
 })
-const $additionalImageContainer: ViewStyle = {
-  flexDirection: "row",
-  gap: 12,
-}
-const $additionalImageItem: ThemedStyle<ImageStyle> = ({ colors }) => ({
-  borderWidth: 1,
-  borderColor: "#fff",
-  height: 50,
-  width: 50,
-  borderRadius: 25,
-  alignItems: "center",
-  justifyContent: "center",
-})
-const $additionalImageAddButton: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  borderWidth: 1,
-  borderColor: "#fff",
-  height: 50,
-  width: 50,
-  borderRadius: 25,
-  alignItems: "center",
-  justifyContent: "center",
-  borderStyle: "dashed",
-})
 const $stepTitle: ThemedStyle<TextStyle> = ({ spacing }) => ({
   fontSize: spacing.sm,
   fontWeight: 700,
@@ -544,48 +345,6 @@ const $stepDescription: ThemedStyle<TextStyle> = ({ spacing }) => ({
 })
 const $stepInActiveDescription: ThemedStyle<TextStyle> = ({ colors }) => ({
   opacity: 0.3,
-})
-const $imageSelectedStyle: ThemedStyle<ImageStyle> = ({ colors }) => ({
-  borderWidth: 2,
-  borderColor: colors.palette.primary200,
-})
-const $imageStyle: ThemedStyle<ImageStyle> = ({ colors }) => ({
-  backgroundColor: colors.palette.neutral800,
-  height: 88,
-  width: 88,
-  borderRadius: 44,
-})
-const $addDashed: ThemedStyle<any> = ({ spacing }) => ({
-  borderWidth: 1,
-  borderStyle: "dashed",
-  borderColor: "rgba(197, 206, 250, 0.50)",
-  borderRadius: spacing.sm,
-  height: 56,
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 6,
-  marginTop: spacing.sm,
-  flexDirection: "row",
-})
-
-const $exampleDialogueContainer: ViewStyle = {
-  flexDirection: "row",
-  gap: 8,
-}
-const $selectedColor: ViewStyle = {
-  flexDirection: "row",
-  borderWidth: 4,
-  borderColor: colors.palette.neutral100,
-  height: 38,
-  width: 38,
-  borderRadius: 19,
-}
-const $labelStyle: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 14,
-  fontWeight: 500,
-  lineHeight: 20,
-  color: colors.fadedTint,
-  marginBottom: 12,
 })
 
 const $dialogueCharacterImage: ImageStyle = {
@@ -600,4 +359,10 @@ const $characterDialogueContainer: ViewStyle = {
 }
 const $step2Container: ViewStyle = {
   gap: 24,
+}
+
+const $titleContainer: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 8,
 }

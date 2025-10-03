@@ -29,10 +29,14 @@ export class ScriptService {
   }
 
   create(payload: FormData): Promise<ApiResult<ScriptResponse>> {
-    return this.httpClient.post<ScriptResponse>("/script", payload)
+    return this.httpClient.post<ScriptResponse>("/script", payload, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
   }
   update(script_id: number, payload: FormData): Promise<ApiResult<ScriptResponse>> {
-    return this.httpClient.put<ScriptResponse>("/script", payload)
+    return this.httpClient.put<ScriptResponse>(`/script/${script_id}`, payload, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
   }
   getScript(scriptId: number): Promise<ApiResult<IScript>> {
     return this.httpClient.get<IScript>(`/script/${scriptId}`)
@@ -97,16 +101,17 @@ export class ScriptService {
     })
   }
 
-  getCharactersByPart(partId: number): Promise<ApiResult<Array<ScriptPartCharacter>>> {
-    return this.httpClient.get<Array<ScriptPartCharacter>>(`/script/dialogues/${partId}/characters`)
+  getCharactersByScript(scriptId: number): Promise<ApiResult<Array<ScriptPartCharacter>>> {
+    return this.httpClient.get<Array<ScriptPartCharacter>>(
+      `/script/dialogues/${scriptId}/characters`,
+    )
   }
-  createPartCharacters(
+  createScriptCharacters(
     part_id: number,
     payload: Omit<ScriptPartCharacter, "id" | "part">,
   ): Promise<ApiResult<ScriptPartCharacter>> {
     const fd = new FormData()
     if (payload.image) {
-      console.log("image ==>", payload.image)
       fd.append("image", payload.image)
     }
     if (payload.text_background_color) {

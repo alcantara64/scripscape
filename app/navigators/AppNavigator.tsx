@@ -47,7 +47,8 @@ export type AppStackParamList = {
   WriteScriptTableContents: { scriptId: number }
   ScriptDetail: { scriptId: number }
   EditOverview: { scriptId: number }
-  // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
+  ScriptPart: undefined
+	// IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
 /**

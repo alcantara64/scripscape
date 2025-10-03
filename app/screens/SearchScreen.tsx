@@ -17,7 +17,7 @@ import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
-import { followers } from "@/utils/mock"
+import { Categories, followers } from "@/utils/mock"
 
 interface SearchScreenProps extends AppStackScreenProps<"Search"> {}
 const Separator = () => <View style={$separator} />
@@ -34,56 +34,6 @@ const SUB_Tabs: TabItem[] = [
 ]
 
 type SubTabKey = (typeof SUB_Tabs)[number]["key"]
-const Categories = [
-  {
-    title: "Action",
-    image: require("../../assets/images/category-action.png"),
-  },
-  {
-    title: "Adventure",
-    image: require("../../assets/images/category-adventure.png"),
-  },
-  {
-    title: "Anime/Animation",
-    image: require("../../assets/images/category-anime-animation.png"),
-  },
-  {
-    title: "Comedy",
-    image: require("../../assets/images/category-comedy.png"),
-  },
-  {
-    title: "Drama",
-    image: require("../../assets/images/category-drama.png"),
-  },
-  {
-    title: "Fan Fiction",
-    image: require("../../assets/images/category-fan-fiction.png"),
-  },
-  {
-    title: "Fantasy",
-    image: require("../../assets/images/category-fantasy.png"),
-  },
-  {
-    title: "Historical",
-    image: require("../../assets/images/category-historical.png"),
-  },
-  {
-    title: "Mystery",
-    image: require("../../assets/images/category-mystery.png"),
-  },
-  {
-    title: "Thriller",
-    image: require("../../assets/images/category-thriller.png"),
-  },
-  {
-    title: "Romance",
-    image: require("../../assets/images/category-romance.png"),
-  },
-  {
-    title: "Horror",
-    image: require("../../assets/images/category-horror.png"),
-  },
-]
 
 export const SearchScreen: FC<SearchScreenProps> = () => {
   // Pull in navigation via hook

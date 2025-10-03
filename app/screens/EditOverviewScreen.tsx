@@ -10,26 +10,31 @@ import {
 import { useNavigation } from "@react-navigation/native"
 
 import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
-import { Icon, PressableIcon } from "@/components/Icon"
+import { Button } from "@/components/Button"
+import { CategorySheet } from "@/components/CategorySheet"
+import { Icon } from "@/components/Icon"
 import { ImagePickerWithCropping } from "@/components/ImagePickerWithCroping"
 import { ImageUploader } from "@/components/ImageUploader"
 import { Screen } from "@/components/Screen"
+import { EditOverViewScreenSkeleton } from "@/components/skeleton/screens/EditOverviewScreen"
+import { TagSheet } from "@/components/TagSheet"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { Switch } from "@/components/Toggle/Switch"
+import { Category, Tag, Tags, WriterStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
-import { useGetScriptById } from "@/querries/script"
+import { useGetMyCategories, useGetScriptById, useUpdateScript } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 
 import { validateTitle } from "./AddScripts/AddParts/editorConstant"
-import { Category, Tags } from "@/interface/script"
-import { Button } from "@/components/Button"
+import { compressImage, toRNFile } from "@/utils/image"
+import { toast } from "@/utils/toast"
 // import { useNavigation } from "@react-navigation/native"
 
 interface EditOverviewScreenProps extends AppStackScreenProps<"EditOverview"> {}
-
+type Mode = "category" | "tag"
 export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
   // Pull in navigation via hook
   const { script_id } = route.params
@@ -38,9 +43,10 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
     themed,
     theme: { spacing },
   } = useAppTheme()
+  const { data: categoriesData } = useGetMyCategories()
+  const updateScript = useUpdateScript()
 
   const [scriptTitle, setScriptTitle] = useState("")
-
   const titleMax = 50
   const titleErr = useMemo(() => validateTitle(scriptTitle), [scriptTitle])
   const titleHelper = titleErr
@@ -54,8 +60,9 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
   )
   const [matureContentFilter, setMatureContentFilter] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
-  const [tags, setTags] = useState<Array<Tags>>([])
+  const [tags, setTags] = useState<Array<string>>([])
   const [categories, setCategories] = useState<Array<Category>>([])
+  const [mode, setMode] = useState<Mode>("category")
 
   const overviewMax = 200
 
@@ -72,6 +79,36 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
   const handleCoverImageSelected = (uri: string) => {
     setCoverImage(uri)
   }
+  const openBottomSheet = () => {
+    sheetRef.current?.open()
+  }
+  const closeBottomSheet = () => {
+    sheetRef.current?.close()
+  }
+  const saveChanges = async () => {
+    const manipulated = await compressImage(coverImage!)
+    updateScript.mutate(
+      {
+        scriptId: script_id,
+        payload: {
+          title: scriptTitle,
+          postalImage: toRNFile(manipulated.uri, `${scriptTitle}-${Date.now()}.png`),
+          isMatureContent: matureContentFilter,
+          summary: overview,
+          tags,
+          categories,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Script Updated sucessfully ")
+        },
+        onError: () => {
+          toast.error("Error updating your script try again later")
+        },
+      },
+    )
+  }
 
   useEffect(() => {
     if (scriptData) {
@@ -79,8 +116,15 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
       setOverview(scriptData?.summary)
       setCategories(scriptData?.categories)
       setTags(scriptData?.tags)
+      setMatureContentFilter(scriptData.contains_mature_content)
+      setIsCompleted(scriptData.writerStatus === WriterStatus.completed)
     }
   }, [scriptData])
+
+  if (isLoading) {
+    return <EditOverViewScreenSkeleton />
+  }
+
   return (
     <>
       <ImagePickerWithCropping
@@ -141,38 +185,48 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
           />
         </View>
         <View style={$sectionContainer}>
-          <View>
+          <View style={{ width: "85%" }}>
             <Text text="Category" style={themed($sectionTitle)} />
             <View style={$sectionItems}>
-              <View style={themed($pillContainer)}>
-                <Text text="Drama" style={themed($pillText)} />
-              </View>
-              <View style={themed($pillContainer)}>
-                <Text text="Sci-fiction" style={themed($pillText)} />
-              </View>
+              {categories.map((category) => (
+                <View key={category.name} style={themed($pillContainer)}>
+                  <Text text={category.name} style={themed($pillText)} />
+                </View>
+              ))}
             </View>
           </View>
-          <View style={$iconContainer}>
+          <Pressable
+            onPress={() => {
+              setMode("category")
+              openBottomSheet()
+            }}
+            style={$iconContainer}
+          >
             <Icon icon="edit" />
             <Text text="Edit" />
-          </View>
+          </Pressable>
         </View>
         <View style={$sectionContainer}>
-          <View>
+          <View style={{ width: "85%" }}>
             <Text text="Tags" style={themed($sectionTitle)} />
             <View style={$sectionItems}>
-              <View style={[themed($pillContainer), themed($tagContainerStyle)]}>
-                <Text text="#Starwars" style={[themed($pillText), themed($tagText)]} />
-              </View>
-              <View style={[themed($pillContainer), themed($tagContainerStyle)]}>
-                <Text text="Starfighter" style={[themed($pillText), themed($tagText)]} />
-              </View>
+              {tags.map((item) => (
+                <View key={item} style={[themed($pillContainer), themed($tagContainerStyle)]}>
+                  <Text text={item} style={[themed($pillText), themed($tagText)]} />
+                </View>
+              ))}
             </View>
           </View>
-          <View style={$iconContainer}>
+          <Pressable
+            style={$iconContainer}
+            onPress={() => {
+              setMode("tag")
+              openBottomSheet()
+            }}
+          >
             <Icon icon="edit" />
             <Text text="Edit" />
-          </View>
+          </Pressable>
         </View>
         <View style={$sectionContainer}>
           <View>
@@ -205,7 +259,7 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
       </Screen>
       <View style={themed($bottomButton)}>
         <View style={$saveAndPusblishContainer}>
-          <Button text="Save Changes" style={{ flex: 1 }} />
+          <Button onPress={saveChanges} text="Save Changes" style={{ flex: 1 }} />
           <Button text="Publish" style={{ flex: 1 }} />
         </View>
         <Pressable
@@ -217,8 +271,28 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
           <Text style={themed($skipTxt)}>Edit Table of Contents</Text>
         </Pressable>
       </View>
-      <AppBottomSheet controllerRef={sheetRef} snapPoints={["32%"]}>
-        <View></View>
+      <AppBottomSheet controllerRef={sheetRef} snapPoints={["75%"]}>
+        {mode === "category" && (
+          <CategorySheet
+            categories={categoriesData?.items || []}
+            onSave={(selectedItems) => {
+              setCategories(selectedItems)
+              closeBottomSheet()
+            }}
+            onBack={closeBottomSheet}
+            title="Edit Categories"
+            subtitle={`You can select up to 3 categories`}
+          />
+        )}
+        {mode === "tag" && (
+          <TagSheet
+            onSave={(tags) => {
+              setTags(tags)
+              closeBottomSheet()
+            }}
+            onBack={closeBottomSheet}
+          />
+        )}
       </AppBottomSheet>
     </>
   )
@@ -272,6 +346,7 @@ const $sectionItems: ViewStyle = {
   flexDirection: "row",
   gap: 4,
   marginTop: 8,
+  flexWrap: "wrap",
 }
 const $sectionTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 14,

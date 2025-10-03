@@ -28,7 +28,6 @@ export const ImagePickerWithCropping = forwardRef<ImagePickerRef, ImagePickerWit
         mediaTypes: ["images"],
         allowsEditing: true,
       })
-      console.log("result", result)
       if (!result.canceled) {
         onImageSelected(result.assets[0].uri, result.assets[0].mimeType)
       }

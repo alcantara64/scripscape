@@ -15,11 +15,7 @@ export const HomeScreenSkeleton = () => {
   } = useAppTheme()
 
   return (
-    <Screen
-      safeAreaEdges={["top"]}
-      contentContainerStyle={themed($content)}
-      showsVerticalScrollIndicator={false}
-    >
+    <Screen safeAreaEdges={["top"]} contentContainerStyle={themed($content)}>
       {/* Top Bar */}
       <View style={$rowBetween}>
         <View style={$row}>

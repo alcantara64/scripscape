@@ -22,6 +22,7 @@ import { buildLocationHTML, editorContentStyle, type TabKey } from "./AddParts/e
 import { LocationSheet } from "./AddParts/locationSheet"
 import { useDialogue } from "./AddParts/useDialogue"
 import { useLocations } from "./AddParts/useLocation"
+import { useQuota } from "@/utils/useQuota"
 
 export interface AddPartProps {
   style?: StyleProp<ViewStyle>
@@ -73,26 +74,17 @@ export default function AddPart({
     addCharacter,
     characterForm,
     onAddMoreImages,
-  } = useDialogue({ partId: selectedPart?.part_id })
+  } = useDialogue({ scriptId: selectedPart?.script_id })
 
-  const quota = useMemo(() => {
-    const limits = isPro
-      ? { poster: 1, embedded: 50, location: 50, character: 50 }
-      : { poster: 1, embedded: 10, location: 15, character: 15 }
-
-    return {
-      poster: { used: 1, limit: limits.poster },
-      embedded: { used: embeddedImageUsed, limit: limits.embedded },
-      location: { used: locations.length, limit: limits.location },
-      character: { used: characters.length, limit: limits.character },
-    }
-  }, [isPro, locations.length, characters.length, embeddedImageUsed])
-
-  const progress = useMemo(() => {
-    const total = Object.values(quota).reduce((sum, q) => sum + q.limit, 0)
-    const used = Object.values(quota).reduce((sum, q) => sum + q.used, 0)
-    return { used, total, pct: used / total }
-  }, [quota])
+  const { quota, progress } = useQuota({
+    isPro,
+    used: {
+      embedded: embeddedImageUsed,
+      location: locations.length,
+      character: characters.length,
+      // poster is optional; default = 1
+    },
+  })
 
   useEffect(() => {
     bindDialogueClick(editorRef)

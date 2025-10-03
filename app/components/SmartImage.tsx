@@ -54,7 +54,6 @@ export const SmartImage = (props: SmartImageProps) => {
   }, [error, image, fallBackImage])
 
   const remote = useMemo(() => isRemote(sourceToUse), [sourceToUse])
-  console.log(loading, remote)
   return (
     <View style={$styles}>
       <Image

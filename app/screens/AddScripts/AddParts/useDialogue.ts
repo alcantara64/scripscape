@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react"
 
-import { ScriptPartCharacter } from "@/interface/script"
-import { useGetCharactersByParts, useScriptCreatePartCharacter } from "@/querries/script"
+import { ScriptCharacter } from "@/interface/script"
+import { useGetCharactersByScript, useScriptCreatePartCharacter } from "@/querries/script"
 
 import type { CharacterForm, BackgroundColorType, TextColorType } from "./types"
 
-export function useDialogue({ partId }: { partId: number }) {
-  const { data: characters = [] } = useGetCharactersByParts(partId)
+export function useDialogue({ scriptId }: { scriptId: number }) {
+  const { data: characters = [] } = useGetCharactersByScript(scriptId)
   const { mutate } = useScriptCreatePartCharacter()
   const [characterForm, setCharacterForm] = useState<CharacterForm>({
     image: null,

@@ -6,7 +6,6 @@ export async function getOrThrow<T>(p: Promise<ApiResult<T>>): Promise<T> {
   const res = await p
   if (res.ok) return res.data
   // Map problems to user-friendly messages
-  console.log({ res })
   const msg =
     res.problem.kind === "bad-data"
       ? "Malformed server response"

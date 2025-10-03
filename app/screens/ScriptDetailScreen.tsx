@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo, useRef } from "react"
+import { FC, useCallback, useMemo, useRef, useState } from "react"
 import {
   ImageBackground,
   Pressable,
@@ -29,10 +29,13 @@ import { useGetScriptById } from "@/querries/script"
 import { ScriptOverviewSkeleton } from "@/components/skeleton/screens/ScriptOverviewSkeleton"
 import { formatDate, formatNumber } from "@/utils/formatDate"
 import { SmartImage } from "@/components/SmartImage"
+import { CharacterSheet } from "./AddScripts/AddParts/characterSheet"
+import { useDialogue } from "./AddScripts/AddParts/useDialogue"
+import { useQuota } from "@/utils/useQuota"
 
 interface ScriptDetailScreenProps extends AppStackScreenProps<"ScriptDetail"> {}
 
-type Part = { id: string; title: string; date: string }
+type Mode = "manage-location" | "manage-characters" | "manage-images" | "settings"
 
 export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   const { script_id } = route.params
@@ -46,11 +49,48 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   const sheetRef = useRef<BottomSheetController>(null)
 
   const { isLoading, data: scriptData } = useGetScriptById(script_id)
+  const [mode, setMode] = useState<Mode>("settings")
+  const [snapPoints, setSnaPoints] = useState("34%")
+
+  const {
+    characters,
+    selectedBackgroundColor,
+    selectedTextColor,
+    setSelectedBackgroundColor,
+    setSelectedTextColor,
+    additionalImages,
+    addCharacter,
+    characterForm,
+    onAddMoreImages,
+  } = useDialogue({ scriptId: script_id })
+
+  const { quota, progress } = useQuota({
+    isPro: false,
+    used: {
+      embedded: 2,
+      location: 4,
+      character: characters.length,
+      // poster is optional; default = 1
+    },
+  })
 
   const scriptManipulators = useMemo(
     () => [
-      { icon: "edit", label: "Edit Table Of Contents ", action: () => {} },
-      { icon: "person", label: "Manage Characters ", action: () => {} },
+      {
+        icon: "edit",
+        label: "Edit Table Of Contents ",
+        action: () => {
+          navigation.navigate("WriteScriptTableContents", { scriptId: script_id })
+        },
+      },
+      {
+        icon: "person",
+        label: "Manage Characters ",
+        action: () => {
+          setSnaPoints("85%")
+          setMode("manage-characters")
+        },
+      },
       { icon: "gps", label: "Manage Locations", action: () => {} },
       { icon: "image", label: "Manage Images", action: () => {} },
       { icon: "trash", label: "Delete This Script", action: () => {} },
@@ -59,7 +99,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   )
 
   const renderBottomSheetItem = useCallback(
-    (icon: string, label: string, action?: () => void) => (
+    (icon: string, label: string, action: () => void) => (
       <Pressable key={label} style={$navigationItem} onPress={action}>
         <Icon icon={icon} size={24} />
         <Text text={label} style={themed($navigationText)} />
@@ -352,9 +392,36 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
           />
         </View>
       </Screen>
-      <AppBottomSheet controllerRef={sheetRef} snapPoints={["34%"]}>
+      <AppBottomSheet controllerRef={sheetRef} snapPoints={[snapPoints]}>
         <View style={{ gap: 20, marginTop: 10 }}>
-          {scriptManipulators.map((item) => renderBottomSheetItem(item.icon, item.label))}
+          {mode === "settings" &&
+            scriptManipulators.map((item) =>
+              renderBottomSheetItem(item.icon, item.label, item.action),
+            )}
+          {mode === "manage-characters" && (
+            <CharacterSheet
+              quota={quota.character}
+              isPro={true}
+              onSave={async (res) => {
+                // await onCharacterSave(res)
+                // sheetRef.current?.close()
+              }}
+              selectedCharacterTextBackgroundColor={selectedBackgroundColor}
+              selectedCharacterTextColor={selectedTextColor}
+              characters={characters}
+              setCharacterTextColor={setSelectedTextColor}
+              setCharacterTextBackgroundColor={setSelectedBackgroundColor}
+              additionalImages={additionalImages}
+              onAddAdditionalImages={onAddMoreImages}
+              addCharacter={addCharacter}
+              onConfirm={() => {}}
+              form={characterForm}
+              setCharacterImage={() => {}}
+              setCharacterName={() => {}}
+              onLimitReached={() => {}}
+              isEditMode
+            />
+          )}
         </View>
       </AppBottomSheet>
     </>

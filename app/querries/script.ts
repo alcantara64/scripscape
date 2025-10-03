@@ -9,6 +9,7 @@ import {
   ScriptPartCharacter,
   ScriptPartLocationImage,
 } from "@/interface/script"
+import { categoryService } from "@/services/categoryService"
 import { scriptService } from "@/services/scriptService"
 import { getOrThrow } from "@/utils/query"
 
@@ -29,6 +30,10 @@ type CreatePartDialogueVars = {
     audioFile?: DocumentPicker.DocumentPickerAsset
   }
 }
+type UpdateScriptVar = {
+  scriptId: number
+  payload: CreateScript
+}
 
 //Script
 async function createScript(payload: CreateScript) {
@@ -48,9 +53,42 @@ function buildFormData(payload: CreateScript) {
   return fd
 }
 
+function buildUpdateFormData(fields: CreateScript): FormData {
+  const fd = new FormData()
+  // File (optional)
+  if (fields.postalImage) {
+    fd.append("postalImage", fields.postalImage as File)
+  }
+  if (fields.title != null) fd.append("title", fields.title)
+  if (fields.summary !== undefined) fd.append("summary", fields.summary ?? "")
+  if (fields.status) fd.append("status", fields.status)
+
+  // Arrays → repeat the key (multer-friendly)
+  if (fields.categories?.length) {
+    fields.categories.forEach((id) => fd.append("categoryIds[]", String(id)))
+  }
+
+  if (fields.tags?.length) {
+    fields.tags.forEach((t) => fd.append("tags[]", String(t)))
+  }
+
+  return fd
+}
+
+async function updateScript(vars: UpdateScriptVar) {
+  const form = buildUpdateFormData(vars.payload)
+  return getOrThrow(scriptService.update(vars.scriptId, form))
+}
+
 export function useCreateScript() {
   return useMutation({
     mutationFn: createScript,
+  })
+}
+
+export function useUpdateScript() {
+  return useMutation({
+    mutationFn: updateScript,
   })
 }
 
@@ -130,14 +168,14 @@ export const useScriptPartLocation = () => {
 
 //character
 
-export const useGetCharactersByParts = (part_id: number) => {
+export const useGetCharactersByScript = (script_id: number) => {
   return useQuery({
-    queryKey: ["get-part-characters", part_id],
-    queryFn: () => getOrThrow(scriptService.getCharactersByPart(part_id)),
+    queryKey: ["get-part-characters", script_id],
+    queryFn: () => getOrThrow(scriptService.getCharactersByScript(script_id)),
   })
 }
 async function createPartCharacter(vars: CreatePartCharactersVars) {
-  return getOrThrow(scriptService.createPartCharacters(vars.part_id, vars.character))
+  return getOrThrow(scriptService.createScriptCharacters(vars.part_id, vars.character))
 }
 export const useScriptCreatePartCharacter = () => {
   const qc = useQueryClient()
@@ -155,5 +193,13 @@ async function createPartDialogue(vars: CreatePartDialogueVars) {
 export const useScriptCreateDialoguePart = () => {
   return useMutation({
     mutationFn: createPartDialogue,
+  })
+}
+
+// category
+export const useGetMyCategories = () => {
+  return useQuery({
+    queryKey: ["get-my-categories"],
+    queryFn: () => getOrThrow(categoryService.getCategories()),
   })
 }

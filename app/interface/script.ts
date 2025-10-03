@@ -28,7 +28,7 @@ export interface IScript {
   contains_mature_content: boolean
   parts: Array<Part>
   author: User
-  tags: Array<Tags>
+  tags: Array<Tag>
   categories: Array<Category>
 }
 
@@ -41,9 +41,10 @@ export type CreateScript = {
   summary?: string
   postalImage?: File | { uri: string; name: string; type: string } | null
   tags?: Array<Tags>
-  categories?: Array<Category>
+  categories?: Array<string>
   isMatureContent?: boolean
   writerStatus?: WriterStatus
+  status?: ScriptStatus
 }
 
 export type Part = {
@@ -69,14 +70,13 @@ export type ScriptPartLocationImage = {
   createdAt?: string
 }
 
-export type ScriptPartCharacter = {
+export type ScriptCharacter = {
   id: number
   text_color: string
   text_background_color: string
   image?: string
   additional_images?: Array<string>
   created_at?: string
-  part: Part
   name: string
 }
 
@@ -87,7 +87,7 @@ export type Dialogue = {
   character_id: number
   created_at: string
   dialogue: string
-  dialogueCharacter: ScriptPartCharacter
+  dialogueCharacter: ScriptCharacter
 }
 export type Tags = {
   id: number
@@ -102,6 +102,13 @@ export type Category = {
   slug: string
   name: string
   description: string
+  created_at: string
+  updated_at: string
+}
+export type Tag = {
+  id?: number
+  slug: string
+  name: string
   created_at: string
   updated_at: string
 }

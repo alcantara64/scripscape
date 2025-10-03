@@ -54,3 +54,53 @@ export const followers = [
     isFollowing: false,
   },
 ]
+export const Categories = [
+  {
+    title: "Action",
+    image: require("../../assets/images/category-action.png"),
+  },
+  {
+    title: "Adventure",
+    image: require("../../assets/images/category-adventure.png"),
+  },
+  {
+    title: "Anime/Animation",
+    image: require("../../assets/images/category-anime-animation.png"),
+  },
+  {
+    title: "Comedy",
+    image: require("../../assets/images/category-comedy.png"),
+  },
+  {
+    title: "Drama",
+    image: require("../../assets/images/category-drama.png"),
+  },
+  {
+    title: "Fan Fiction",
+    image: require("../../assets/images/category-fan-fiction.png"),
+  },
+  {
+    title: "Fantasy",
+    image: require("../../assets/images/category-fantasy.png"),
+  },
+  {
+    title: "Historical",
+    image: require("../../assets/images/category-historical.png"),
+  },
+  {
+    title: "Mystery",
+    image: require("../../assets/images/category-mystery.png"),
+  },
+  {
+    title: "Thriller",
+    image: require("../../assets/images/category-thriller.png"),
+  },
+  {
+    title: "Romance",
+    image: require("../../assets/images/category-romance.png"),
+  },
+  {
+    title: "Horror",
+    image: require("../../assets/images/category-horror.png"),
+  },
+]
