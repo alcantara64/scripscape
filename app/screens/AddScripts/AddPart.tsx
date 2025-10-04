@@ -12,23 +12,25 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { UpgradeProPopup } from "@/components/UprogradePropPup"
 import { Dialogue, Part } from "@/interface/script"
+import { useGetLocationImagesByScriptId } from "@/querries/location"
 import { useScriptCreateDialoguePart } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { bindDialogueClick, insertDialogue } from "@/utils/insertDialogueBubble"
+import { useQuota } from "@/utils/useQuota"
 
 import { CharacterSheet } from "./AddParts/characterSheet"
 import { buildLocationHTML, editorContentStyle, type TabKey } from "./AddParts/editorConstant"
 import { LocationSheet } from "./AddParts/locationSheet"
 import { useDialogue } from "./AddParts/useDialogue"
 import { useLocations } from "./AddParts/useLocation"
-import { useQuota } from "@/utils/useQuota"
 
 export interface AddPartProps {
   style?: StyleProp<ViewStyle>
   onBack: () => void
   nextPartNumber: number
   selectedPart: Part | null
+  script_id: number
   onUpdate: (id: number, payload: Omit<Part, "part_id">) => void | Promise<void>
   onSave: (draft: Omit<Part, "id" | "script_id">) => void | Promise<void>
 }
@@ -41,6 +43,7 @@ export default function AddPart({
   selectedPart,
   onSave,
   onUpdate,
+  script_id,
 }: AddPartProps) {
   const $styles = [$container, style, Platform.OS === "android" && { marginTop: 24 }]
   const {
@@ -61,8 +64,10 @@ export default function AddPart({
   const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
   const [embeddedImageUsed, setEmbeddedImageUsed] = useState(0)
 
+  const { data, isLoading } = useGetLocationImagesByScriptId(script_id)
+
   const { locations, sortedLocations, locationForm, setImage, setName, setHideName, resetForm } =
-    useLocations({ currentTab, locations: selectedPart?.partLocations || [] })
+    useLocations({ currentTab, locations: data?.items || [] })
 
   const {
     characters,
@@ -74,7 +79,7 @@ export default function AddPart({
     addCharacter,
     characterForm,
     onAddMoreImages,
-  } = useDialogue({ scriptId: selectedPart?.script_id })
+  } = useDialogue({ scriptId: script_id })
 
   const { quota, progress } = useQuota({
     isPro,
@@ -132,7 +137,7 @@ export default function AddPart({
   const onSheetClose = useCallback(() => focusEditor(), [focusEditor])
 
   const onConfirmLocation = useCallback(
-    (item: { image: string; name: string; hideName: boolean }) => {
+    (item: { image: string; name: string; hideName: boolean; id: number }) => {
       const html = buildLocationHTML(item)
       editorRef.current?.insertHTML?.(html)
       closeLocationSheet()

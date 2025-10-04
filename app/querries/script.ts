@@ -1,25 +1,14 @@
 import * as DocumentPicker from "expo-document-picker"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import {
-  CreatePart,
-  CreateScript,
-  Dialogue,
-  Part,
-  ScriptCharacter,
-  ScriptPartLocationImage,
-} from "@/interface/script"
+import { CreatePart, CreateScript, Dialogue, Part, ScriptCharacter } from "@/interface/script"
 import { categoryService } from "@/services/categoryService"
 import { scriptService } from "@/services/scriptService"
 import { getOrThrow } from "@/utils/query"
 
 type ReorderVars = { script_id: number; parts: Part[] }
 type UpdateVars = { part_id: number; part: Partial<Omit<Part, "part_id">> }
-type CreateLocationVars = {
-  part_id: number
-  script_id: number
-  Loc: Omit<ScriptPartLocationImage, "id">
-}
+
 type CreatePartCharactersVars = {
   part_id: number
   character: Omit<ScriptCharacter, "id">
@@ -148,20 +137,6 @@ export const useUpdateScriptPart = () => {
     mutationFn: updatePart,
     onSuccess: (data, variable) => {
       qc.invalidateQueries({ queryKey: ["get-parts", `${data.script_id}`] })
-    },
-  })
-}
-
-async function createLocationPart(vars: CreateLocationVars) {
-  return getOrThrow(scriptService.createScriptPartLocation(vars.part_id, vars.Loc))
-}
-
-export const useScriptPartLocation = () => {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: createLocationPart,
-    onSuccess: (response, variables) => {
-      qc.invalidateQueries({ queryKey: ["get-parts", variables.script_id] })
     },
   })
 }

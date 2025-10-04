@@ -155,7 +155,7 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
           </View>
         ) : (
           <AddPart
-            partId={selectedPart?.part_id}
+            script_id={scriptId}
             onBack={() => setShowAdd(false)}
             nextPartNumber={parts?.length || 0 + 1}
             selectedPart={selectedPart}

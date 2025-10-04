@@ -11,20 +11,20 @@ import { Tabs } from "@/components/Tab"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { Switch } from "@/components/Toggle/Switch"
+import { ScriptLocationImage } from "@/interface/script"
+import { useScriptPartLocation } from "@/querries/location"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
+import { compressImage, toRNFile } from "@/utils/image"
 
 import { TAB_ITEMS, type TabKey, validateTitle } from "./editorConstant"
 import type { LocationItem, LocationForm } from "./types"
-import { useScriptPartLocation } from "@/querries/script"
-import { compressImage, toRNFile } from "@/utils/image"
-import { ScriptPartLocationImage } from "@/interface/script"
 
 type Props = {
   currentTab: TabKey
   setCurrentTab: (k: TabKey) => void
   quotaLimit: number
-  locations: ScriptPartLocationImage[]
+  locations: ScriptLocationImage[]
   form: LocationForm
   setImage: (uri: string | null) => void
   setName: (name: string) => void
@@ -32,7 +32,6 @@ type Props = {
   addLocation: (item: LocationItem) => void
   onConfirm: (item: LocationItem) => void
   onLimitReached: () => void
-  partId: number
   script_id: number
 }
 
@@ -48,14 +47,13 @@ export function LocationSheet({
   addLocation,
   onConfirm,
   onLimitReached,
-  partId,
   script_id,
 }: Props) {
   const {
     themed,
     theme: { spacing, colors },
   } = useAppTheme()
-  const partLocation = useScriptPartLocation()
+  const scriptLocation = useScriptPartLocation()
 
   const pickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const [isAddLocation, setIsAddLocation] = useState(false)
@@ -77,8 +75,7 @@ export function LocationSheet({
     }
     const img = await compressImage(form.image)
 
-    partLocation.mutate({
-      part_id: partId,
+    scriptLocation.mutate({
       script_id: script_id,
       Loc: {
         image: toRNFile(img.uri, `${form.name.trim()}.png`) as any,
@@ -97,18 +94,18 @@ export function LocationSheet({
 
   const LocationSeparator = useCallback(() => <View style={{ height: 12 }} />, [])
   const keyExtractor = useCallback(
-    (item: ScriptPartLocationImage, index: number) => `${item.name}-${index}`,
+    (item: ScriptLocationImage, index: number) => `${item.name}-${index}`,
     [],
   )
 
   const RenderItem = useCallback(
-    ({ item, index }: { item: ScriptPartLocationImage; index: number }) => {
+    ({ item, index }: { item: ScriptLocationImage; index: number }) => {
       const isSelected = selectedIndex === index
       return (
         <Pressable
           onPress={() => setSelectedIndex((cur) => (cur === index ? null : index))}
           hitSlop={6}
-          style={[{ flex: 1, margin: 6 }]}
+          style={{ flex: 1, margin: 6 }}
         >
           <Image
             source={{ uri: item.image }}
@@ -145,7 +142,7 @@ export function LocationSheet({
             gap={8}
           />
 
-          <ListView<ScriptPartLocationImage>
+          <ListView<ScriptLocationImage>
             data={locations}
             extraData={{ locations, selectedIndex }} // re-render on selection
             estimatedItemSize={locations.length || 1}

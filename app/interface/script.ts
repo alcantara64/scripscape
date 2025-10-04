@@ -53,7 +53,7 @@ export type Part = {
   index: number
   title: string
   content: string
-  partLocations: Array<ScriptPartLocationImage>
+  partLocations: Array<ScriptLocationImage>
   partDialogues: Array<{}>
   postalImage?: string
   created_at: string
@@ -62,7 +62,7 @@ export type Part = {
 
 export type CreatePart = Pick<Part, "script_id" | "index" | "content" | "title">
 
-export type ScriptPartLocationImage = {
+export type ScriptLocationImage = {
   id: number
   name: string
   hideName: boolean
@@ -111,4 +111,14 @@ export type Tag = {
   name: string
   created_at: string
   updated_at: string
+}
+
+export type ScriptLocationImageResponse = {
+  items: Array<ScriptLocationImage>
+  pagination: {
+    page: number
+    pageSize: number
+    total: number
+    pages: number
+  }
 }

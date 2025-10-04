@@ -80,12 +80,17 @@ export const editorContentStyle = (colors: any) => ({
 export const validateTitle = (v: string) =>
   v.trim().length < 3 ? "Title must be at least 3 characters" : undefined
 
-export const buildLocationHTML = (item: { image: string; name: string; hideName: boolean }) => {
+export const buildLocationHTML = (item: {
+  image: string
+  name: string
+  hideName: boolean
+  id: number
+}) => {
   const caption = item.hideName
     ? ""
     : `<figcaption class="ss-cap">${escapeHtml(item.name)}</figcaption>`
   return `
-    <div class="ss-location" data-ss="location" data-name="${escapeAttr(item.name)}">
+    <div id="location-image-${item.id}" class="ss-location" data-ss="location" data-name="${escapeAttr(item.name)}">
      ${caption}
       <figure>
         <img src="${escapeAttr(item.image)}" alt="${escapeAttr(item.name || "Location")}"/>

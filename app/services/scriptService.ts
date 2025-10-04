@@ -8,13 +8,14 @@ import {
   IScript,
   Part,
   ScriptCharacter,
-  ScriptPartLocationImage,
+  ScriptLocationImage,
+  ScriptLocationImageResponse,
   ScriptResponse,
 } from "@/interface/script"
+import { toRNFile } from "@/utils/image"
 
 import { Api } from "./api"
 import { ApiResult } from "./api/types"
-import { toRNFile } from "@/utils/image"
 
 export class ScriptService {
   constructor(private httpClient: Api) {}
@@ -82,10 +83,12 @@ export class ScriptService {
       headers: { "Content-Type": "multipart/form-data" },
     })
   }
-  createScriptPartLocation(
-    part_id: number,
-    payload: Omit<ScriptPartLocationImage, "id">,
-  ): Promise<ApiResult<ScriptPartLocationImage>> {
+
+  //location images
+  createScriptLocation(
+    script_id: number,
+    payload: Omit<ScriptLocationImage, "id">,
+  ): Promise<ApiResult<ScriptLocationImage>> {
     const fd = new FormData()
     if (payload.image) {
       fd.append("image", payload.image)
@@ -94,12 +97,15 @@ export class ScriptService {
       fd.append("name", payload.name)
     }
     if (payload.hideName) {
-      fd.append("hideName", payload.hideName)
+      fd.append("hideName", payload.hideName as any)
     }
 
-    return this.httpClient.post<ScriptPartLocationImage>(`/script/parts/${part_id}/locations`, fd, {
+    return this.httpClient.post<ScriptLocationImage>(`/script/${script_id}/locations`, fd, {
       headers: { "Content-Type": "multipart/form-data" },
     })
+  }
+  getLocationsByScript(scriptId: number): Promise<ApiResult<ScriptLocationImageResponse>> {
+    return this.httpClient.get<ScriptLocationImageResponse>(`/script/${scriptId}/locations`)
   }
 
   getCharactersByScript(scriptId: number): Promise<ApiResult<Array<ScriptCharacter>>> {
