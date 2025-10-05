@@ -12,6 +12,10 @@ type UpdateLocationVars = {
   script_id: number
   payload: ScriptLocationImage
 }
+type DeleteVars = {
+  script_id: number
+  location_id: number
+}
 
 async function createScriptLocation(vars: CreateLocationVars) {
   return getOrThrow(scriptService.createScriptLocation(vars.script_id, vars.Loc))
@@ -42,6 +46,20 @@ export const useUpdateScriptLocation = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: updateScriptLocation,
+    onSuccess: (response, variables) => {
+      qc.invalidateQueries({ queryKey: ["get-location-by-script-id", variables.script_id] })
+    },
+  })
+}
+
+async function deleteScriptLocation(vars: DeleteVars) {
+  return getOrThrow(scriptService.deleteLocationsByScript(vars.script_id, vars.location_id))
+}
+
+export const useDeleteScriptLocation = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: deleteScriptLocation,
     onSuccess: (response, variables) => {
       qc.invalidateQueries({ queryKey: ["get-location-by-script-id", variables.script_id] })
     },

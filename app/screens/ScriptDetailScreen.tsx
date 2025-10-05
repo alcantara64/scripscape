@@ -139,7 +139,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   const openBottomSheet = () => {
     setSnaPoints("34%")
     setMode("settings")
-    sheetRef.current?.expand()
+    sheetRef.current?.open()
   }
   const goToEditOverview = () => {
     navigation.navigate("EditOverview", { script_id })
@@ -425,7 +425,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
       </Screen>
       <AppBottomSheet
         controllerRef={sheetRef}
-        snapPoints={[snapPoints]}
+        snapPoints={["34%", "85%"]}
         onChange={(index) => {
           if (index < 1) {
             // sheetRef.current?.collapse()

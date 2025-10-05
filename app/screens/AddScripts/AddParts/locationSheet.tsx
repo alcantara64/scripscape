@@ -12,7 +12,11 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { Switch } from "@/components/Toggle/Switch"
 import { ScriptLocationImage } from "@/interface/script"
-import { useScriptPartLocation, useUpdateScriptLocation } from "@/querries/location"
+import {
+  useDeleteScriptLocation,
+  useScriptPartLocation,
+  useUpdateScriptLocation,
+} from "@/querries/location"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { compressImage, toRNFile } from "@/utils/image"
@@ -60,6 +64,7 @@ export function LocationSheet({
   } = useAppTheme()
   const scriptLocation = useScriptPartLocation()
   const updateScriptLocationQuery = useUpdateScriptLocation()
+  const deleteLocation = useDeleteScriptLocation()
 
   const pickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const [isAddLocation, setIsAddLocation] = useState(false)
@@ -119,11 +124,16 @@ export function LocationSheet({
       const img = await compressImage(form.image)
       payload.payload.image = toRNFile(img.uri, `${form.name.trim()}.png`)
     }
-    console.log(payload)
     const response = await updateScriptLocationQuery.mutateAsync(payload)
     if (response) {
       toast.success(`${form.name} updated Successfully`)
+      setIsAddLocation(false)
     }
+  }
+
+  const deleteLocationImage = async () => {
+    if (form.id) await deleteLocation.mutateAsync({ script_id, location_id: form.id })
+    setIsAddLocation(false)
   }
 
   const locationTextMax = 50
@@ -296,7 +306,7 @@ export function LocationSheet({
                 <Button
                   text="Delete"
                   style={[themed($saveBtn), themed($deleteButton)]}
-                  onPress={onSave}
+                  onPress={deleteLocationImage}
                 />
               </>
             )}

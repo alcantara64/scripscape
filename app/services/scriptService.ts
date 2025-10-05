@@ -132,6 +132,15 @@ export class ScriptService {
     )
   }
 
+  deleteLocationsByScript(
+    scriptId: number,
+    id: number,
+  ): Promise<ApiResult<ScriptLocationImageResponse>> {
+    return this.httpClient.delete<ScriptLocationImageResponse>(
+      `/script/${scriptId}/locations/${id}`,
+    )
+  }
+
   getCharactersByScript(scriptId: number): Promise<ApiResult<Array<ScriptCharacter>>> {
     return this.httpClient.get<Array<ScriptCharacter>>(`/script/dialogues/${scriptId}/characters`)
   }
