@@ -68,6 +68,7 @@ export type ScriptLocationImage = {
   hideName: boolean
   image?: string
   createdAt?: string
+  blurhash?: string
 }
 
 export type ScriptCharacter = {

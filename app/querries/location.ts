@@ -8,6 +8,10 @@ type CreateLocationVars = {
   script_id: number
   Loc: Omit<ScriptLocationImage, "id">
 }
+type UpdateLocationVars = {
+  script_id: number
+  payload: ScriptLocationImage
+}
 
 async function createScriptLocation(vars: CreateLocationVars) {
   return getOrThrow(scriptService.createScriptLocation(vars.script_id, vars.Loc))
@@ -27,5 +31,19 @@ export const useGetLocationImagesByScriptId = (scriptId: number) => {
   return useQuery({
     queryKey: ["get-location-by-script-id", scriptId],
     queryFn: () => getOrThrow(scriptService.getLocationsByScript(scriptId)),
+  })
+}
+
+async function updateScriptLocation(vars: UpdateLocationVars) {
+  return getOrThrow(scriptService.updateScriptLocation(vars.script_id, vars.payload))
+}
+
+export const useUpdateScriptLocation = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: updateScriptLocation,
+    onSuccess: (response, variables) => {
+      qc.invalidateQueries({ queryKey: ["get-location-by-script-id", variables.script_id] })
+    },
   })
 }

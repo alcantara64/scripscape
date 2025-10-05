@@ -52,5 +52,6 @@ export function useLocations({ currentTab, locations }: Options) {
     setName,
     setHideName,
     resetForm,
+    setLocationForm,
   }
 }

@@ -1,9 +1,9 @@
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Alert, KeyboardAvoidingView, Platform, Pressable, View, ViewStyle } from "react-native"
-import { Image, ImageStyle } from "expo-image"
+import { Image, ImageBackground, ImageStyle } from "expo-image"
 
 import { Button } from "@/components/Button"
-import { Icon } from "@/components/Icon"
+import { Icon, PressableIcon } from "@/components/Icon"
 import { ImagePickerWithCropping } from "@/components/ImagePickerWithCroping"
 import { ImageUploader } from "@/components/ImageUploader"
 import { ListView } from "@/components/ListView"
@@ -12,10 +12,11 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { Switch } from "@/components/Toggle/Switch"
 import { ScriptLocationImage } from "@/interface/script"
-import { useScriptPartLocation } from "@/querries/location"
+import { useScriptPartLocation, useUpdateScriptLocation } from "@/querries/location"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { compressImage, toRNFile } from "@/utils/image"
+import { toast } from "@/utils/toast"
 
 import { TAB_ITEMS, type TabKey, validateTitle } from "./editorConstant"
 import type { LocationItem, LocationForm } from "./types"
@@ -33,6 +34,8 @@ type Props = {
   onConfirm: (item: LocationItem) => void
   onLimitReached: () => void
   script_id: number
+  isEditMode?: boolean
+  setLocationForm: (form: { name: string; image: string; id: number; hideName: boolean }) => void
 }
 
 export function LocationSheet({
@@ -48,12 +51,15 @@ export function LocationSheet({
   onConfirm,
   onLimitReached,
   script_id,
+  isEditMode,
+  setLocationForm,
 }: Props) {
   const {
     themed,
     theme: { spacing, colors },
   } = useAppTheme()
   const scriptLocation = useScriptPartLocation()
+  const updateScriptLocationQuery = useUpdateScriptLocation()
 
   const pickerRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const [isAddLocation, setIsAddLocation] = useState(false)
@@ -62,6 +68,23 @@ export function LocationSheet({
 
   const onPick = useCallback(() => pickerRef.current?.pickImage(), [])
   const onRemove = useCallback(() => setImage(null), [setImage])
+  const selectedItem = selectedIndex != null ? locations[selectedIndex] : null
+  const setInitialForm = useCallback(() => {
+    if (selectedItem) {
+      setLocationForm({
+        id: selectedItem?.id,
+        name: selectedItem?.name,
+        hideName: selectedItem?.hideName,
+        image: selectedItem?.image || "",
+      })
+    }
+  }, [selectedItem])
+
+  useEffect(() => {
+    if (isEditMode) {
+      setInitialForm()
+    }
+  }, [isEditMode, setInitialForm])
 
   const onSave = useCallback(async () => {
     if (!form.image) {
@@ -86,6 +109,23 @@ export function LocationSheet({
     setIsAddLocation(false)
   }, [form, addLocation])
 
+  const updateScriptLocation = async () => {
+    const payload = {
+      script_id: script_id,
+      payload: { id: form.id!, name: form.name, hideName: form.hideName },
+    }
+
+    if (form.image && selectedItem?.image !== form.image) {
+      const img = await compressImage(form.image)
+      payload.payload.image = toRNFile(img.uri, `${form.name.trim()}.png`)
+    }
+    console.log(payload)
+    const response = await updateScriptLocationQuery.mutateAsync(payload)
+    if (response) {
+      toast.success(`${form.name} updated Successfully`)
+    }
+  }
+
   const locationTextMax = 50
   const nameError = validateTitle(form.name)
   const nameHelper = nameError
@@ -107,8 +147,9 @@ export function LocationSheet({
           hitSlop={6}
           style={{ flex: 1, margin: 6 }}
         >
-          <Image
+          <ImageBackground
             source={{ uri: item.image }}
+            placeholder={{ blurhash: item.blurhash }}
             style={[themed($imageStyle), isSelected && themed($imageSelectedStyle)]}
             contentFit="cover"
             transition={100}
@@ -120,14 +161,26 @@ export function LocationSheet({
     [colors.palette.neutral800, colors.tint, selectedIndex],
   )
 
-  const selectedItem = selectedIndex != null ? locations[selectedIndex] : null
   const haReachedLimit = locations.length >= quotaLimit
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ImagePickerWithCropping ref={pickerRef} onImageSelected={setImage} aspect={[16, 9]} />
 
       <View style={$headerRow}>
-        <Text text={isAddLocation ? "Add Location" : "Select Location"} preset="titleHeading" />
+        <View style={$titleContainer}>
+          <PressableIcon
+            icon="arrowLeft"
+            onPress={() => {
+              setIsAddLocation(false)
+            }}
+          />
+          <Text
+            text={
+              isAddLocation ? (isEditMode ? "Edit Location" : "Add Location") : "Select Location"
+            }
+            preset="titleHeading"
+          />
+        </View>
         <Text text={`${locations.length}/${quotaLimit}`} />
       </View>
 
@@ -177,7 +230,14 @@ export function LocationSheet({
           <Button
             text="Confirm"
             disabled={!selectedItem}
-            onPress={() => selectedItem && onConfirm(selectedItem)}
+            onPress={() => {
+              if (!selectedItem) return
+              if (isEditMode) {
+                setIsAddLocation(true)
+              } else {
+                onConfirm(selectedItem)
+              }
+            }}
             style={[themed($confirmBtn), !selectedItem && { opacity: 0.6 }]}
           />
         </>
@@ -210,8 +270,37 @@ export function LocationSheet({
             </View>
             <Switch value={form.hideName} onValueChange={setHideName} />
           </View>
-
-          <Button text="Save" style={themed($saveBtn)} onPress={onSave} />
+          <View style={$actionContainer}>
+            {!isEditMode && (
+              <Button
+                disabled={!form.image || !form.name}
+                text="Save"
+                style={themed($saveBtn)}
+                onPress={onSave}
+              />
+            )}
+            {isEditMode && (
+              <>
+                <Button
+                  disabled={
+                    (selectedItem?.name === form.name &&
+                      selectedItem?.image === form.image &&
+                      selectedItem?.hideName === selectedItem?.hideName) ||
+                    !form.image ||
+                    !form.name
+                  }
+                  text="Save Changes"
+                  style={themed($saveBtn)}
+                  onPress={updateScriptLocation}
+                />
+                <Button
+                  text="Delete"
+                  style={[themed($saveBtn), themed($deleteButton)]}
+                  onPress={onSave}
+                />
+              </>
+            )}
+          </View>
         </View>
       )}
     </KeyboardAvoidingView>
@@ -249,7 +338,17 @@ const $confirmBtn: ThemedStyle<ViewStyle> = () => ({
   marginTop: 14,
 })
 
-const $saveBtn: ThemedStyle<any> = () => ({ height: 44, marginTop: 70 })
+const $actionContainer: ViewStyle = {
+  marginTop: 70,
+  gap: 8,
+}
+const $saveBtn: ThemedStyle<ViewStyle> = () => ({ height: 44, bottom: 0 })
+
+const $deleteButton: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  backgroundColor: "transparent",
+  borderWidth: 1,
+  borderColor: colors.palette.neutral300,
+})
 
 const $imageSelectedStyle: ThemedStyle<ImageStyle> = ({ colors }) => ({
   borderWidth: 2,
@@ -262,3 +361,8 @@ const $imageStyle: ThemedStyle<ImageStyle> = ({ colors }) => ({
   aspectRatio: 1.5,
   backgroundColor: colors.palette.neutral800,
 })
+const $titleContainer: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 8,
+}

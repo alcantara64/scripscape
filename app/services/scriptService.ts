@@ -108,6 +108,30 @@ export class ScriptService {
     return this.httpClient.get<ScriptLocationImageResponse>(`/script/${scriptId}/locations`)
   }
 
+  updateScriptLocation(
+    script_id: number,
+    payload: ScriptLocationImage,
+  ): Promise<ApiResult<ScriptLocationImage>> {
+    const fd = new FormData()
+    if (payload.image) {
+      fd.append("image", payload.image)
+    }
+    if (payload.name) {
+      fd.append("name", payload.name)
+    }
+    if (payload.hideName) {
+      fd.append("hideName", payload.hideName as any)
+    }
+
+    return this.httpClient.patch<ScriptLocationImage>(
+      `/script/${script_id}/locations/${payload.id}`,
+      fd,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    )
+  }
+
   getCharactersByScript(scriptId: number): Promise<ApiResult<Array<ScriptCharacter>>> {
     return this.httpClient.get<Array<ScriptCharacter>>(`/script/dialogues/${scriptId}/characters`)
   }

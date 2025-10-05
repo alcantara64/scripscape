@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
 import { Icon, PressableIcon } from "@/components/Icon"
@@ -23,6 +22,7 @@ import { SmartImage } from "@/components/SmartImage"
 import { Text } from "@/components/Text"
 import { IScript, ScriptStatus, WriterStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { useGetLocationImagesByScriptId } from "@/querries/location"
 import { useGetScriptById } from "@/querries/script"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
@@ -32,7 +32,10 @@ import { formatDate, formatNumber } from "@/utils/formatDate"
 import { useQuota } from "@/utils/useQuota"
 
 import { CharacterSheet } from "./AddScripts/AddParts/characterSheet"
+import { TabKey } from "./AddScripts/AddParts/editorConstant"
+import { LocationSheet } from "./AddScripts/AddParts/locationSheet"
 import { useDialogue } from "./AddScripts/AddParts/useDialogue"
+import { useLocations } from "./AddScripts/AddParts/useLocation"
 
 interface ScriptDetailScreenProps extends AppStackScreenProps<"ScriptDetail"> {}
 
@@ -48,6 +51,19 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   const { isLoading, data: scriptData } = useGetScriptById(script_id)
   const [mode, setMode] = useState<Mode>("settings")
   const [snapPoints, setSnaPoints] = useState("34%")
+
+  const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
+
+  const { data } = useGetLocationImagesByScriptId(script_id)
+  const {
+    sortedLocations,
+    locationForm,
+    setImage,
+    setName,
+    setHideName,
+    setLocationForm,
+    resetForm,
+  } = useLocations({ currentTab, locations: data?.items || [] })
 
   const {
     characters,
@@ -89,8 +105,22 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
           setMode("manage-characters")
         },
       },
-      { icon: "gps", label: "Manage Locations", action: () => {} },
-      { icon: "image", label: "Manage Images", action: () => {} },
+      {
+        icon: "gps",
+        label: "Manage Locations",
+        action: () => {
+          setSnaPoints("85%")
+          setMode("manage-location")
+        },
+      },
+      {
+        icon: "image",
+        label: "Manage Images",
+        action: () => {
+          setSnaPoints("85%")
+          setMode("manage-images")
+        },
+      },
       { icon: "trash", label: "Delete This Script", action: () => {} },
     ],
     [],
@@ -193,6 +223,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
     ],
     [],
   )
+
   if (isLoading) {
     return <ScriptOverviewSkeleton />
   }
@@ -348,7 +379,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
               />
             </View>
           </View>
-          {scriptData?.parts.map((p, idx) => (
+          {scriptData?.parts.map((p) => (
             <Pressable key={p.part_id} style={themed($partRow)}>
               <View style={{ flex: 1 }}>
                 <Text weight="medium">&quot;{p.title}&rdquo;</Text>
@@ -411,7 +442,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
             <CharacterSheet
               quota={quota.character}
               isPro={true}
-              onSave={async (res) => {
+              onSave={async () => {
                 // await onCharacterSave(res)
                 // sheetRef.current?.close()
               }}
@@ -433,6 +464,26 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
               scriptId={script_id}
             />
           )}
+          {mode === "manage-location" && (
+            <LocationSheet
+              script_id={script_id}
+              currentTab={currentTab}
+              setCurrentTab={setCurrentTab}
+              quotaLimit={quota.location.limit}
+              locations={sortedLocations}
+              form={locationForm}
+              setImage={setImage}
+              setName={setName}
+              setLocationForm={setLocationForm}
+              setHideName={setHideName}
+              addLocation={() => {
+                resetForm()
+              }}
+              onConfirm={() => {}}
+              onLimitReached={() => {}}
+              isEditMode
+            />
+          )}
         </View>
       </AppBottomSheet>
     </>
@@ -448,7 +499,7 @@ const Stat = ({ icon, label, size }: { icon: string; label: string; size?: numbe
   </View>
 )
 const $root: ViewStyle = { flex: 1, paddingHorizontal: 16 }
-const $headerContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+const $headerContainer: ThemedStyle<ViewStyle> = () => ({
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "space-between",
@@ -560,7 +611,7 @@ const $partRow: ThemedStyle<ViewStyle> = ({ colors }) => ({
   marginBottom: 8,
 })
 
-const $draft: ThemedStyle<ViewStyle> = ({ colors }) => ({
+const $draft: ThemedStyle<ViewStyle> = () => ({
   borderRadius: 5,
   borderWidth: 1,
   borderColor: "#FFC773",
@@ -569,7 +620,7 @@ const $draft: ThemedStyle<ViewStyle> = ({ colors }) => ({
   paddingHorizontal: 4,
 })
 
-const $draftText: ThemedStyle<TextStyle> = ({ colors }) => ({
+const $draftText: ThemedStyle<TextStyle> = () => ({
   color: "#FFC773",
   paddingHorizontal: 4,
   textAlign: "center",

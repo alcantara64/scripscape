@@ -3,6 +3,7 @@ import { TEXT_BACKGROUND_COLORS, TEXT_COLOR } from "./editorConstant"
 export type LocationItem = { name: string; image: string; hideName: boolean }
 
 export type LocationForm = {
+  id?: number
   image: string | null
   name: string
   hideName: boolean
