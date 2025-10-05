@@ -12,6 +12,10 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { UpgradeProPopup } from "@/components/UprogradePropPup"
 import { Dialogue, Part } from "@/interface/script"
+import {
+  useCreateScriptEmbeddedImages,
+  useEmbeddedImagesByScript,
+} from "@/querries/embedded-images"
 import { useGetLocationImagesByScriptId } from "@/querries/location"
 import { useScriptCreateDialoguePart } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
@@ -63,6 +67,7 @@ export default function AddPart({
   const [editorFocused, setEditorFocused] = useState(false)
   const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
   const [embeddedImageUsed, setEmbeddedImageUsed] = useState(0)
+  const { data: embeddedImages, isLoading: loadingEmbedded } = useEmbeddedImagesByScript(script_id)
 
   const { data, isLoading } = useGetLocationImagesByScriptId(script_id)
 
@@ -84,10 +89,10 @@ export default function AddPart({
   const { quota, progress } = useQuota({
     isPro,
     used: {
-      embedded: embeddedImageUsed,
+      embedded: embeddedImages?.items.length || 0,
       location: locations.length,
       character: characters.length,
-      // poster is optional; default = 1
+      poster: 1,
     },
   })
 
@@ -280,7 +285,6 @@ export default function AddPart({
           />
           <UpgradeProPopup visible={false} onClose={() => {}} />
           <KeyboardToolbar
-            partId={selectedPart?.part_id}
             editorRef={editorRef}
             visible={editorFocused}
             onLocation={openLocationSheet}
@@ -289,6 +293,7 @@ export default function AddPart({
             setEmbeddedImageUsed={setEmbeddedImageUsed}
             embeddedImageLimit={quota.embedded.limit}
             onLimitReached={showUPloadDetail}
+            scriptId={script_id}
           />
         </KeyboardAvoidingView>
       </View>

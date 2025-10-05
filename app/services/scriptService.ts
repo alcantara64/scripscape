@@ -5,6 +5,8 @@ import * as FileSystem from "expo-file-system"
 import {
   CreatePart,
   Dialogue,
+  EmbeddedImage,
+  EmbeddedImageResponse,
   IScript,
   Part,
   ScriptCharacter,
@@ -104,6 +106,24 @@ export class ScriptService {
       headers: { "Content-Type": "multipart/form-data" },
     })
   }
+  createEmbedImages(
+    script_id: number,
+    payload: { image: string },
+  ): Promise<ApiResult<EmbeddedImage>> {
+    const fd = new FormData()
+    if (payload.image) {
+      fd.append("image", toRNFile(payload.image, `${new Date().toLocaleString()}.png`) as any)
+    }
+
+    return this.httpClient.post<EmbeddedImage>(`/script/${script_id}/images`, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+  }
+
+  getEmbeddedImagesByScript(scriptId: number): Promise<ApiResult<EmbeddedImageResponse>> {
+    return this.httpClient.get<EmbeddedImageResponse>(`/script/${scriptId}/images`)
+  }
+
   getLocationsByScript(scriptId: number): Promise<ApiResult<ScriptLocationImageResponse>> {
     return this.httpClient.get<ScriptLocationImageResponse>(`/script/${scriptId}/locations`)
   }

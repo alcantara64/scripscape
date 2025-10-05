@@ -36,6 +36,8 @@ import { TabKey } from "./AddScripts/AddParts/editorConstant"
 import { LocationSheet } from "./AddScripts/AddParts/locationSheet"
 import { useDialogue } from "./AddScripts/AddParts/useDialogue"
 import { useLocations } from "./AddScripts/AddParts/useLocation"
+import { EmbeddedImageSheet } from "./AddScripts/AddParts/embeddedImageSheet"
+import { useEmbeddedImagesByScript } from "@/querries/embedded-images"
 
 interface ScriptDetailScreenProps extends AppStackScreenProps<"ScriptDetail"> {}
 
@@ -53,6 +55,8 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   const [snapPoints, setSnaPoints] = useState("34%")
 
   const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
+  const [embeddedCurrentTab, setEmbeddedCurrentTab] = useState<TabKey>("last_used")
+  const { data: embeddedImages } = useEmbeddedImagesByScript(script_id)
 
   const { data } = useGetLocationImagesByScriptId(script_id)
   const {
@@ -482,6 +486,16 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
               onConfirm={() => {}}
               onLimitReached={() => {}}
               isEditMode
+            />
+          )}
+          {mode === "manage-images" && (
+            <EmbeddedImageSheet
+              currentTab={embeddedCurrentTab}
+              setCurrentTab={setEmbeddedCurrentTab}
+              quotaLimit={quota.embedded.limit}
+              embeddedImages={embeddedImages?.items || []}
+              onLimitReached={() => {}}
+              scriptId={script_id}
             />
           )}
         </View>

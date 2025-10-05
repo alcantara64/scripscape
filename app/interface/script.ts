@@ -123,3 +123,23 @@ export type ScriptLocationImageResponse = {
     pages: number
   }
 }
+
+export type EmbeddedImage = {
+  id: number
+  script_id: number
+  url: string
+  blurhash?: string
+  width?: number
+  height?: number
+  caption?: string
+}
+
+export type EmbeddedImageResponse = {
+  items: Array<EmbeddedImage>
+  pagination: {
+    page: number
+    pageSize: number
+    total: number
+    pages: number
+  }
+}

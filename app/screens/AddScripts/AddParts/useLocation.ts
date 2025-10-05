@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react"
 
-import type { TabKey } from "./editorConstant"
-import type { LocationItem, LocationForm } from "./types"
-import { ScriptPartLocationImage } from "@/interface/script"
+import { ScriptLocationImage } from "@/interface/script"
 
-type Options = { currentTab: TabKey; locations: Array<ScriptPartLocationImage> }
+import type { TabKey } from "./editorConstant"
+import type { LocationForm } from "./types"
+
+type Options = { currentTab: TabKey; locations: Array<ScriptLocationImage> }
 
 export function useLocations({ currentTab, locations }: Options) {
   const [locationForm, setLocationForm] = useState<LocationForm>({

@@ -14,6 +14,7 @@ import { useKeyboardHeight } from "@/utils/useKeyboardHeight"
 
 import { ImagePickerWithCropping } from "./ImagePickerWithCroping"
 import { useUpdateScriptPart } from "@/querries/script"
+import { useCreateScriptEmbeddedImages } from "@/querries/embedded-images"
 
 type Props = {
   editorRef: React.RefObject<RichEditor | null>
@@ -24,7 +25,7 @@ type Props = {
   setEmbeddedImageUsed: (x: number) => void
   embeddedImageLimit: number
   onLimitReached: () => void
-  partId: number
+  scriptId: number
 }
 
 const BAR_HEIGHT = Platform.OS === "ios" ? 64 : 110
@@ -38,12 +39,12 @@ export function KeyboardToolbar({
   embeddedImageUsed,
   setEmbeddedImageUsed,
   onLimitReached,
-  partId,
+  scriptId,
 }: Props) {
   const kb = useKeyboardHeight()
   const insets = useSafeAreaInsets()
   const { themed } = useAppTheme()
-  const updateScriptPart = useUpdateScriptPart()
+  const createScriptEmbeddedImage = useCreateScriptEmbeddedImages()
 
   const coverImageRef = useRef<{ pickImage: () => Promise<void> }>(null)
   const bottom = Math.max(0, kb - (Platform.OS === "ios" ? insets.bottom : 0))
@@ -65,17 +66,19 @@ export function KeyboardToolbar({
       onLimitReached()
     } else {
       const img = await compressImage(uri)
-      updateScriptPart.mutate(
+      createScriptEmbeddedImage.mutate(
         {
-          part_id: partId,
-          part: { postalImage: toRNFile(img.uri, "poster-image.jpg") as any },
+          script_id: scriptId,
+          payload: { image: img.uri },
         },
+
         {
           onSuccess: (response) => {
+            console.log({ response })
             editorRef.current?.focusContentEditor?.()
             editorRef.current?.insertHTML?.(`
     <figure style="margin:12px 0;" id="embedded-image${response.id}">
-      <img src="${response.poster_image}" alt="${null ?? "image"}"
+      <img src="${response.url}" alt="${response.caption ?? "image"}"
            style="max-width:100%;height:auto;display:block;border-radius:12px;" />
     </figure>
   `)
