@@ -21,7 +21,7 @@ import { TagSheet } from "@/components/TagSheet"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { Switch } from "@/components/Toggle/Switch"
-import { Category, Tag, Tags, WriterStatus } from "@/interface/script"
+import { Category, ScriptStatus, Tag, Tags, WriterStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useGetMyCategories, useGetScriptById, useUpdateScript } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
@@ -55,9 +55,7 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
 
   // Overview
   const [overview, setOverview] = useState("")
-  const [coverImage, setCoverImage] = useState<string | null>(
-    "https://images.unsplash.com/photo-1441716844725-09cedc13a4e7?q=80&w=1200",
-  )
+  const [coverImage, setCoverImage] = useState<string | null>(null)
   const [matureContentFilter, setMatureContentFilter] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
   const [tags, setTags] = useState<Array<string>>([])
@@ -85,6 +83,17 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
   const closeBottomSheet = () => {
     sheetRef.current?.close()
   }
+  const publishScript = async () => {
+    try {
+      await updateScript.mutateAsync({
+        scriptId: script_id,
+        payload: { status: ScriptStatus.published },
+      })
+      toast.success("Script Publish  Successfully ")
+    } catch (e) {
+      console.log(e)
+    }
+  }
   const saveChanges = async () => {
     const manipulated = await compressImage(coverImage!)
     updateScript.mutate(
@@ -92,11 +101,14 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
         scriptId: script_id,
         payload: {
           title: scriptTitle,
-          postalImage: toRNFile(manipulated.uri, `${scriptTitle}-${Date.now()}.png`),
+          ...(scriptData?.cover_image_url !== coverImage
+            ? { postalImage: toRNFile(manipulated.uri, `${scriptTitle}-${Date.now()}.png`) }
+            : {}),
           isMatureContent: matureContentFilter,
           summary: overview,
           tags,
-          categories,
+          categoryIds: categories.map((category) => category.id),
+          writerStatus: isCompleted ? WriterStatus.completed : WriterStatus.inprogress,
         },
       },
       {
@@ -113,18 +125,21 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
   useEffect(() => {
     if (scriptData) {
       setScriptTitle(scriptData?.title)
+      setCoverImage(scriptData.cover_image_url)
       setOverview(scriptData?.summary)
-      setCategories(scriptData?.categories)
-      setTags(scriptData?.tags)
+      if (scriptData?.categories.length) {
+        setCategories(scriptData?.categories.map((category) => category.category) || [])
+      }
+      setTags(scriptData?.tags.map((tag) => tag?.tag?.slug) || [])
       setMatureContentFilter(scriptData.contains_mature_content)
-      setIsCompleted(scriptData.writerStatus === WriterStatus.completed)
+      setIsCompleted(scriptData.writerStatus === WriterStatus.completed.toLowerCase())
     }
   }, [scriptData])
 
   if (isLoading) {
     return <EditOverViewScreenSkeleton />
   }
-
+  const requireAction = scriptTitle && overview && coverImage
   return (
     <>
       <ImagePickerWithCropping
@@ -147,12 +162,14 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
               </TouchableOpacity>
               <Text text="Edit Overview" preset="sectionHeader" />
             </View>
-            <View>
-              <View style={themed($draft)}>
-                <Icon icon="write" color="#FFC773" size={11} />
-                <Text text="Draft" style={themed($draftText)} />
+            {scriptData?.status !== ScriptStatus.published && (
+              <View>
+                <View style={themed($draft)}>
+                  <Icon icon="write" color="#FFC773" size={11} />
+                  <Text text="Draft" style={themed($draftText)} />
+                </View>
               </View>
-            </View>
+            )}
           </View>
         </View>
 
@@ -259,8 +276,20 @@ export const EditOverviewScreen: FC<EditOverviewScreenProps> = ({ route }) => {
       </Screen>
       <View style={themed($bottomButton)}>
         <View style={$saveAndPusblishContainer}>
-          <Button onPress={saveChanges} text="Save Changes" style={{ flex: 1 }} />
-          <Button text="Publish" style={{ flex: 1 }} />
+          <Button
+            disabled={!requireAction}
+            onPress={saveChanges}
+            text="Save Changes"
+            style={{ flex: 1 }}
+          />
+          {scriptData?.status !== ScriptStatus.published && (
+            <Button
+              disabled={!requireAction}
+              text="Publish"
+              style={{ flex: 1 }}
+              onPress={publishScript}
+            />
+          )}
         </View>
         <Pressable
           style={themed($cabtn)}

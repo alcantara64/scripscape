@@ -6,8 +6,8 @@ export enum ScriptStatus {
   acrchived = "archived",
 }
 export enum WriterStatus {
-  inprogress = "Inprogress",
-  completed = "Completed",
+  inprogress = "in_progress",
+  completed = "completed",
 }
 
 export interface IScript {
@@ -30,6 +30,7 @@ export interface IScript {
   author: User
   tags: Array<Tag>
   categories: Array<Category>
+  blurhash?: string
 }
 
 export interface ScriptResponse {

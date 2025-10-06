@@ -1,6 +1,5 @@
 import { FC, useCallback, useMemo, useRef, useState } from "react"
 import {
-  ImageBackground,
   Pressable,
   View,
   ViewStyle,
@@ -38,6 +37,7 @@ import { useDialogue } from "./AddScripts/AddParts/useDialogue"
 import { useLocations } from "./AddScripts/AddParts/useLocation"
 import { EmbeddedImageSheet } from "./AddScripts/AddParts/embeddedImageSheet"
 import { useEmbeddedImagesByScript } from "@/querries/embedded-images"
+import { ImageBackground } from "expo-image"
 
 interface ScriptDetailScreenProps extends AppStackScreenProps<"ScriptDetail"> {}
 
@@ -149,6 +149,11 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
     navigation.navigate("EditOverview", { script_id })
   }
 
+  const startReading = () => {
+    const firstPart = scriptData?.parts[0]
+    navigation.navigate("ScriptPart", { part_id: firstPart?.part_id })
+  }
+
   const recs: IScript[] = useMemo(
     () => [
       {
@@ -247,10 +252,12 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
                 <Icon icon="arrowLeft" />
               </TouchableOpacity>
               <Text text="Overview" preset="sectionHeader" />
-              <View style={themed($draft)}>
-                <Icon icon="write" color="#FFC773" size={11} />
-                <Text text="Draft" style={themed($draftText)} />
-              </View>
+              {scriptData?.status !== ScriptStatus.published && (
+                <View style={themed($draft)}>
+                  <Icon icon="write" color="#FFC773" size={11} />
+                  <Text text="Draft" style={themed($draftText)} />
+                </View>
+              )}
             </View>
             <Pressable
               onPress={goToEditOverview}
@@ -267,8 +274,9 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
         <View style={$heroWrap}>
           <ImageBackground
             source={{
-              uri: "https://images.unsplash.com/photo-1441716844725-09cedc13a4e7?q=80&w=1200",
+              uri: scriptData?.cover_image_url,
             }}
+            placeholder={{ blurhash: scriptData?.blurhash }}
             imageStyle={$heroImage}
             style={$hero}
           >
@@ -276,7 +284,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
             <View style={$heroHeaderRow}>
               <View style={$statusContainer(scriptData?.writerStatus)}>
                 <Text style={themed($statusText)}>
-                  {scriptData?.writerStatus === WriterStatus.completed
+                  {scriptData?.writerStatus === WriterStatus.completed.toLowerCase()
                     ? "Completed"
                     : "In Progress"}
                 </Text>
@@ -312,7 +320,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
             <Stat icon="like" label={formatNumber(scriptData?.likes_count || 0)} />
           </View>
 
-          <Pressable style={themed($cta)}>
+          <Pressable style={themed($cta)} onPress={startReading}>
             <Text weight="semiBold" style={$ctaText}>
               Start Reading
             </Text>
@@ -339,36 +347,38 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
           </View>
         </View>
 
-        <View style={$sectionContainer}>
-          <View style={$titleItemsContainer}>
-            <View style={$commentContainer}>
-              <Text preset="contentTitle" text="Comments" />
-              <View style={themed($commentCountContainer)}>
-                <Text style={themed($statusText)} text="2.4k" />
+        {scriptData?.comments_count > 0 && (
+          <View style={$sectionContainer}>
+            <View style={$titleItemsContainer}>
+              <View style={$commentContainer}>
+                <Text preset="contentTitle" text="Comments" />
+                <View style={themed($commentCountContainer)}>
+                  <Text style={themed($statusText)} text="2.4k" />
+                </View>
               </View>
+              <Text preset="readMore" text="View more" />
             </View>
-            <Text preset="readMore" text="View more" />
-          </View>
-          <View style={$commentRow}>
-            <View style={$avatarLg} />
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Text weight="medium" size="sm">
-                  Oscar Halton
+            <View style={$commentRow}>
+              <View style={$avatarLg} />
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text weight="medium" size="sm">
+                    Oscar Halton
+                  </Text>
+                  <Text preset="description">2 weeks ago</Text>
+                </View>
+                <Text preset="description" style={$commentText}>
+                  This script beautifully captures the emotional complexity of love that transcends
+                  distance, culture, and circumstance. ....
                 </Text>
-                <Text preset="description">2 weeks ago</Text>
-              </View>
-              <Text preset="description" style={$commentText}>
-                This script beautifully captures the emotional complexity of love that transcends
-                distance, culture, and circumstance. ....
-              </Text>
-              <View style={$commentsStatsRow}>
-                <Stat icon="like" label="45 likes" size={12} />
-                <Stat icon="reply" label="5 Replies" size={12} />
+                <View style={$commentsStatsRow}>
+                  <Stat icon="like" label="45 likes" size={12} />
+                  <Stat icon="reply" label="5 Replies" size={12} />
+                </View>
               </View>
             </View>
           </View>
-        </View>
+        )}
 
         {/* Parts list */}
         <View>

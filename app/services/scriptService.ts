@@ -54,6 +54,9 @@ export class ScriptService {
   getPartsByScript(scriptId: number): Promise<ApiResult<Array<Part>>> {
     return this.httpClient.get<Array<Part>>(`/script/${scriptId}/parts`)
   }
+  getPartById(part_id: number): Promise<ApiResult<Part>> {
+    return this.httpClient.get<Part>(`/script/parts/${part_id}`)
+  }
   createScriptParts(scriptId: number, payload: CreatePart): Promise<ApiResult<Part>> {
     return this.httpClient.post<Part>(`/script/${scriptId}/parts`, payload)
   }

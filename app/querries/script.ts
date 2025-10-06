@@ -1,7 +1,14 @@
 import * as DocumentPicker from "expo-document-picker"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { CreatePart, CreateScript, Dialogue, Part, ScriptCharacter } from "@/interface/script"
+import {
+  CreatePart,
+  CreateScript,
+  Dialogue,
+  Part,
+  ScriptCharacter,
+  WriterStatus,
+} from "@/interface/script"
 import { categoryService } from "@/services/categoryService"
 import { scriptService } from "@/services/scriptService"
 import { getOrThrow } from "@/utils/query"
@@ -21,7 +28,7 @@ type CreatePartDialogueVars = {
 }
 type UpdateScriptVar = {
   scriptId: number
-  payload: CreateScript
+  payload: Partial<CreateScript> & { tags?: Array<string | number>; categoryIds?: Array<number> }
 }
 
 //Script
@@ -42,7 +49,13 @@ function buildFormData(payload: CreateScript) {
   return fd
 }
 
-function buildUpdateFormData(fields: CreateScript): FormData {
+function buildUpdateFormData(
+  fields: Partial<CreateScript> & {
+    tags?: Array<string | number>
+    categoryIds?: Array<number>
+    isMatureContent?: boolean
+  },
+): FormData {
   const fd = new FormData()
   // File (optional)
   if (fields.postalImage) {
@@ -51,10 +64,16 @@ function buildUpdateFormData(fields: CreateScript): FormData {
   if (fields.title != null) fd.append("title", fields.title)
   if (fields.summary !== undefined) fd.append("summary", fields.summary ?? "")
   if (fields.status) fd.append("status", fields.status)
+  if (fields.isMatureContent) fd.append("isMatureContent", fields.isMatureContent as any)
+  if (fields.writerStatus)
+    fd.append(
+      "writerStatus",
+      fields.writerStatus === WriterStatus.completed ? "completed" : "in_progress",
+    )
 
   // Arrays → repeat the key (multer-friendly)
-  if (fields.categories?.length) {
-    fields.categories.forEach((id) => fd.append("categoryIds[]", String(id)))
+  if (fields.categoryIds?.length) {
+    fields.categoryIds.forEach((id) => fd.append("categoryIds[]", String(id)))
   }
 
   if (fields.tags?.length) {
@@ -76,8 +95,12 @@ export function useCreateScript() {
 }
 
 export function useUpdateScript() {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: updateScript,
+    onSuccess: (response, variables) => {
+      qc.invalidateQueries({ queryKey: ["get-script-by-id", variables.scriptId] })
+    },
   })
 }
 
@@ -89,6 +112,13 @@ async function createPart(payload: CreatePart) {
 export const useCreateScriptPart = () => {
   return useMutation({
     mutationFn: createPart,
+  })
+}
+
+export const useGetPartsById = (partId: number) => {
+  return useQuery({
+    queryKey: ["get-part-by-id", partId],
+    queryFn: () => getOrThrow(scriptService.getPartById(partId)),
   })
 }
 

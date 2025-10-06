@@ -49,7 +49,9 @@ export const categoryImages: Record<string, any> = {
   "romance": require("../../assets/images/category-romance.png"),
   "horror": require("../../assets/images/category-horror.png"),
 }
-
+const ITEM_HEIGHT = 80 // your row’s approx height in px
+const SEPARATOR_HEIGHT = 8 // spacing.sm, adjust if different
+const ESTIMATED = ITEM_HEIGHT + SEPARATOR_HEIGHT
 export const CategorySheet = (props: CategorySheetProps) => {
   const { style, onBack, title, subtitle, categories, onSave } = props
   const $styles = [$container, style]
@@ -98,7 +100,7 @@ export const CategorySheet = (props: CategorySheetProps) => {
           data={categories}
           extraData={selectedCategories}
           keyExtractor={(item) => item.id.toString()}
-          estimatedItemSize={categories.length}
+          estimatedItemSize={ESTIMATED}
           ItemSeparatorComponent={Separator}
           renderItem={({ item }) => {
             const selected = isSelected(item)
