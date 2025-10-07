@@ -137,8 +137,6 @@ export const CharacterSheet = ({
     }
   }
   const updateCharacter = (payload: ScriptCharacter) => {
-    console.log("script_id", scriptId, payload.id, payload)
-
     updateScriptCharacter.mutate(
       {
         script_id: scriptId as number,
@@ -172,7 +170,6 @@ export const CharacterSheet = ({
       character_id: selectedItem?.id as number,
       audioFiLe: state.audioFile,
     })
-    onSave(state)
   }
 
   return (

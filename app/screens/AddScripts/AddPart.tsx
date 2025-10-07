@@ -3,10 +3,13 @@ import { View, Platform, KeyboardAvoidingView, StyleProp, ViewStyle, TextStyle }
 import * as DocumentPicker from "expo-document-picker"
 import { RichEditor } from "react-native-pell-rich-editor"
 
+import IntroArt from "@assets/images/svgviewer-output.svg"
+
 import { AppBottomSheet, type BottomSheetController } from "@/components/AppBottomSheet"
 import { Button } from "@/components/Button"
 import { PressableIcon } from "@/components/Icon"
 import { KeyboardToolbar } from "@/components/KeyboardToolbar"
+import { OneTimeModal } from "@/components/OneTimeModal"
 import { ProgressRing } from "@/components/ProgressRing"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
@@ -124,7 +127,8 @@ export default function AddPart({
 
       if (data?.type === "edit-dialogue") {
         // TODO: open your dialogue modal/sheet and pass data.payload
-        console.log("edit-dialogue payload:", data?.type)
+        console.log("edit-dialogue payload:", data?.type, data.id)
+        openCharacterSheet()
       }
     } catch (e) {}
   }, [])
@@ -181,8 +185,7 @@ export default function AddPart({
         textColor: result.dialogueCharacter.text_color,
         message: result.dialogue,
         avatarUrl: result.dialogueCharacter.image,
-        audioUrl:
-          "https://scripscape-assets-prod.s3.us-west-2.amazonaws.com/users/1/scripts/1/parts/1/dialogues/audio/9d2d9356-54e7-4ed0-88e5-ed7e3d80a52f.mp3", //result.audio_uri,
+        audioUrl: result.audio_uri,
       })
     }
 
@@ -297,7 +300,7 @@ export default function AddPart({
           />
         </KeyboardAvoidingView>
       </View>
-
+      {isEdit && <OneTimeModal testID="dialog" artwork={<IntroArt />} storageKey="dialog-modal" />}
       {/* Location Sheet */}
       <AppBottomSheet
         controllerRef={sheetRef}
@@ -328,6 +331,7 @@ export default function AddPart({
             onConfirm={onConfirmLocation}
             onLimitReached={showUPloadDetail}
             partId={selectedPart?.part_id as number}
+            resetLocationForm={resetForm}
           />
         ) : (
           <CharacterSheet

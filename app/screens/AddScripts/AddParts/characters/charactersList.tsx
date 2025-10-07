@@ -64,6 +64,7 @@ export const CharactersList = ({
             style={[themed($imageStyle), isSelected && themed($imageSelectedStyle)]}
             contentFit="cover"
             transition={100}
+            placeholder={{ blurhash: item.blurhash }}
           />
           {<Text text={item.name} numberOfLines={1} />}
         </Pressable>

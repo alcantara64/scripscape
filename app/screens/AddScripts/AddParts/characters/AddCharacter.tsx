@@ -70,6 +70,7 @@ export const AddCharacter = ({
         name: state.name,
         text_background_color: selectedCharacterTextBackgroundColor,
         text_color: selectedCharacterTextColor,
+        additional_images: additionalImages,
       })
       setMode("choose-character")
     }

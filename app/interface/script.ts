@@ -83,6 +83,7 @@ export type ScriptCharacter = {
   additional_images?: Array<string>
   created_at?: string
   name: string
+  blurhash?: string
 }
 
 export type Dialogue = {

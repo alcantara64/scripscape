@@ -173,7 +173,7 @@ export class ScriptService {
   ): Promise<ApiResult<ScriptCharacter>> {
     const fd = new FormData()
     if (payload.image) {
-      fd.append("image", payload.image)
+      fd.append("image", toRNFile(payload.image, payload.name) as any)
     }
     if (payload.text_background_color) {
       fd.append("text_background_color", payload.text_background_color)
@@ -185,7 +185,7 @@ export class ScriptService {
       fd.append("name", payload.name)
     }
     payload.additional_images?.forEach((p, i) => {
-      fd.append("additional_images", { uri: p, name: `extra-${i}.jpg`, type: "image/jpeg" } as any)
+      fd.append("additional_images", toRNFile(p, `extra-${i}.jpg`) as any)
     })
 
     return this.httpClient.post<ScriptCharacter>(`/script/dialogues/${script_id}/characters`, fd, {
