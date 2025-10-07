@@ -11,6 +11,7 @@ import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useCreateScript } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { compressImage, toRNFile } from "@/utils/image"
 
 interface AddScriptScreenProps extends AppStackScreenProps<"AddScript"> {}
 
@@ -46,12 +47,26 @@ export const AddScriptScreen: FC<AddScriptScreenProps> = () => {
   const handleCoverImageSelected = (uri: string) => {
     setCoverImage(uri)
   }
-  const createScript = () => {
+  const createScript = async () => {
+    let image = ""
+    if (coverImage) {
+      const compressedImage = await compressImage(coverImage)
+      image = compressedImage.uri
+    }
     mutate(
-      { title: scriptTitle || "Untitled", summary: overview },
+      {
+        title: scriptTitle || "Untitled",
+        summary: overview,
+        ...(image
+          ? { postalImage: toRNFile(image, scriptTitle || new Date().toLocaleString()) }
+          : {}),
+      },
       {
         onSuccess: (response) => {
-          navigation.navigate("WriteScriptTableContents", { scriptId: response.script_id })
+          navigation.navigate("WriteScriptTableContents", {
+            scriptId: response.script_id,
+            from: "AddScript",
+          })
         },
       },
     )

@@ -264,7 +264,10 @@ export class ScriptService {
 
     fd.append("dialogue", payload.dialogue)
 
-    return this.httpClient.post<Dialogue>(`/script/parts/${part_id}/dialogues`, fd)
+    return this.httpClient.post<Dialogue>(`/script/parts/${part_id}/dialogues`, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+      transformRequest: (d) => d,
+    })
   }
 }
 

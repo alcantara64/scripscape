@@ -1,8 +1,8 @@
 import { useState } from "react"
-import { ActivityIndicator, StyleProp, TextStyle, View, ViewStyle } from "react-native"
+import { ActivityIndicator, StyleProp, View, ViewStyle } from "react-native"
+import { useNavigation } from "@react-navigation/native"
 import { ContentStyle } from "@shopify/flash-list"
 
-import { Text } from "@/components/Text"
 import { IScript } from "@/interface/script"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
@@ -10,7 +10,6 @@ import type { ThemedStyle } from "@/theme/types"
 
 import { ListView } from "./ListView"
 import { ScriptCard } from "./ScriptCard"
-import { useNavigation } from "@react-navigation/native"
 
 export interface ScriptListProps {
   /**
@@ -73,7 +72,7 @@ export const ScriptList = (props: ScriptListProps) => {
             gotoDetailScreen(item.script_id)
           }}
           imageSource={{
-            uri: "https://scripscape-assets-prod.s3.us-west-2.amazonaws.com/users/1/scripts/1/parts/1/poster/a0414aa5-ec29-46ec-800a-a864fdb7707b.jpg",
+            uri: item.cover_image_url,
           }}
           title={item.title}
           status={item.status}

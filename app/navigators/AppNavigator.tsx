@@ -45,7 +45,7 @@ export type AppStackParamList = {
   Settings: undefined
   Subscription: undefined
   Search: undefined
-  WriteScriptTableContents: { scriptId: number }
+  WriteScriptTableContents: { scriptId: number; from?: string }
   ScriptDetail: { scriptId: number }
   EditOverview: { scriptId: number }
   ScriptPart: { part_id: number }

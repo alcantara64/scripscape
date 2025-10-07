@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react"
 
 import { ScriptCharacter } from "@/interface/script"
-import { useGetCharactersByScript, useScriptCreatePartCharacter } from "@/querries/script"
+import { useCreateScriptCharacter, useGetCharactersByScript } from "@/querries/character"
 
 import type { CharacterForm, BackgroundColorType, TextColorType } from "./types"
 
 export function useDialogue({ scriptId }: { scriptId: number }) {
   const { data: characters = [] } = useGetCharactersByScript(scriptId)
-  const { mutate } = useScriptCreatePartCharacter()
+  const { mutate } = useCreateScriptCharacter()
   const [characterForm, setCharacterForm] = useState<CharacterForm>({
     image: null,
     name: "",
@@ -41,7 +41,7 @@ export function useDialogue({ scriptId }: { scriptId: number }) {
   }, [quota])
 
   const addCharacter = (item: ScriptCharacter) => {
-    mutate({ part_id: partId, character: item })
+    mutate({ scrip_id: scriptId, character: item })
   }
   const resetCharacterForm = () =>
     setCharacterForm({ image: null, name: "", textBackgroundColor: "", textColor: "" })

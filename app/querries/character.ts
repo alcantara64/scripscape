@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { ScriptCharacter } from "@/interface/script"
 import { scriptService } from "@/services/scriptService"
@@ -9,6 +9,29 @@ type UpdateCharactersVars = {
   character_id: number
   character: Omit<ScriptCharacter, "id">
 }
+type CreateCharactersVars = {
+  scrip_id: number
+  character: Omit<ScriptCharacter, "id">
+}
+
+export const useGetCharactersByScript = (script_id: number) => {
+  return useQuery({
+    queryKey: ["get-script-characters", script_id],
+    queryFn: () => getOrThrow(scriptService.getCharactersByScript(script_id)),
+  })
+}
+async function createPartCharacter(vars: CreateCharactersVars) {
+  return getOrThrow(scriptService.createScriptCharacters(vars.scrip_id, vars.character))
+}
+export const useCreateScriptCharacter = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createPartCharacter,
+    onSuccess: (response, variables) => {
+      qc.invalidateQueries({ queryKey: ["get-script-characters", variables.scrip_id] })
+    },
+  })
+}
 
 async function updateScriptCharacter(vars: UpdateCharactersVars) {
   return getOrThrow(
@@ -16,7 +39,11 @@ async function updateScriptCharacter(vars: UpdateCharactersVars) {
   )
 }
 export const useScriptUpdateCharacter = () => {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: updateScriptCharacter,
+    onSuccess: (response, variables) => {
+      qc.invalidateQueries({ queryKey: ["get-script-characters", variables.script_id] })
+    },
   })
 }

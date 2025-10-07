@@ -16,10 +16,6 @@ import { getOrThrow } from "@/utils/query"
 type ReorderVars = { script_id: number; parts: Part[] }
 type UpdateVars = { part_id: number; part: Partial<Omit<Part, "part_id">> }
 
-type CreatePartCharactersVars = {
-  part_id: number
-  character: Omit<ScriptCharacter, "id">
-}
 type CreatePartDialogueVars = {
   part_id: number
   dialogue: Omit<Dialogue, "id" | "part_id" | "created_at" | "dialogueCharacter"> & {
@@ -89,8 +85,12 @@ async function updateScript(vars: UpdateScriptVar) {
 }
 
 export function useCreateScript() {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: createScript,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["get-my-scripts"] })
+    },
   })
 }
 
@@ -173,24 +173,6 @@ export const useUpdateScriptPart = () => {
 
 //character
 
-export const useGetCharactersByScript = (script_id: number) => {
-  return useQuery({
-    queryKey: ["get-part-characters", script_id],
-    queryFn: () => getOrThrow(scriptService.getCharactersByScript(script_id)),
-  })
-}
-async function createPartCharacter(vars: CreatePartCharactersVars) {
-  return getOrThrow(scriptService.createScriptCharacters(vars.part_id, vars.character))
-}
-export const useScriptCreatePartCharacter = () => {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: createPartCharacter,
-    onSuccess: (response, variables) => {
-      qc.invalidateQueries({ queryKey: ["get-get-part-characters", variables.part_id] })
-    },
-  })
-}
 async function createPartDialogue(vars: CreatePartDialogueVars) {
   return getOrThrow(scriptService.createDialogue(vars.part_id, vars.dialogue))
 }

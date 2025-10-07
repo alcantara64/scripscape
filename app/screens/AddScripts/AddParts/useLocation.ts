@@ -38,7 +38,7 @@ export function useLocations({ currentTab, locations }: Options) {
     return locations
   }, [locations, currentTab])
 
-  const resetForm = () => setLocationForm({ image: null, name: "", hideName: false })
+  const resetForm = () => setLocationForm({ image: null, name: "", hideName: false, id: undefined })
   const setImage = (uri: string | null) => setLocationForm((f) => ({ ...f, image: uri }))
   const setName = (name: string) => setLocationForm((f) => ({ ...f, name }))
   const setHideName = (hide: boolean) => setLocationForm((f) => ({ ...f, hideName: hide }))

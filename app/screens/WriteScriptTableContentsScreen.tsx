@@ -36,6 +36,7 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
   const orderMutation = useOrderScriptParts()
   const updateScriptPart = useUpdateScriptPart()
   const scriptId = route?.params?.scriptId
+  const previousRoute = route.params.from
   const { data: parts } = useGetPartsByScript(scriptId)
 
   const pendingParts = parts
@@ -43,13 +44,6 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
   const [showAdd, setShowAdd] = useState(false)
   const [newTitle, setNewTitle] = useState("")
   const [selectedPart, setSelectedPart] = useState<Part | null>(null)
-
-  const confirmAdd = (index: number, content: string) => {
-    if (!newTitle.trim()) return
-
-    setNewTitle("")
-    setShowAdd(false)
-  }
 
   const onDragEnd = useCallback(({ data }: { data: Part[] }) => {
     orderMutation.mutate({ script_id: scriptId, parts: data })
@@ -114,7 +108,6 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
     <SafeAreaView style={$root}>
       <View
         style={$root}
-        preset="fixed"
         safeAreaEdges={["top", "bottom", "left"]}
         gradientColors={["#4b276b", "#0e1636"]}
       >
@@ -124,7 +117,11 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
               <PressableIcon
                 icon="arrowLeft"
                 onPress={() => {
-                  navigation.goBack()
+                  if (!!previousRoute) {
+                    navigation.navigate("Demo" as never, { screen: "MyScripts" })
+                  } else {
+                    navigation.goBack()
+                  }
                 }}
               />
               <Text preset="sectionHeader" weight="semiBold">

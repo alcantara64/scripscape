@@ -62,11 +62,14 @@ export const LOCATION_CSS = `
   .ss-location { margin: 14px 0; position: relative; }
   .ss-location figure { margin: 0; }
   .ss-location img {
-    width: 100%; height: auto; border-radius: 12px; display: block;
+    width: 100%; max-height:204px; border-radius: 4px; display: block;
     box-shadow: 0 2px 8px rgba(0,0,0,.18);
   }
   .ss-location .ss-cap {
-    font-size: 12px; line-height: 16px; opacity: .85; margin-top: 6px;
+    font-size: 16px; line-height: 16px;  margin: 6px 0px; text-transform: lowercase;
+  }
+  .ss-location  .ss-cap::first-letter{
+   text-transform: uppercase;
   }
 `.trim()
 
@@ -91,10 +94,10 @@ export const buildLocationHTML = (item: {
     : `<figcaption class="ss-cap">${escapeHtml(item.name)}</figcaption>`
   return `
     <div id="location-image-${item.id}" class="ss-location" data-ss="location" data-name="${escapeAttr(item.name)}">
-     ${caption}
       <figure>
         <img src="${escapeAttr(item.image)}" alt="${escapeAttr(item.name || "Location")}"/>
       </figure>
+      ${caption}
     </div>
     <p><br/></p>
   `.trim()

@@ -172,7 +172,7 @@ export const CharacterSheet = ({
       character_id: selectedItem?.id as number,
       audioFiLe: state.audioFile,
     })
-    // onSave(state)
+    onSave(state)
   }
 
   return (

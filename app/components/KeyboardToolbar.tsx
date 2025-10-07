@@ -79,7 +79,7 @@ export function KeyboardToolbar({
             editorRef.current?.insertHTML?.(`
     <figure style="margin:12px 0;" id="embedded-image${response.id}">
       <img src="${response.url}" alt="${response.caption ?? "image"}"
-           style="max-width:100%;height:auto;display:block;border-radius:12px;" />
+           style="max-width:100%;max-height:204px;display:block;border-radius:4px;" />
     </figure>
   `)
             setEmbeddedImageUsed(embeddedImageUsed + 1)

@@ -59,6 +59,9 @@ export type Part = {
   postalImage?: string
   created_at: string
   updated_at: string
+  permissions?: {
+    isOwner: boolean
+  }
 }
 
 export type CreatePart = Pick<Part, "script_id" | "index" | "content" | "title">

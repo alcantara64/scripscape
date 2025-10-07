@@ -40,6 +40,7 @@ type Props = {
   script_id: number
   isEditMode?: boolean
   setLocationForm: (form: { name: string; image: string; id: number; hideName: boolean }) => void
+  resetLocationForm?: () => void
 }
 
 export function LocationSheet({
@@ -57,6 +58,7 @@ export function LocationSheet({
   script_id,
   isEditMode,
   setLocationForm,
+  resetLocationForm,
 }: Props) {
   const {
     themed,
@@ -103,14 +105,21 @@ export function LocationSheet({
     }
     const img = await compressImage(form.image)
 
-    scriptLocation.mutate({
-      script_id: script_id,
-      Loc: {
-        image: toRNFile(img.uri, `${form.name.trim()}.png`) as any,
-        name: form.name.trim(),
-        hideName: form.hideName,
+    scriptLocation.mutate(
+      {
+        script_id: script_id,
+        Loc: {
+          image: toRNFile(img.uri, `${form.name.trim()}.png`) as any,
+          name: form.name.trim(),
+          hideName: form.hideName,
+        },
       },
-    })
+      {
+        onSuccess: () => {
+          resetLocationForm?.()
+        },
+      },
+    )
     setIsAddLocation(false)
   }, [form, addLocation])
 
