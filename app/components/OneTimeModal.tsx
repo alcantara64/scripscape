@@ -47,8 +47,9 @@ export const OneTimeModal = (props: OneTimeModalProps) => {
         style={$backdrop}
         onPress={dismiss}
         testID={testID ? `${testID}-backdrop` : undefined}
-      />
-      <View style={$artworkWrap}>{artwork}</View>
+      >
+        <View style={$artworkWrap}>{artwork}</View>
+      </Pressable>
     </Modal>
   )
 }

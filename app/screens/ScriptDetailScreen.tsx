@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from "react-native"
+import { ImageBackground } from "expo-image"
 import { useNavigation } from "@react-navigation/native"
 
 import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
@@ -21,6 +22,7 @@ import { SmartImage } from "@/components/SmartImage"
 import { Text } from "@/components/Text"
 import { IScript, ScriptStatus, WriterStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { useEmbeddedImagesByScript } from "@/querries/embedded-images"
 import { useGetLocationImagesByScriptId } from "@/querries/location"
 import { useGetScriptById } from "@/querries/script"
 import { colors } from "@/theme/colors"
@@ -32,12 +34,10 @@ import { useQuota } from "@/utils/useQuota"
 
 import { CharacterSheet } from "./AddScripts/AddParts/characterSheet"
 import { TabKey } from "./AddScripts/AddParts/editorConstant"
+import { EmbeddedImageSheet } from "./AddScripts/AddParts/embeddedImageSheet"
 import { LocationSheet } from "./AddScripts/AddParts/locationSheet"
 import { useDialogue } from "./AddScripts/AddParts/useDialogue"
 import { useLocations } from "./AddScripts/AddParts/useLocation"
-import { EmbeddedImageSheet } from "./AddScripts/AddParts/embeddedImageSheet"
-import { useEmbeddedImagesByScript } from "@/querries/embedded-images"
-import { ImageBackground } from "expo-image"
 
 interface ScriptDetailScreenProps extends AppStackScreenProps<"ScriptDetail"> {}
 
@@ -139,6 +139,10 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
     ),
     [themed],
   )
+
+  const gotoPart = (partId: number) => {
+    navigation.navigate("ScriptPart", { part_id: partId })
+  }
 
   const openBottomSheet = () => {
     setSnaPoints("34%")
@@ -394,7 +398,13 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
             </View>
           </View>
           {scriptData?.parts.map((p) => (
-            <Pressable key={p.part_id} style={themed($partRow)}>
+            <Pressable
+              key={p.part_id}
+              style={themed($partRow)}
+              onPress={() => {
+                gotoPart(p.part_id)
+              }}
+            >
               <View style={{ flex: 1 }}>
                 <Text weight="medium">&quot;{p.title}&rdquo;</Text>
                 <Text preset="description">{formatDate(p.created_at)}</Text>

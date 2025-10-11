@@ -100,6 +100,7 @@ export function useUpdateScript() {
     mutationFn: updateScript,
     onSuccess: (response, variables) => {
       qc.invalidateQueries({ queryKey: ["get-script-by-id", variables.scriptId] })
+      qc.invalidateQueries({ queryKey: ["get-my-scripts"] })
     },
   })
 }
@@ -167,6 +168,19 @@ export const useUpdateScriptPart = () => {
     mutationFn: updatePart,
     onSuccess: (data, variable) => {
       qc.invalidateQueries({ queryKey: ["get-parts", `${data.script_id}`] })
+    },
+  })
+}
+async function deletePart(vars: { part_id: number }) {
+  return getOrThrow(scriptService.deleteScriptPart(vars.part_id))
+}
+
+export const useDeleteScriptPart = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: deletePart,
+    onSuccess: (data, variable) => {
+      qc.invalidateQueries({ queryKey: ["get-part-by-id", variable.part_id] })
     },
   })
 }

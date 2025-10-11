@@ -1,18 +1,21 @@
-import { FC, useMemo } from "react"
-import { Linking, Platform, View, ViewStyle } from "react-native"
+import { FC, useCallback, useMemo, useRef, useState } from "react"
+import { Linking, Platform, Pressable, TextStyle, View, ViewStyle } from "react-native"
+import { useNavigation } from "@react-navigation/native"
 import WebView from "react-native-webview"
 
-import { PressableIcon } from "@/components/Icon"
+import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
+import { ConfirmAction } from "@/components/ConfirmAction"
+import { Icon, PressableIcon } from "@/components/Icon"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { useDeleteScriptPart, useGetPartsById } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { dialogueBridgeJS } from "@/utils/insertDialogueBubble"
+import { toast } from "@/utils/toast"
 
 import { editorContentStyle } from "./AddScripts/AddParts/editorConstant"
-import { useGetPartsById } from "@/querries/script"
-import { useNavigation } from "@react-navigation/native"
-import { dialogueBridgeJS } from "@/utils/insertDialogueBubble"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -27,7 +30,10 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
     theme: { colors },
   } = useAppTheme()
   const { data: partData, isLoading } = useGetPartsById(part_id)
+  const { mutateAsync } = useDeleteScriptPart()
   const { contentCSSText } = editorContentStyle(colors)
+  const sheetRef = useRef<BottomSheetController>(null)
+  const [showDeleteDialogue, setShowDeleteDialogue] = useState(false)
   const pageHtml = useMemo(() => {
     // Convert editorContentStyle(colors) into CSS. If your editorContentStyle
     // returns a JS object, you likely already baked class names into the HTML.
@@ -91,6 +97,40 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
     return wrapped
   }, [colors, partData])
 
+  const scriptManipulators = useMemo(
+    () => [
+      {
+        icon: "trash",
+        label: "Delete Part",
+        action: () => {
+          setShowDeleteDialogue(true)
+        },
+      },
+    ],
+    [],
+  )
+  const openBottomSheet = () => {
+    sheetRef.current?.open()
+  }
+  const deletePart = async () => {
+    try {
+      await mutateAsync({ part_id: partData?.part_id! })
+      navigation.navigate("ScriptDetail")
+    } catch (e) {
+      toast.error("Unable to delete script at the moment")
+    }
+  }
+
+  const renderBottomSheetItem = useCallback(
+    (icon: string, label: string, action: () => void) => (
+      <Pressable key={label} style={$navigationItem} onPress={action}>
+        <Icon icon={icon} size={24} />
+        <Text text={label} style={themed($navigationText)} />
+      </Pressable>
+    ),
+    [themed],
+  )
+
   const goBack = () => {
     navigation.goBack()
   }
@@ -98,65 +138,106 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
     return <Text text="loading ..." />
   }
   return (
-    <Screen
-      style={$root}
-      preset="auto"
-      safeAreaEdges={["top"]}
-      ScrollViewProps={{ contentContainerStyle: { flexGrow: 1 } }}
-    >
-      <View style={$container}>
-        {/* Header (same layout as AddPart, just no inputs/actions) */}
-        <View style={themed($headerRow)}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <PressableIcon icon="arrowLeft" onPress={goBack} hitSlop={10} />
-            <Text preset="sectionHeader" weight="semiBold">
-              Part {partData?.index}
+    <>
+      <Screen
+        style={$root}
+        preset="auto"
+        safeAreaEdges={["top"]}
+        ScrollViewProps={{ contentContainerStyle: { flexGrow: 1 } }}
+      >
+        <View style={$container}>
+          {/* Header (same layout as AddPart, just no inputs/actions) */}
+          <View style={themed($headerRow)}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <PressableIcon icon="arrowLeft" onPress={goBack} hitSlop={10} />
+              <Text preset="sectionHeader" weight="semiBold">
+                Part {partData?.index}
+              </Text>
+              {partData?.status !== "published" && (
+                <View style={themed($draft)}>
+                  <Icon icon="write" color="#FFC773" size={11} />
+                  <Text text="Draft" style={themed($draftText)} />
+                </View>
+              )}
+            </View>
+            {partData?.permissions?.isOwner && (
+              <Pressable onPress={openBottomSheet}>
+                <PressableIcon icon="circledEllipsis" size={20} />
+              </Pressable>
+            )}
+          </View>
+
+          {/* Title */}
+          <View style={{ paddingHorizontal: 24, paddingBottom: 6 }}>
+            <Text preset="subheading" weight="semiBold" numberOfLines={2}>
+              {partData?.title || "Untitled"}
             </Text>
           </View>
+
+          {/* Read-only content */}
+
+          <WebView
+            originWhitelist={["*"]}
+            source={{ html: pageHtml }}
+            injectedJavaScript={dialogueBridgeJS}
+            // Keep scrollable, but no zoom to mimic editor
+            scalesPageToFit={false}
+            scrollEnabled
+            // Disable text selection callouts on iOS
+            dataDetectorTypes="all"
+            // Allow tapping links to open externally
+            onShouldStartLoadWithRequest={(req) => {
+              const isHttp = /^https?:\/\//i.test(req.url)
+              // Let the initial "about:blank" / internal doc load
+              if (req.navigationType === "other" && !isHttp) return true
+              if (isHttp) {
+                Linking.openURL(req.url).catch(() => {})
+                return false
+              }
+              return true
+            }}
+            // Performance niceties
+            automaticallyAdjustContentInsets={false}
+            contentInsetAdjustmentBehavior="never"
+            // Android: improves hardware-acceleration text clarity
+            androidLayerType={Platform.OS === "android" ? "hardware" : undefined}
+            // Prevent keyboard popping (no inputs anyway)
+            keyboardDisplayRequiresUserAction
+            allowsInlineMediaPlayback // iOS: needed for inline <audio>
+            mediaPlaybackRequiresUserAction // keep true; play() is user-initiated via click
+            style={$webview}
+          />
         </View>
-
-        {/* Title */}
-        <View style={{ paddingHorizontal: 24, paddingBottom: 6 }}>
-          <Text preset="subheading" weight="semiBold" numberOfLines={2}>
-            {partData?.title || "Untitled"}
-          </Text>
+      </Screen>
+      <AppBottomSheet
+        controllerRef={sheetRef}
+        snapPoints={["28%"]}
+        onChange={(index) => {
+          if (index < 1) {
+            // sheetRef.current?.collapse()
+            // sheetRef.current?.close()
+          }
+        }}
+      >
+        <View style={{ gap: 20, marginTop: 10 }}>
+          {!showDeleteDialogue &&
+            scriptManipulators.map((item) =>
+              renderBottomSheetItem(item.icon, item.label, item.action),
+            )}
         </View>
-
-        {/* Read-only content */}
-
-        <WebView
-          originWhitelist={["*"]}
-          source={{ html: pageHtml }}
-          injectedJavaScript={dialogueBridgeJS}
-          // Keep scrollable, but no zoom to mimic editor
-          scalesPageToFit={false}
-          scrollEnabled
-          // Disable text selection callouts on iOS
-          dataDetectorTypes="all"
-          // Allow tapping links to open externally
-          onShouldStartLoadWithRequest={(req) => {
-            const isHttp = /^https?:\/\//i.test(req.url)
-            // Let the initial "about:blank" / internal doc load
-            if (req.navigationType === "other" && !isHttp) return true
-            if (isHttp) {
-              Linking.openURL(req.url).catch(() => {})
-              return false
-            }
-            return true
-          }}
-          // Performance niceties
-          automaticallyAdjustContentInsets={false}
-          contentInsetAdjustmentBehavior="never"
-          // Android: improves hardware-acceleration text clarity
-          androidLayerType={Platform.OS === "android" ? "hardware" : undefined}
-          // Prevent keyboard popping (no inputs anyway)
-          keyboardDisplayRequiresUserAction
-          allowsInlineMediaPlayback // iOS: needed for inline <audio>
-          mediaPlaybackRequiresUserAction // keep true; play() is user-initiated via click
-          style={$webview}
-        />
-      </View>
-    </Screen>
+        {showDeleteDialogue && (
+          <ConfirmAction
+            title="Confirm Delete"
+            question="Are you sure you want to delete this part"
+            onConfirm={deletePart}
+            onCancel={() => {
+              setShowDeleteDialogue(false)
+            }}
+            confirmBtnText="Delete"
+          />
+        )}
+      </AppBottomSheet>
+    </>
   )
 }
 
@@ -179,3 +260,36 @@ const $webview: ViewStyle = {
 }
 
 const $container: ViewStyle = { flex: 1 }
+const $draft: ThemedStyle<ViewStyle> = () => ({
+  borderRadius: 5,
+  borderWidth: 1,
+  borderColor: "#FFC773",
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 4,
+})
+
+const $draftText: ThemedStyle<TextStyle> = () => ({
+  color: "#FFC773",
+  paddingHorizontal: 4,
+  textAlign: "center",
+  fontSize: 12,
+  fontWeight: 600,
+  lineHeight: 19,
+  textTransform: "capitalize",
+})
+
+const $navigationText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.palette.neutral300,
+  textAlign: "center",
+  fontSize: 15,
+  fontWeight: 500,
+  lineHeight: 20,
+  textTransform: "capitalize",
+})
+
+const $navigationItem: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 12,
+}

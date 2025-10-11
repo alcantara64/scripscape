@@ -89,6 +89,10 @@ export class ScriptService {
     })
   }
 
+  deleteScriptPart(part_id: number): Promise<ApiResult<{}>> {
+    return this.httpClient.delete(`/script/parts/${part_id}`)
+  }
+
   //location images
   createScriptLocation(
     script_id: number,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { View, Platform, KeyboardAvoidingView, StyleProp, ViewStyle, TextStyle } from "react-native"
 import * as DocumentPicker from "expo-document-picker"
 import { RichEditor } from "react-native-pell-rich-editor"
@@ -15,10 +15,7 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { UpgradeProPopup } from "@/components/UprogradePropPup"
 import { Dialogue, Part } from "@/interface/script"
-import {
-  useCreateScriptEmbeddedImages,
-  useEmbeddedImagesByScript,
-} from "@/querries/embedded-images"
+import { useEmbeddedImagesByScript } from "@/querries/embedded-images"
 import { useGetLocationImagesByScriptId } from "@/querries/location"
 import { useScriptCreateDialoguePart } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"

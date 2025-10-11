@@ -62,6 +62,8 @@ export type Part = {
   permissions?: {
     isOwner: boolean
   }
+  status: "draft" | "published"
+  published_at: string
 }
 
 export type CreatePart = Pick<Part, "script_id" | "index" | "content" | "title">
