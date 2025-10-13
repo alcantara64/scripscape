@@ -104,6 +104,18 @@ export function useUpdateScript() {
     },
   })
 }
+async function deleteScript(vars: Pick<UpdateScriptVar, "scriptId">) {
+  return getOrThrow(scriptService.deleteScript(vars.scriptId))
+}
+export function useDeleteScript() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: deleteScript,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["get-my-scripts"] })
+    },
+  })
+}
 
 //parts
 async function createPart(payload: CreatePart) {

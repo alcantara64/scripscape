@@ -24,7 +24,7 @@ import { IScript, ScriptStatus, WriterStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useEmbeddedImagesByScript } from "@/querries/embedded-images"
 import { useGetLocationImagesByScriptId } from "@/querries/location"
-import { useGetScriptById } from "@/querries/script"
+import { useDeleteScript, useGetScriptById } from "@/querries/script"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
@@ -38,10 +38,17 @@ import { EmbeddedImageSheet } from "./AddScripts/AddParts/embeddedImageSheet"
 import { LocationSheet } from "./AddScripts/AddParts/locationSheet"
 import { useDialogue } from "./AddScripts/AddParts/useDialogue"
 import { useLocations } from "./AddScripts/AddParts/useLocation"
+import { toast } from "@/utils/toast"
+import { ConfirmAction } from "@/components/ConfirmAction"
 
 interface ScriptDetailScreenProps extends AppStackScreenProps<"ScriptDetail"> {}
 
-type Mode = "manage-location" | "manage-characters" | "manage-images" | "settings"
+type Mode =
+  | "manage-location"
+  | "manage-characters"
+  | "manage-images"
+  | "settings"
+  | "confirm-delete"
 
 export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   const { script_id } = route.params
@@ -59,6 +66,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   const { data: embeddedImages } = useEmbeddedImagesByScript(script_id)
 
   const { data } = useGetLocationImagesByScriptId(script_id)
+  const deleteScriptMutation = useDeleteScript()
   const {
     sortedLocations,
     locationForm,
@@ -125,9 +133,16 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
           setMode("manage-images")
         },
       },
-      { icon: "trash", label: "Delete This Script", action: () => {} },
+      {
+        icon: "trash",
+        label: "Delete This Script",
+        action: () => {
+          console.log("delete")
+          setMode("confirm-delete")
+        },
+      },
     ],
-    [],
+    [script_id, navigation],
   )
 
   const renderBottomSheetItem = useCallback(
@@ -156,6 +171,18 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   const startReading = () => {
     const firstPart = scriptData?.parts[0]
     navigation.navigate("ScriptPart", { part_id: firstPart?.part_id })
+  }
+
+  const deleteScript = async () => {
+    try {
+      await deleteScriptMutation.mutateAsync({ scriptId: script_id })
+      toast.success("Script Deleted successfully")
+      navigation.navigate("Demo", { screen: "MyScripts" })
+      setMode("settings")
+    } catch (e) {
+      console.error(e)
+      toast.error("Could not delete script, please try again letter")
+    }
   }
 
   const recs: IScript[] = useMemo(
@@ -333,25 +360,27 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
         </View>
 
         {/* Writer's Notes */}
-        <View style={themed($card)}>
-          <Text text="Writer’s Notes" style={$writerNoteTitle} />
-          <View>
-            <Text size="xs" style={$lastUpdated}>
-              Last updated 3d ago
-            </Text>
-            <Text preset="description" style={[$bodyText, { marginBottom: 20 }]}>
-              New updates! After reader comments on the last chapter, I refined the scene pacing and
-              added a conversation where Laila confronts her own expectations. Check out the latest
-              update.
-            </Text>
-            <Line />
-            <Pressable style={$linkRow}>
-              <Text preset="readMore">View more</Text>
-            </Pressable>
+        {scriptData?.writer_note && (
+          <View style={themed($card)}>
+            <Text text="Writer’s Notes" style={$writerNoteTitle} />
+            <View>
+              <Text size="xs" style={$lastUpdated}>
+                Last updated 3d ago
+              </Text>
+              <Text preset="description" style={[$bodyText, { marginBottom: 20 }]}>
+                New updates! After reader comments on the last chapter, I refined the scene pacing
+                and added a conversation where Laila confronts her own expectations. Check out the
+                latest update.
+              </Text>
+              <Line />
+              <Pressable style={$linkRow}>
+                <Text preset="readMore">View more</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
+        )}
 
-        {scriptData?.comments_count > 0 && (
+        {scriptData?.comments_count && scriptData?.comments_count > 0 && (
           <View style={$sectionContainer}>
             <View style={$titleItemsContainer}>
               <View style={$commentContainer}>
@@ -516,6 +545,15 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
               embeddedImages={embeddedImages?.items || []}
               onLimitReached={() => {}}
               scriptId={script_id}
+            />
+          )}
+          {mode === "confirm-delete" && (
+            <ConfirmAction
+              style={{ marginTop: 8 }}
+              onCancel={() => setMode("settings")}
+              onConfirm={deleteScript}
+              title={`Delete ${scriptData?.title}`}
+              question={`Are you sure you wanna delete this script`}
             />
           )}
         </View>

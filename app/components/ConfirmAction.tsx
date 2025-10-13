@@ -37,7 +37,9 @@ export const ConfirmAction = (props: ConfirmActionProps) => {
 
   return (
     <View style={$styles}>
-      <Text preset="sectionHeader">{title}</Text>
+      <Text preset="sectionHeader" numberOfLines={1}>
+        {title}
+      </Text>
       <Text preset="description" style={themed($text)}>
         {question} {highlightedText && <Text>{highlightedText}</Text>}?
       </Text>

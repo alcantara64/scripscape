@@ -42,6 +42,9 @@ export class ScriptService {
       headers: { "Content-Type": "multipart/form-data" },
     })
   }
+  deleteScript(script_id: number): Promise<ApiResult<ScriptResponse>> {
+    return this.httpClient.delete<ScriptResponse>(`/script/${script_id}`)
+  }
   getScript(scriptId: number): Promise<ApiResult<IScript>> {
     return this.httpClient.get<IScript>(`/script/${scriptId}`)
   }
