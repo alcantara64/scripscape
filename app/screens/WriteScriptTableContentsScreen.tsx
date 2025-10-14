@@ -101,7 +101,7 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
         </View>
       </Pressable>
     ),
-    [themed],
+    [themed, colors],
   )
 
   return (

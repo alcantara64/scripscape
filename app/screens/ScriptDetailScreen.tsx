@@ -380,7 +380,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
           </View>
         )}
 
-        {scriptData?.comments_count && scriptData?.comments_count > 0 && (
+        {!!scriptData?.comments_count && scriptData?.comments_count > 0 && (
           <View style={$sectionContainer}>
             <View style={$titleItemsContainer}>
               <View style={$commentContainer}>

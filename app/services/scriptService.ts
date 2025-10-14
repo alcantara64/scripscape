@@ -276,6 +276,9 @@ export class ScriptService {
       transformRequest: (d) => d,
     })
   }
+  getDialogueById(dialogueId: number): Promise<ApiResult<Dialogue>> {
+    return this.httpClient.get<Dialogue>(`/script/dialogue/${dialogueId}`)
+  }
 }
 
 export const scriptService = new ScriptService(new Api())

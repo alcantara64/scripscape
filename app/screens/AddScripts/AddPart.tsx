@@ -20,10 +20,11 @@ import { useGetLocationImagesByScriptId } from "@/querries/location"
 import { useScriptCreateDialoguePart } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
-import { bindDialogueClick, insertDialogue } from "@/utils/insertDialogueBubble"
+import { bindDialogueClick, getBubbleData, insertDialogue } from "@/utils/insertDialogueBubble"
 import { useQuota } from "@/utils/useQuota"
 
 import { CharacterSheet } from "./AddParts/characterSheet"
+import { UpdateDialogue } from "./AddParts/dialogue"
 import { buildLocationHTML, editorContentStyle, type TabKey } from "./AddParts/editorConstant"
 import { LocationSheet } from "./AddParts/locationSheet"
 import { useDialogue } from "./AddParts/useDialogue"
@@ -38,7 +39,7 @@ export interface AddPartProps {
   onUpdate: (id: number, payload: Omit<Part, "part_id">) => void | Promise<void>
   onSave: (draft: Omit<Part, "id" | "script_id">) => void | Promise<void>
 }
-type SheetMode = "location" | "character" | "upload-details"
+type SheetMode = "location" | "character" | "upload-details" | "update-dialogue"
 
 export default function AddPart({
   style,
@@ -67,6 +68,8 @@ export default function AddPart({
   const [editorFocused, setEditorFocused] = useState(false)
   const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
   const [embeddedImageUsed, setEmbeddedImageUsed] = useState(0)
+  const [dialogueId, setDialogueId] = useState<number | null>(null)
+  const [dialogueText, setDialogueText] = useState("")
   const { data: embeddedImages, isLoading: loadingEmbedded } = useEmbeddedImagesByScript(script_id)
 
   const { data, isLoading } = useGetLocationImagesByScriptId(script_id)
@@ -118,14 +121,18 @@ export default function AddPart({
 
   const focusEditor = useCallback(() => editorRef.current?.focusContentEditor?.(), [])
 
-  const onEditorMessage = useCallback((msg: any) => {
+  const onEditorMessage = useCallback(async (msg: any) => {
     try {
       const data: { id: string; type: string } = msg
 
       if (data?.type === "edit-dialogue") {
-        // TODO: open your dialogue modal/sheet and pass data.payload
-        console.log("edit-dialogue payload:", data?.type, data.id)
-        openCharacterSheet()
+        setDialogueId(Number(data.id))
+        setSheetMode("update-dialogue")
+        const dataObject = await getBubbleData(data.id, editorRef)
+        if (dataObject) {
+          setDialogueText(dataObject?.message)
+        }
+        sheetRef.current?.expand()
       }
     } catch (e) {}
   }, [])
@@ -157,18 +164,6 @@ export default function AddPart({
       audioFile?: DocumentPicker.DocumentPickerAsset
     },
   ) => {
-    // persist a lightweight record if you want to support re-edit later
-    // cacheDialogueData({ id, ...res })
-
-    // const html = buildCharacterDialogueHTML({
-    //   id,
-    //   name: res.name,
-    //   avatar: res.avatarUri,
-    //   bubbleBg: res.bubbleBg ?? "#2C1A67",
-    //   textColor: res.textColor ?? "#FFFFFF",
-    //   dialogue: res.dialogue ?? "",
-    //   audioSrc: res.audioUri, // only set when PRO selected audio
-    // })
     const result = await createDialogue.mutateAsync({
       part_id: selectedPart?.part_id as number,
       dialogue: res,
@@ -185,10 +180,6 @@ export default function AddPart({
         audioUrl: result.audio_uri,
       })
     }
-
-    // Insert and add a blank line after
-    // editorRef.current?.insertHTML(html + "<p><br/></p>")
-    // Keep caret outside and clicks routed to modal
     bindDialogueClick(editorRef) // reuse your util if it adds extra guards
   }
 
@@ -303,15 +294,13 @@ export default function AddPart({
         controllerRef={sheetRef}
         snapPoints={["95%"]}
         style={{ zIndex: 40, pointerEvents: "auto", flex: 1 }}
-        // onOpen={onSheetOpen}
         onChange={(index) => {
           if (index > -1) onSheetOpen()
         }}
         onClose={onSheetClose}
       >
-        {sheetMode === "upload-details" ? (
-          <UploadDetail />
-        ) : sheetMode === "location" ? (
+        {sheetMode === "upload-details" && <UploadDetail />}
+        {sheetMode === "location" && (
           <LocationSheet
             script_id={selectedPart?.script_id as number}
             currentTab={currentTab}
@@ -330,7 +319,8 @@ export default function AddPart({
             partId={selectedPart?.part_id as number}
             resetLocationForm={resetForm}
           />
-        ) : (
+        )}
+        {sheetMode === "character" && (
           <CharacterSheet
             quota={quota.character}
             isPro={true}
@@ -351,6 +341,14 @@ export default function AddPart({
             setCharacterImage={() => {}}
             setCharacterName={() => {}}
             onLimitReached={showUPloadDetail}
+          />
+        )}
+        {sheetMode === "update-dialogue" && dialogueId && (
+          <UpdateDialogue
+            diaLogueId={dialogueId}
+            sheetRef={sheetRef}
+            initialDialogueText={dialogueText}
+            editorRef={editorRef}
           />
         )}
       </AppBottomSheet>

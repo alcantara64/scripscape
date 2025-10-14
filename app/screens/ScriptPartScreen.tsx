@@ -161,9 +161,7 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
               )}
             </View>
             {partData?.permissions?.isOwner && (
-              <Pressable onPress={openBottomSheet}>
-                <PressableIcon icon="circledEllipsis" size={20} />
-              </Pressable>
+              <PressableIcon onPress={openBottomSheet} icon="circledEllipsis" size={20} />
             )}
           </View>
 

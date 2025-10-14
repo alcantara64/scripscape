@@ -30,7 +30,7 @@ import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
 import { formatNumber } from "@/utils/formatDate"
-import { toRNFile } from "@/utils/image"
+import { compressImage, toRNFile } from "@/utils/image"
 import { followers } from "@/utils/mock"
 import { toast } from "@/utils/toast"
 
@@ -135,10 +135,11 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ route }) => {
     }
   }
 
-  const saveAvatar = () => {
+  const saveAvatar = async () => {
     if (!pendingAvatar) return
+    const profilePix = await compressImage(pendingAvatar)
     updateProfile.mutate(
-      { profilePicture: toRNFile(pendingAvatar, "avatar.jpg") },
+      { profilePicture: toRNFile(profilePix.uri, "avatar.jpg") },
       {
         onSuccess: () => {
           setPendingAvatar(null)
@@ -153,10 +154,11 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ route }) => {
     )
   }
 
-  const saveBackground = () => {
+  const saveBackground = async () => {
     if (!pendingBackground) return
+    const bgImage = await compressImage(pendingBackground)
     updateProfile.mutate(
-      { coverPhoto: toRNFile(pendingBackground, "cover.jpg") },
+      { coverPhoto: toRNFile(bgImage.uri, "cover.jpg") },
       {
         onSuccess: () => {
           setPendingBackground(null)
@@ -173,8 +175,6 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ route }) => {
 
   const user = data?.user
   const stats = data?.stats
-
-  const defaultProfileImage = DEFAULT_PROFILE_IMAGE
 
   const handleBgImageSelected = (uri: string) => {
     setPendingBackground(uri)

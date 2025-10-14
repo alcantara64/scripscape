@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 
 import { ScriptCharacter } from "@/interface/script"
 import { useCreateScriptCharacter, useGetCharactersByScript } from "@/querries/character"
+import { toast } from "@/utils/toast"
 
 import type { CharacterForm, BackgroundColorType, TextColorType } from "./types"
 
@@ -41,7 +42,14 @@ export function useDialogue({ scriptId }: { scriptId: number }) {
   }, [quota])
 
   const addCharacter = (item: ScriptCharacter) => {
-    mutate({ scrip_id: scriptId, character: item })
+    mutate(
+      { scrip_id: scriptId, character: item },
+      {
+        onError(error, variables, context) {
+          toast.error("Unable to add character at the moment please try again later")
+        },
+      },
+    )
   }
   const resetCharacterForm = () =>
     setCharacterForm({ image: null, name: "", textBackgroundColor: "", textColor: "" })

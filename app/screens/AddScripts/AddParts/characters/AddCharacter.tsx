@@ -55,7 +55,7 @@ export const AddCharacter = ({
   const { themed } = useAppTheme()
 
   const saveAndUpdateCharacter = () => {
-    if (isEditMode) {
+    if (isEditMode && state.id) {
       onUpdate?.({
         image: state.avatarUri!,
         name: state.name,

@@ -64,6 +64,7 @@ type Props = {
   isEditMode?: boolean
   setAdditionalImages?: (images: Array<string>) => void
   scriptId?: number
+  updateDialogue: Dialogue | undefined
 }
 
 type Mode = "add-character" | "add-dialogue" | "choose-character"
@@ -88,6 +89,7 @@ export const CharacterSheet = ({
   isEditMode,
   setAdditionalImages,
   scriptId,
+  updateDialogue,
 }: Props) => {
   const { themed } = useAppTheme()
   const [state, setState] = useState<CharacterResult>({
@@ -120,7 +122,14 @@ export const CharacterSheet = ({
         setAdditionalImages?.(selectedItem.additional_images)
       }
     }
-  }, [selectedIndex])
+  }, [
+    selectedIndex,
+    isEditMode,
+    selectedItem,
+    setCharacterTextBackgroundColor,
+    setAdditionalImages,
+    setCharacterTextColor,
+  ])
 
   const pickAvatar = async (isAdditionalImage?: boolean) => {
     const res = await ImagePicker.launchImageLibraryAsync({

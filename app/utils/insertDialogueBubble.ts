@@ -1,6 +1,7 @@
 // utils/dialogue.ts
 import type { RichEditor } from "react-native-pell-rich-editor"
 
+type PartialDialogue = Partial<Omit<DialogueData, "id">> & { id: string }
 const esc = (s: string) =>
   s
     .replace(/&/g, "&amp;")
@@ -324,3 +325,101 @@ export const dialogueBridgeJS = `
 })();
 true;
   `
+async function replaceDialogueBlock(
+  editorRef: React.RefObject<RichEditor>,
+  id: string,
+  newBlockHtml: string,
+) {
+  const html = await editorRef.current?.getContentHtml?.()
+  if (!html) return false
+
+  const start = `<!--ss-dialogue-start:${id}-->`
+  const end = `<!--ss-dialogue-end:${id}-->`
+
+  // Defensive: ensure both markers exist
+  const startIdx = html.indexOf(start)
+  const endIdx = html.indexOf(end)
+  if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) return false
+
+  // Keep anything before/after the block. Also place a caret <p> after it.
+  const before = html.slice(0, startIdx)
+  const after = html.slice(endIdx + end.length)
+
+  // Ensure the replacement includes both markers (so future updates still work)
+  const blockWithMarkers = `${start}\n${newBlockHtml}\n${end}`
+
+  const next = `${before}${blockWithMarkers}<p data-ss-caret><br/></p>${after}`
+
+  // Replace the whole content (safest with pell)
+  // Use setContentHTML to avoid cumulative mutations from insertHTML
+  // Then scroll caret into view.
+  editorRef.current?.setContentHTML?.(next)
+  editorRef.current?.focusContentEditor?.()
+
+  // Move caret after the bubble (where we left data-ss-caret)
+  editorRef.current?.injectJavascript?.(`
+    (function(){
+      var caret = document.querySelector('p[data-ss-caret]');
+      if (!caret) return true;
+      var sel = window.getSelection();
+      var range = document.createRange();
+      range.selectNodeContents(caret);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      // Cleanup attribute (optional)
+      caret.removeAttribute('data-ss-caret');
+      true;
+    })();
+    true;
+  `)
+
+  return true
+}
+
+export async function updateDialogue(
+  editorRef: React.RefObject<RichEditor>,
+  patch: PartialDialogue,
+) {
+  console.log(patch.id, patch)
+  const existing = await getBubbleData(patch.id, editorRef)
+  if (!existing) return false
+
+  const merged: DialogueData = {
+    id: existing.id,
+    name: patch.name ?? existing.name,
+    message: patch.message ?? existing.message,
+    avatarUrl: patch.avatarUrl ?? existing.avatarUrl,
+    bubbleColor: patch.bubbleColor ?? existing.bubbleColor,
+    textColor: patch.textColor ?? existing.textColor,
+    nameColor: patch.nameColor ?? existing.nameColor,
+    playIconColor: patch.playIconColor ?? undefined, // optional; we don't parse it back
+    audioUrl: patch.audioUrl ?? existing.audioUrl,
+  }
+  console.log(merged)
+  const { html } = dialogueHtml(merged) // keeps same id
+  return replaceDialogueBlock(editorRef, merged.id!, html)
+}
+
+export async function upsertDialogue(editorRef: React.RefObject<RichEditor>, data: DialogueData) {
+  if (data.id) {
+    const exists = await getBubbleData(data.id, editorRef)
+    if (exists) return updateDialogue(editorRef, data as PartialDialogue)
+  }
+  insertDialogue(editorRef, data)
+  return true
+}
+export async function removeDialogue(editorRef: React.RefObject<RichEditor>, id: string) {
+  const html = await editorRef.current?.getContentHtml?.()
+  if (!html) return false
+
+  const start = `<!--ss-dialogue-start:${id}-->`
+  const end = `<!--ss-dialogue-end:${id}-->`
+  const re = new RegExp(`${start}[\\s\\S]*?${end}`, "m")
+  if (!re.test(html)) return false
+
+  const next = html.replace(re, "") // delete the block
+  editorRef.current?.setContentHTML?.(next)
+  editorRef.current?.focusContentEditor?.()
+  return true
+}
