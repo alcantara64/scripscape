@@ -47,3 +47,10 @@ export const useScriptUpdateCharacter = () => {
     },
   })
 }
+
+export const useGetDialogueById = (dialogueId: number) => {
+  return useQuery({
+    queryKey: ["get-dialogue", dialogueId],
+    queryFn: () => getOrThrow(scriptService.getDialogueById(dialogueId)),
+  })
+}
