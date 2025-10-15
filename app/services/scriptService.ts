@@ -62,6 +62,9 @@ export class ScriptService {
   getTrendingToday(category = "all"): Promise<ApiResult<TrendingTodayResponse>> {
     return this.httpClient.get<TrendingTodayResponse>(`/script/trending/today?category=${category}`)
   }
+  getFeatured(): Promise<ApiResult<IScript>> {
+    return this.httpClient.get<IScript>(`/script/featured/script`)
+  }
   getMyScripts(): Promise<ApiResult<Array<IScript>>> {
     return this.httpClient.get<Array<IScript>>(`/script/me`)
   }

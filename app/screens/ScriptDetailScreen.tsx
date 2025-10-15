@@ -44,6 +44,7 @@ import { EmbeddedImageSheet } from "./AddScripts/AddParts/embeddedImageSheet"
 import { LocationSheet } from "./AddScripts/AddParts/locationSheet"
 import { useDialogue } from "./AddScripts/AddParts/useDialogue"
 import { useLocations } from "./AddScripts/AddParts/useLocation"
+import { Button } from "@/components/Button"
 
 interface ScriptDetailScreenProps extends AppStackScreenProps<"ScriptDetail"> {}
 
@@ -102,10 +103,9 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   const { quota } = useQuota({
     isPro: false,
     used: {
-      embedded: 2,
-      location: 4,
+      embedded: embeddedImages?.items.length || 0,
+      location: sortedLocations.length,
       character: characters.length,
-      // poster is optional; default = 1
     },
   })
 
@@ -223,16 +223,18 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
                 </View>
               )}
             </View>
-            <Pressable
-              onPress={goToEditOverview}
-              style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
-            >
-              <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
-                <PressableIcon icon="edit" size={20} color="#fff" />
-                <Text text="Edit" style={{ fontSize: 14, fontWeight: 500 }} />
-              </View>
-              <PressableIcon icon="circledEllipsis" size={20} onPress={openBottomSheet} />
-            </Pressable>
+            {scriptData?.isOwner && (
+              <Pressable
+                onPress={goToEditOverview}
+                style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
+              >
+                <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+                  <PressableIcon icon="edit" size={20} color="#fff" />
+                  <Text text="Edit" style={{ fontSize: 14, fontWeight: 500 }} />
+                </View>
+                <PressableIcon icon="circledEllipsis" size={20} onPress={openBottomSheet} />
+              </Pressable>
+            )}
           </View>
         </View>
         <View style={$heroWrap}>
@@ -258,18 +260,30 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
         </View>
         <View style={$coverMeta}>
           <Text preset="sectionHeader">{scriptData?.title}</Text>
-          <View style={$authorRow}>
-            <SmartImage
-              image={{ uri: scriptData?.author.profile_picture_url }}
-              blurhash={scriptData?.author.profile_picture_blurhash}
-              imageStyle={$avatar}
-            />
-            <View>
-              <Text size="xs" style={$muted}>
-                {scriptData?.author.username}
-              </Text>
-              <Text preset="description" text={`${formatNumber(0)} Followers`} />
+          <View style={$authorAndFollowSection}>
+            <View style={$authorRow}>
+              <SmartImage
+                image={{ uri: scriptData?.author.profile_picture_url }}
+                blurhash={scriptData?.author.profile_picture_blurhash}
+                imageStyle={$avatar}
+              />
+
+              <View>
+                <Text size="xs" style={$muted}>
+                  {scriptData?.author.username}
+                </Text>
+                <Text
+                  preset="description"
+                  text={`${formatNumber(scriptData?.author._count.followers || 0)} Followers`}
+                />
+              </View>
             </View>
+            {!scriptData?.isOwner && (
+              <Pressable style={$followButton}>
+                <Icon icon="person" size={16} />
+                <Text text="Follow" />
+              </Pressable>
+            )}
           </View>
         </View>
         {/* Description */}
@@ -284,11 +298,15 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
             <Stat icon="like" label={formatNumber(scriptData?.likes_count || 0)} />
           </View>
 
-          <Pressable style={themed($cta)} onPress={startReading}>
+          <Button
+            disabled={scriptData?.parts && scriptData?.parts.length < 1}
+            style={themed($cta)}
+            onPress={startReading}
+          >
             <Text weight="semiBold" style={$ctaText}>
               Start Reading
             </Text>
-          </Pressable>
+          </Button>
           <Line />
         </View>
 
@@ -347,34 +365,36 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
         )}
 
         {/* Parts list */}
-        <View>
-          <View style={$titleItemsContainer}>
-            <Text preset="contentTitle" text="Parts" />
-            <View style={{ flexDirection: "row", gap: 4, alignItems: "center", marginBottom: 4 }}>
-              <Icon icon="part" color="#C8D0FF" size={20} />
-              <Text
-                text={`${scriptData?.parts_count} Parts`}
-                preset="description"
-                style={$partsTextStyle}
-              />
-            </View>
-          </View>
-          {scriptData?.parts.map((p) => (
-            <Pressable
-              key={p.part_id}
-              style={themed($partRow)}
-              onPress={() => {
-                gotoPart(p.part_id)
-              }}
-            >
-              <View style={{ flex: 1 }}>
-                <Text weight="medium">&quot;{p.title}&rdquo;</Text>
-                <Text preset="description">{formatDate(p.created_at)}</Text>
+        {scriptData?.parts && scriptData?.parts.length > 0 && (
+          <View>
+            <View style={$titleItemsContainer}>
+              <Text preset="contentTitle" text="Parts" />
+              <View style={{ flexDirection: "row", gap: 4, alignItems: "center", marginBottom: 4 }}>
+                <Icon icon="part" color="#C8D0FF" size={20} />
+                <Text
+                  text={`${scriptData?.parts_count} Parts`}
+                  preset="description"
+                  style={$partsTextStyle}
+                />
               </View>
-              <PressableIcon icon="caretRight" />
-            </Pressable>
-          ))}
-        </View>
+            </View>
+            {scriptData?.parts.map((p) => (
+              <Pressable
+                key={p.part_id}
+                style={themed($partRow)}
+                onPress={() => {
+                  gotoPart(p.part_id)
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text weight="medium">&quot;{p.title}&rdquo;</Text>
+                  <Text preset="description">{formatDate(p.created_at)}</Text>
+                </View>
+                <PressableIcon icon="caretRight" />
+              </Pressable>
+            ))}
+          </View>
+        )}
         {/* Recommendations */}
         {!isLoadingRecommendation && !isRecommendationError && recData?.recommendations && (
           <View>
@@ -567,11 +587,17 @@ const $statusText: ThemedStyle<TextStyle> = ({ colors, typography, spacing }) =>
 
 const $coverMeta: ViewStyle = { flex: 1 }
 const $authorRow: ViewStyle = {
-  marginTop: 6,
   flexDirection: "row",
   alignItems: "center",
   gap: 8,
 }
+const $authorAndFollowSection: ViewStyle = {
+  marginTop: 6,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+}
+
 const $avatar: ImageStyle = { width: 36, height: 36, borderRadius: 18, backgroundColor: "#3A3F6A" }
 
 const $statsRow: ViewStyle = {
@@ -693,4 +719,14 @@ const $navigationItem: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
   gap: 12,
+}
+const $followButton: ViewStyle = {
+  flexDirection: "row",
+  borderWidth: 1,
+  borderColor: colors.palette.neutral100,
+  borderRadius: 12,
+  paddingVertical: 9,
+  paddingHorizontal: 16,
+  alignItems: "center",
+  gap: 8,
 }

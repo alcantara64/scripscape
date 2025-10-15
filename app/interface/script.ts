@@ -31,6 +31,7 @@ export interface IScript {
   tags: Array<Tag>
   categories: Array<Category>
   blurhash?: string
+  isOwner?: boolean
 }
 
 export interface ScriptResponse {

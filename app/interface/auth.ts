@@ -17,6 +17,10 @@ export interface User {
   updated_at: string
   coverPhotoBlurHash?: string
   profile_picture_blurhash?: string
+  _count: {
+    followers: number
+    following: number
+  }
 }
 
 export interface AuthResponse {
