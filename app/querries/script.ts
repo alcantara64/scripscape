@@ -155,6 +155,18 @@ export const useGetScriptById = (scriptId: number) => {
     queryFn: () => getOrThrow(scriptService.getScript(scriptId)),
   })
 }
+export const useGetScriptRecommendationByScriptId = (scriptId: number) => {
+  return useQuery({
+    queryKey: ["get-script-recommendation", scriptId],
+    queryFn: () => getOrThrow(scriptService.getScriptRecommendation(scriptId)),
+  })
+}
+export const useGetTodayTrendingScripts = (category: string = "all") => {
+  return useQuery({
+    queryKey: ["get-trending-today", category],
+    queryFn: () => getOrThrow(scriptService.getTrendingToday(category)),
+  })
+}
 
 async function reorderParts(vars: ReorderVars) {
   return getOrThrow(scriptService.reorderScriptParts(vars.script_id, vars.parts))
@@ -178,7 +190,7 @@ export const useUpdateScriptPart = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: updatePart,
-    onSuccess: (data, variable) => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["get-parts", `${data.script_id}`] })
     },
   })

@@ -13,6 +13,7 @@ import {
   ScriptLocationImage,
   ScriptLocationImageResponse,
   ScriptResponse,
+  TrendingTodayResponse,
 } from "@/interface/script"
 import { toRNFile } from "@/utils/image"
 
@@ -48,8 +49,18 @@ export class ScriptService {
   getScript(scriptId: number): Promise<ApiResult<IScript>> {
     return this.httpClient.get<IScript>(`/script/${scriptId}`)
   }
+  getScriptRecommendation(
+    scriptId: number,
+  ): Promise<ApiResult<{ script_id: number; recommendations: Array<IScript> }>> {
+    return this.httpClient.get<{ script_id: number; recommendations: Array<IScript> }>(
+      `/script/${scriptId}/recommendations`,
+    )
+  }
   getScripts(): Promise<ApiResult<ScriptResponse>> {
     return this.httpClient.get<ScriptResponse>(`/script/`)
+  }
+  getTrendingToday(category = "all"): Promise<ApiResult<TrendingTodayResponse>> {
+    return this.httpClient.get<TrendingTodayResponse>(`/script/trending/today?category=${category}`)
   }
   getMyScripts(): Promise<ApiResult<Array<IScript>>> {
     return this.httpClient.get<Array<IScript>>(`/script/me`)

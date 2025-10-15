@@ -1,10 +1,10 @@
 import { FC, useState } from "react"
 import { Dimensions, ImageStyle, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
+import { Image } from "expo-image"
 import { useNavigation } from "@react-navigation/native"
 
 import { AnnouncementBox } from "@/components/AnnouncementBox"
 import { AppCarousel } from "@/components/AppCarousel"
-import { Image } from "expo-image"
 import { EmptyStateIllustration } from "@/components/EmptyStateCard"
 import { Icon, PressableIcon } from "@/components/Icon"
 import { ListView } from "@/components/ListView"
@@ -14,10 +14,11 @@ import { HomeScreenSkeleton } from "@/components/skeleton/screens/HomeScreenSkel
 import { Text } from "@/components/Text"
 import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
-import { ScriptStatus, WriterStatus } from "@/interface/script"
+import { Category, IScript, ScriptStatus, WriterStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { drawerRef } from "@/navigators/Drawer"
 import { useBanners } from "@/querries/banner"
+import { useGetMyCategories, useGetTodayTrendingScripts } from "@/querries/script"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
@@ -31,8 +32,22 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
   const navigation = useNavigation()
   const { width } = Dimensions.get("window")
   const { data: banners, isLoading, error } = useBanners()
-  const CATEGORIES = ["All", "Action", "Adventure", "Comedy", "Drama", "Drama"]
-  const [selectedCategory, setSelectedCategory] = useState("All")
+  const [selectedCategory, setSelectedCategory] = useState<Omit<Category, "id">>({
+    name: "All",
+    slug: "all",
+  })
+
+  const {
+    data: trendingTodayData,
+    isLoading: isLoadingTrendingToday,
+    isError: istrendError,
+  } = useGetTodayTrendingScripts(selectedCategory.slug)
+
+  const {
+    data: categoryData,
+    isLoading: isLoadingCategory,
+    isError: isErrorLoadingCat,
+  } = useGetMyCategories()
 
   const openDraw = () => {
     drawerRef.current?.openDrawer()
@@ -41,6 +56,10 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
 
   const { themed } = useAppTheme()
   const { username, profilePicture, profilePictureBlurhash } = useAuth()
+
+  const gotoDetailScreen = (script_id: number) => {
+    navigation.navigate("ScriptDetail", { script_id })
+  }
   if (isLoading) return <HomeScreenSkeleton />
   return (
     <Screen
@@ -129,60 +148,64 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
         <Text text="Trending Today" style={themed($sectionHeader)} />
         <View>
           <ListView
-            data={CATEGORIES}
-            estimatedItemSize={CATEGORIES.length}
+            data={[
+              { name: "All", slug: "all" },
+              ...(categoryData?.items ? categoryData?.items : []),
+            ]}
+            extraData={selectedCategory}
+            estimatedItemSize={10}
             contentContainerStyle={$categoryContainer}
             horizontal
             ItemSeparatorComponent={Separator}
-            keyExtractor={(item) => item}
+            keyExtractor={(item) => item.slug.toString()}
             renderItem={(category) => (
               <TouchableOpacity
                 style={{
                   ...$itemContainer,
                   backgroundColor:
-                    category.item === selectedCategory ? colors.buttonBackground : undefined,
+                    category.item.name === selectedCategory?.name
+                      ? colors.buttonBackground
+                      : undefined,
                 }}
                 onPress={() => {
                   setSelectedCategory(category.item)
                 }}
               >
-                <Text text={category.item} style={$itemText} />
+                <Text text={category.item.name} style={$itemText} />
               </TouchableOpacity>
             )}
           />
         </View>
         <View style={$trendingContainers}>
-          <View style={$cardWrapper}>
-            <ScriptCard
-              script_id={1}
-              imageSource={require("../../assets/images/demo/script-image.png")}
-              title="Love Knows No Boundaries"
-              description="They came from different worlds—different languages, cultures, ..."
-              status={ScriptStatus.published}
-              commentsCount={2400}
-              viewsCount={1500000}
-              likedCount={55800}
-              numberOfParts={25}
-              isVertical
-              writerStatus={WriterStatus.completed}
-            />
-          </View>
-          <View style={$cardWrapper}>
-            <ScriptCard
-              script_id={1}
-              imageSource={{ uri: "https://reactjs.org/logo-ogs.png" }}
-              // imageSource={require("../../assets/images/demo/script-image.png")}
-              title="Love Knows No Boundaries"
-              description="They came from different worlds—different languages, cultures, ..."
-              status={ScriptStatus.published}
-              commentsCount={2400}
-              viewsCount={1500000}
-              likedCount={55800}
-              numberOfParts={25}
-              isVertical
-              writerStatus={WriterStatus.inprogress}
-            />
-          </View>
+          <ListView<IScript>
+            data={trendingTodayData?.items}
+            numColumns={2}
+            extraData={trendingTodayData?.items}
+            estimatedItemSize={180}
+            keyExtractor={(it) => it.script_id.toString()}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+            contentContainerStyle={{ paddingVertical: 6 }}
+            renderItem={({ item }) => (
+              <ScriptCard
+                isVertical
+                script_id={item.script_id}
+                viewsCount={item.views_count}
+                title={item.title}
+                status={item.status}
+                likedCount={item.likes_count}
+                numberOfParts={item.parts_count}
+                description={item.summary}
+                imageSource={{ uri: item.cover_image_url }}
+                commentsCount={item.comments_count}
+                writerStatus={item.writerStatus}
+                onPress={() => {
+                  gotoDetailScreen(item.script_id)
+                }}
+              />
+            )}
+          />
         </View>
       </View>
     </Screen>

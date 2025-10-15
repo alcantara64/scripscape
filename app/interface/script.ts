@@ -109,9 +109,9 @@ export type Category = {
   id: number
   slug: string
   name: string
-  description: string
-  created_at: string
-  updated_at: string
+  description?: string
+  created_at?: string
+  updated_at?: string
 }
 export type Tag = {
   id?: number
@@ -149,4 +149,14 @@ export type EmbeddedImageResponse = {
     total: number
     pages: number
   }
+}
+interface ITrendingTodayItems extends IScript {
+  rank: number
+  likes_today: number
+}
+
+export interface TrendingTodayResponse {
+  items: Array<ITrendingTodayItems>
+  category: Pick<Category, "slug"> & "all"
+  limit: number
 }

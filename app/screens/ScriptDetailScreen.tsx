@@ -12,6 +12,7 @@ import { ImageBackground } from "expo-image"
 import { useNavigation } from "@react-navigation/native"
 
 import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
+import { ConfirmAction } from "@/components/ConfirmAction"
 import { Icon, PressableIcon } from "@/components/Icon"
 import { Line } from "@/components/Line"
 import { ListView } from "@/components/ListView"
@@ -24,12 +25,17 @@ import { IScript, ScriptStatus, WriterStatus } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useEmbeddedImagesByScript } from "@/querries/embedded-images"
 import { useGetLocationImagesByScriptId } from "@/querries/location"
-import { useDeleteScript, useGetScriptById } from "@/querries/script"
+import {
+  useDeleteScript,
+  useGetScriptById,
+  useGetScriptRecommendationByScriptId,
+} from "@/querries/script"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 import { formatDate, formatNumber } from "@/utils/formatDate"
+import { toast } from "@/utils/toast"
 import { useQuota } from "@/utils/useQuota"
 
 import { CharacterSheet } from "./AddScripts/AddParts/characterSheet"
@@ -38,8 +44,6 @@ import { EmbeddedImageSheet } from "./AddScripts/AddParts/embeddedImageSheet"
 import { LocationSheet } from "./AddScripts/AddParts/locationSheet"
 import { useDialogue } from "./AddScripts/AddParts/useDialogue"
 import { useLocations } from "./AddScripts/AddParts/useLocation"
-import { toast } from "@/utils/toast"
-import { ConfirmAction } from "@/components/ConfirmAction"
 
 interface ScriptDetailScreenProps extends AppStackScreenProps<"ScriptDetail"> {}
 
@@ -64,6 +68,11 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
   const [embeddedCurrentTab, setEmbeddedCurrentTab] = useState<TabKey>("last_used")
   const { data: embeddedImages } = useEmbeddedImagesByScript(script_id)
+  const {
+    data: recData,
+    isLoading: isLoadingRecommendation,
+    isError: isRecommendationError,
+  } = useGetScriptRecommendationByScriptId(script_id)
 
   const { data } = useGetLocationImagesByScriptId(script_id)
   const deleteScriptMutation = useDeleteScript()
@@ -267,6 +276,9 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   if (isLoading) {
     return <ScriptOverviewSkeleton />
   }
+  const gotoDetailScreen = (script_id: number) => {
+    navigation.navigate("ScriptDetail", { script_id })
+  }
 
   return (
     <>
@@ -442,39 +454,43 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
             </Pressable>
           ))}
         </View>
-
         {/* Recommendations */}
-        <View>
+        {!isLoadingRecommendation && !isRecommendationError && recData?.recommendations && (
           <View>
-            <Text preset="contentTitle" text="You Might Also Like" />
+            <View>
+              <Text preset="contentTitle" text="You Might Also Like" />
+            </View>
+            <ListView<IScript>
+              data={recData.recommendations}
+              numColumns={2}
+              extraData={recs}
+              estimatedItemSize={180}
+              keyExtractor={(it) => it.script_id.toString()}
+              showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
+              ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+              contentContainerStyle={{ paddingVertical: 6 }}
+              renderItem={({ item }) => (
+                <ScriptCard
+                  isVertical
+                  script_id={item.script_id}
+                  viewsCount={item.views_count}
+                  title={item.title}
+                  status={item.status}
+                  likedCount={item.likes_count}
+                  numberOfParts={item.parts_count}
+                  description={item.summary}
+                  imageSource={{ uri: item.cover_image_url }}
+                  commentsCount={item.comments_count}
+                  writerStatus={item.writerStatus}
+                  onPress={() => {
+                    gotoDetailScreen(item.script_id)
+                  }}
+                />
+              )}
+            />
           </View>
-          <ListView<IScript>
-            data={recs}
-            numColumns={2}
-            extraData={recs}
-            estimatedItemSize={recs.length}
-            keyExtractor={(it) => it.script_id.toString()}
-            showsHorizontalScrollIndicator={false}
-            showsVerticalScrollIndicator={false}
-            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-            contentContainerStyle={{ paddingVertical: 6 }}
-            renderItem={({ item }) => (
-              <ScriptCard
-                isVertical
-                script_id={item.script_id}
-                viewsCount={item.views_count}
-                title={item.title}
-                status={item.status}
-                likedCount={item.likes_count}
-                numberOfParts={item.parts_count}
-                description={item.summary}
-                imageSource={{ uri: item.cover_image_url }}
-                commentsCount={item.comments_count}
-                writerStatus={item.writerStatus}
-              />
-            )}
-          />
-        </View>
+        )}
       </Screen>
       <AppBottomSheet
         controllerRef={sheetRef}
