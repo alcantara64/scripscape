@@ -18,7 +18,11 @@ import { Category, IScript, ScriptStatus, WriterStatus } from "@/interface/scrip
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { drawerRef } from "@/navigators/Drawer"
 import { useBanners } from "@/querries/banner"
-import { useGetMyCategories, useGetTodayTrendingScripts } from "@/querries/script"
+import {
+  useGetFeaturedScript,
+  useGetMyCategories,
+  useGetTodayTrendingScripts,
+} from "@/querries/script"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
@@ -48,6 +52,11 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
     isLoading: isLoadingCategory,
     isError: isErrorLoadingCat,
   } = useGetMyCategories()
+  const {
+    data: featuredScriptData,
+    isLoading: isLoadingFeatured,
+    isError: isErrorFeatured,
+  } = useGetFeaturedScript()
 
   const openDraw = () => {
     drawerRef.current?.openDrawer()
@@ -60,7 +69,7 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
   const gotoDetailScreen = (script_id: number) => {
     navigation.navigate("ScriptDetail", { script_id })
   }
-  if (isLoading) return <HomeScreenSkeleton />
+  if (isLoading || isLoadingFeatured || isLoadingCategory) return <HomeScreenSkeleton />
   return (
     <Screen
       style={$root}
@@ -129,21 +138,24 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
           <EmptyStateIllustration width={width - 22} height={331} />
         )}
       </View>
-      <View style={$sectionContainer}>
-        <Text text="Featured" style={themed($sectionHeader)} />
-        <ScriptCard
-          script_id={3}
-          imageSource={require("../../assets/images/demo/script-image.png")}
-          title="Love Knows No Boundaries"
-          description="They came from different worlds—different languages, cultures, ..."
-          status={ScriptStatus.published}
-          commentsCount={2400}
-          viewsCount={1500000}
-          likedCount={55800}
-          numberOfParts={25}
-          writerStatus={WriterStatus.completed}
-        />
-      </View>
+      {featuredScriptData && (
+        <View style={$sectionContainer}>
+          <Text text="Featured" style={themed($sectionHeader)} />
+          <ScriptCard
+            script_id={featuredScriptData?.script_id}
+            imageSource={{ uri: featuredScriptData?.cover_image_url }}
+            title={featuredScriptData?.title}
+            description={featuredScriptData?.summary}
+            status={featuredScriptData?.status}
+            commentsCount={featuredScriptData?.comments_count}
+            viewsCount={featuredScriptData?.views_count}
+            likedCount={featuredScriptData?.likes_count}
+            numberOfParts={featuredScriptData?.parts_count}
+            writerStatus={featuredScriptData?.writerStatus}
+            onPress={() => gotoDetailScreen(featuredScriptData.script_id)}
+          />
+        </View>
+      )}
       <View style={$sectionContainer}>
         <Text text="Trending Today" style={themed($sectionHeader)} />
         <View>

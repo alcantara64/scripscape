@@ -194,85 +194,6 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
     }
   }
 
-  const recs: IScript[] = useMemo(
-    () => [
-      {
-        script_id: 1,
-        title: "Beneath the City Lights",
-        cover_image_url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=640",
-        tags: ["Romance", "Drama"],
-        likes_count: 55800,
-        parts: 18,
-        author_id: 1,
-        parts_count: 25,
-        views_count: 1500000,
-        comments_count: 24000,
-        contains_mature_content: false,
-        status: ScriptStatus.published,
-        updated_at: "10-12-2025",
-        created_at: "10-12-2025",
-        summary: "A romantic drama about hidden lives in a bustling metropolis.",
-        writer_note: "Note from writer",
-        writerStatus: WriterStatus.inprogress,
-      },
-      {
-        script_id: 2,
-        title: "Echoes of Tomorrow",
-        cover_image_url: "https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=640",
-        tags: ["Sci-Fi", "Adventure"],
-        likes_count: 62000,
-        parts_count: 25,
-        author_id: 1,
-        comments_count: 24000,
-        contains_mature_content: false,
-        status: ScriptStatus.published,
-        views_count: 1500000,
-        updated_at: "10-12-2025",
-        summary: "A sci-fi thriller about time travel and second chances.",
-        writer_note: "Note from writer",
-        created_at: "10-12-2025",
-        writerStatus: WriterStatus.completed,
-      },
-      {
-        script_id: 3,
-        title: "Shadows of November",
-        cover_image_url: "https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?q=80&w=640",
-        tags: ["Mystery"],
-        likes_count: 62000,
-        parts_count: 25,
-        author_id: 1,
-        comments_count: 24000,
-        contains_mature_content: false,
-        status: ScriptStatus.published,
-        updated_at: "10-12-2025",
-        summary: "A sci-fi thriller about time travel and second chances.",
-        writer_note: "Note from writer",
-        created_at: "10-12-2025",
-        views_count: 1500000,
-        writerStatus: WriterStatus.completed,
-      },
-      {
-        script_id: 4,
-        title: "Shadows of November",
-        cover_image_url: "https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?q=80&w=640",
-        tags: ["Mystery"],
-        likes_count: 62000,
-        parts_count: 25,
-        author_id: 1,
-        comments_count: 24000,
-        contains_mature_content: false,
-        status: ScriptStatus.published,
-        updated_at: "10-12-2025",
-        summary: "A sci-fi thriller about time travel and second chances.",
-        writer_note: "Note from writer",
-        created_at: "10-12-2025",
-        views_count: 1500000,
-        writerStatus: WriterStatus.completed,
-      },
-    ],
-    [],
-  )
-
   if (isLoading) {
     return <ScriptOverviewSkeleton />
   }
@@ -463,7 +384,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
             <ListView<IScript>
               data={recData.recommendations}
               numColumns={2}
-              extraData={recs}
+              extraData={recData.recommendations}
               estimatedItemSize={180}
               keyExtractor={(it) => it.script_id.toString()}
               showsHorizontalScrollIndicator={false}

@@ -167,6 +167,12 @@ export const useGetTodayTrendingScripts = (category: string = "all") => {
     queryFn: () => getOrThrow(scriptService.getTrendingToday(category)),
   })
 }
+export const useGetFeaturedScript = () => {
+  return useQuery({
+    queryKey: ["featured-script"],
+    queryFn: () => getOrThrow(scriptService.getFeatured()),
+  })
+}
 
 async function reorderParts(vars: ReorderVars) {
   return getOrThrow(scriptService.reorderScriptParts(vars.script_id, vars.parts))

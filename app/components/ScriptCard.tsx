@@ -108,7 +108,10 @@ export const ScriptCard = (props: ScriptCardProps) => {
         </View>
         <View style={$partContainer}>
           <View style={$statusContainer(writerStatus)}>
-            <Text text={writerStatus} style={themed($statusText)} />
+            <Text
+              text={writerStatus === WriterStatus.completed ? "Completed" : "In progress"}
+              style={themed($statusText)}
+            />
           </View>
           <View style={{ flexDirection: "row", gap: 4, alignItems: "center", marginBottom: 4 }}>
             <Icon icon="part" color="#C8D0FF" />
