@@ -46,7 +46,7 @@ export class Api {
 
     this.apisauce.addAsyncRequestTransform(async (request) => {
       const { accessToken, tokenType } = await readTokens()
-      if (request.headers) {
+      if (request.headers && !request.url?.includes(Config.CMS_URL)) {
         request.headers.Authorization = `${tokenType} ${accessToken}`
       }
     })

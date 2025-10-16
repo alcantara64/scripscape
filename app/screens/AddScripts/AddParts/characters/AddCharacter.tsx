@@ -226,7 +226,9 @@ export const AddCharacter = ({
           </View>
         </View>
       </ScrollView>
-      <Button text={isEditMode ? "Save Changes" : "Save"} onPress={saveAndUpdateCharacter} />
+      <View style={$actionContainer}>
+        <Button text={isEditMode ? "Save Changes" : "Save"} onPress={saveAndUpdateCharacter} />
+      </View>
     </>
   )
 }
@@ -272,4 +274,7 @@ const $labelStyle: ThemedStyle<TextStyle> = ({ colors }) => ({
 const $exampleDialogueContainer: ViewStyle = {
   flexDirection: "row",
   gap: 8,
+}
+const $actionContainer: ViewStyle = {
+  marginBottom: 24,
 }
