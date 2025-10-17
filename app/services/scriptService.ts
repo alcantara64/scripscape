@@ -68,6 +68,9 @@ export class ScriptService {
   getMyScripts(): Promise<ApiResult<Array<IScript>>> {
     return this.httpClient.get<Array<IScript>>(`/script/me`)
   }
+  viewScript(script_id: number): Promise<ApiResult<undefined>> {
+    return this.httpClient.post(`/script/${script_id}/views`)
+  }
   getPartsByScript(scriptId: number): Promise<ApiResult<Array<Part>>> {
     return this.httpClient.get<Array<Part>>(`/script/${scriptId}/parts`)
   }

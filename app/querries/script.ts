@@ -1,17 +1,13 @@
+import { useCallback } from "react"
 import * as DocumentPicker from "expo-document-picker"
+import { useFocusEffect } from "@react-navigation/native"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import {
-  CreatePart,
-  CreateScript,
-  Dialogue,
-  Part,
-  ScriptCharacter,
-  WriterStatus,
-} from "@/interface/script"
+import { CreatePart, CreateScript, Dialogue, Part, WriterStatus } from "@/interface/script"
 import { categoryService } from "@/services/categoryService"
 import { scriptService } from "@/services/scriptService"
 import { getOrThrow } from "@/utils/query"
+import { loadString, saveString } from "@/utils/storage"
 
 type ReorderVars = { script_id: number; parts: Part[] }
 type UpdateVars = { part_id: number; part: Partial<Omit<Part, "part_id">> }
@@ -107,6 +103,7 @@ export function useUpdateScript() {
 async function deleteScript(vars: Pick<UpdateScriptVar, "scriptId">) {
   return getOrThrow(scriptService.deleteScript(vars.scriptId))
 }
+
 export function useDeleteScript() {
   const qc = useQueryClient()
   return useMutation({
@@ -115,6 +112,38 @@ export function useDeleteScript() {
       qc.invalidateQueries({ queryKey: ["get-my-scripts"] })
     },
   })
+}
+async function viewScriptScript(vars: { script_id: number }) {
+  return getOrThrow(scriptService.viewScript(vars.script_id))
+}
+
+export function useTrackScriptView(scriptId: number, hours = 8) {
+  const qc = useQueryClient()
+  useFocusEffect(
+    useCallback(() => {
+      const key = `ss:viewed_at:${scriptId}`
+      const last = Number(loadString(key) ?? "0")
+      const now = Date.now()
+      if (now - last < hours * 3600_000) return
+
+      // mark first so we don’t double fire on re-focus
+      saveString(key, String(now))
+
+      // optimistic ++ on detail cache
+      const detailKey = ["get-script-by-id", scriptId] as const
+      const prev = qc.getQueryData<any>(detailKey)
+      //todo fix this logic
+      if (prev) qc.setQueryData(detailKey, { ...prev, viewCount: (prev.viewCount ?? 0) + 1 })
+
+      viewScriptScript({ script_id: scriptId }).catch(() => {
+        // rollback
+        const curr = qc.getQueryData<any>(detailKey)
+        if (curr)
+          qc.setQueryData(detailKey, { ...curr, viewCount: Math.max(0, (curr.viewCount ?? 1) - 1) })
+        saveString(key, "0")
+      })
+    }, [scriptId, hours]),
+  )
 }
 
 //parts

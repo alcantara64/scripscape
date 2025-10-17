@@ -29,6 +29,7 @@ import {
   useDeleteScript,
   useGetScriptById,
   useGetScriptRecommendationByScriptId,
+  useTrackScriptView,
 } from "@/querries/script"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
@@ -108,7 +109,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
       character: characters.length,
     },
   })
-
+  useTrackScriptView(script_id)
   const scriptManipulators = useMemo(
     () => [
       {
