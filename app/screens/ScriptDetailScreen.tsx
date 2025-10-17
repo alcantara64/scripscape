@@ -29,6 +29,7 @@ import {
   useDeleteScript,
   useGetScriptById,
   useGetScriptRecommendationByScriptId,
+  useToggleScriptLike,
   useTrackScriptView,
 } from "@/querries/script"
 import { colors } from "@/theme/colors"
@@ -78,6 +79,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
 
   const { data } = useGetLocationImagesByScriptId(script_id)
   const deleteScriptMutation = useDeleteScript()
+  const likeMut = useToggleScriptLike(script_id)
   const {
     sortedLocations,
     locationForm,
@@ -87,7 +89,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
     setLocationForm,
     resetForm,
   } = useLocations({ currentTab, locations: data?.items || [] })
-
+  console.log(scriptData)
   const {
     characters,
     selectedBackgroundColor,
@@ -182,6 +184,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
     const firstPart = scriptData?.parts[0]
     navigation.navigate("ScriptPart", { part_id: firstPart?.part_id })
   }
+  const onPressLike = () => likeMut.mutate(!(scriptData?.likedByMe ?? false))
 
   const deleteScript = async () => {
     try {
@@ -296,7 +299,11 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
 
           <View style={$statsRow}>
             <Stat icon="view" label={formatNumber(scriptData?.views_count || 0)} />
-            <Stat icon="like" label={formatNumber(scriptData?.likes_count || 0)} />
+            <Stat
+              icon="like"
+              onPress={onPressLike}
+              label={formatNumber(scriptData?.likes_count || 0)}
+            />
           </View>
 
           <Button
@@ -520,9 +527,19 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
   )
 }
 
-const Stat = ({ icon, label, size }: { icon: string; label: string; size?: number }) => (
+const Stat = ({
+  icon,
+  label,
+  size,
+  onPress,
+}: {
+  icon: string
+  label: string
+  size?: number
+  onPress?: () => void
+}) => (
   <View style={$stat}>
-    <Icon icon={icon} color="#fff" size={size || 28} />
+    <PressableIcon icon={icon} onPress={onPress} color="#fff" size={size || 28} />
     <Text size="xs" style={$muted}>
       {label}
     </Text>

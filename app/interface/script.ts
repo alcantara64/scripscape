@@ -32,6 +32,7 @@ export interface IScript {
   categories: Array<Category>
   blurhash?: string
   isOwner?: boolean
+  likedByMe?: boolean
 }
 
 export interface ScriptResponse {

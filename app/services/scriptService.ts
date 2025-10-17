@@ -71,6 +71,12 @@ export class ScriptService {
   viewScript(script_id: number): Promise<ApiResult<undefined>> {
     return this.httpClient.post(`/script/${script_id}/views`)
   }
+  likeScript(script_id: number): Promise<ApiResult<{ created: boolean; likeCount?: number }>> {
+    return this.httpClient.post(`/script/${script_id}/like`)
+  }
+  unlikeScript(script_id: number): Promise<ApiResult<{ deleted: boolean }>> {
+    return this.httpClient.delete(`/script/${script_id}/like`)
+  }
   getPartsByScript(scriptId: number): Promise<ApiResult<Array<Part>>> {
     return this.httpClient.get<Array<Part>>(`/script/${scriptId}/parts`)
   }

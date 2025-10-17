@@ -3,10 +3,10 @@ import * as DocumentPicker from "expo-document-picker"
 import { useFocusEffect } from "@react-navigation/native"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { CreatePart, CreateScript, Dialogue, Part, WriterStatus } from "@/interface/script"
+import { CreatePart, CreateScript, Dialogue, IScript, Part, WriterStatus } from "@/interface/script"
 import { categoryService } from "@/services/categoryService"
 import { scriptService } from "@/services/scriptService"
-import { getOrThrow } from "@/utils/query"
+import { getOrThrow, patchScriptInCollections } from "@/utils/query"
 import { loadString, saveString } from "@/utils/storage"
 
 type ReorderVars = { script_id: number; parts: Part[] }
@@ -200,6 +200,57 @@ export const useGetFeaturedScript = () => {
   return useQuery({
     queryKey: ["featured-script"],
     queryFn: () => getOrThrow(scriptService.getFeatured()),
+  })
+}
+async function likeScript(scriptId: number) {
+  return getOrThrow(scriptService.likeScript(scriptId))
+}
+async function unlikeScript(scriptId: number) {
+  return getOrThrow(scriptService.unlikeScript(scriptId))
+}
+export function useToggleScriptLike(scriptId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (nextLike: boolean) =>
+      nextLike ? likeScript(scriptId) : unlikeScript(scriptId),
+    onMutate: async (nextLike) => {
+      // stop outgoing refetches on detail
+      await qc.cancelQueries({ queryKey: ["get-script-by-id", scriptId] })
+      const detailKey = ["get-script-by-id", scriptId] as const
+      const previous = qc.getQueryData<IScript>(detailKey)
+
+      const patcher = (s: IScript) =>
+        s
+          ? {
+              ...s,
+              likedByMe: nextLike,
+              likes_count: Math.max(0, (s.likes_count ?? 0) + (nextLike ? 1 : -1)),
+            }
+          : s
+
+      // detail cache
+      if (previous) qc.setQueryData(detailKey, patcher(previous))
+      // lists
+      patchScriptInCollections(qc, scriptId, patcher)
+
+      return { previous }
+    },
+    onError: (_err, _vars, ctx) => {
+      // rollback detail
+      if (ctx?.previous) qc.setQueryData(["get-script-by-id", scriptId], ctx.previous)
+      // safest: refresh detail
+      qc.invalidateQueries({ queryKey: ["get-script-by-id", scriptId] })
+    },
+    onSuccess: (server) => {
+      // trust server counts
+      const detailKey = ["get-script-by-id", scriptId] as const
+      qc.setQueryData(detailKey, (curr: any) => (curr ? { ...curr, ...server } : curr))
+      patchScriptInCollections(qc, scriptId, (s) => (s ? { ...s, ...server } : s))
+    },
+    onSettled: () => {
+      // ensure eventual consistency
+      qc.invalidateQueries({ queryKey: ["get-script-by-id", scriptId], exact: true })
+    },
   })
 }
 
