@@ -83,6 +83,7 @@ export const ScriptList = (props: ScriptListProps) => {
           description={item.summary}
           writerStatus={item.writerStatus}
           script_id={item.script_id}
+          likedByMe={item.likedByMe}
         />
       )}
     />

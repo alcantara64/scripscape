@@ -215,6 +215,7 @@ export const HomeScreen: FC<HomeScreenProps> = () => {
                 onPress={() => {
                   gotoDetailScreen(item.script_id)
                 }}
+                likedByMe={item.likedByMe}
               />
             )}
           />

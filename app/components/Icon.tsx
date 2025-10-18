@@ -141,7 +141,7 @@ export const iconRegistry = {
   profileAvatar: require("@assets/icons/profile-avatar.png"),
   search: require("@assets/icons/search.png"),
   comment: require("@assets/icons/uil_comment.png"),
-  like: require("@assets/icons/iconamoon_like.png"),
+  like: require("@assets/icons/like.png"),
   eye: require("@assets/icons/eye.png"),
   help: require("@assets/icons/help.png"),
   person: require("@assets/icons/person.png"),

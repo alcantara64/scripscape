@@ -8,6 +8,7 @@ import {
   ViewStyle,
   StyleSheet,
 } from "react-native"
+import { ImageSource } from "expo-image"
 
 import { Text } from "@/components/Text"
 import { ScriptStatus, WriterStatus } from "@/interface/script"
@@ -17,10 +18,8 @@ import { spacing } from "@/theme/spacing"
 import type { ThemedStyle } from "@/theme/types"
 import { formatNumber } from "@/utils/formatDate"
 
-import { AutoImage } from "./AutoImage"
 import { Icon } from "./Icon"
 import { SmartImage } from "./SmartImage"
-import { ImageSource } from "expo-image"
 
 export interface ScriptCardProps {
   /**
@@ -39,6 +38,7 @@ export interface ScriptCardProps {
   script_id: number
   writerStatus: WriterStatus
   onPress?: (script_id: number) => void
+  likedByMe: boolean
 }
 
 /**
@@ -58,6 +58,7 @@ export const ScriptCard = (props: ScriptCardProps) => {
     isVertical,
     writerStatus,
     script_id,
+    likedByMe,
     onPress,
   } = props
   const $styles = [
@@ -131,7 +132,11 @@ export const ScriptCard = (props: ScriptCardProps) => {
             />
           </View>
           <View style={$statItem}>
-            <Icon icon="like" size={15} />
+            <Icon
+              icon="like"
+              color={likedByMe ? colors.buttonBackground : colors.palette.neutral100}
+              size={15}
+            />
             <Text
               text={`${formatNumber(likedCount)}`}
               size="sm"

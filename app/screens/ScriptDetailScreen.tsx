@@ -89,7 +89,6 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
     setLocationForm,
     resetForm,
   } = useLocations({ currentTab, locations: data?.items || [] })
-  console.log(scriptData)
   const {
     characters,
     selectedBackgroundColor,
@@ -301,6 +300,7 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
             <Stat icon="view" label={formatNumber(scriptData?.views_count || 0)} />
             <Stat
               icon="like"
+              color={scriptData?.likedByMe ? colors.buttonBackground : colors.palette.neutral100}
               onPress={onPressLike}
               label={formatNumber(scriptData?.likes_count || 0)}
             />
@@ -531,15 +531,17 @@ const Stat = ({
   icon,
   label,
   size,
+  color = "#fff",
   onPress,
 }: {
   icon: string
   label: string
   size?: number
+  color?: string
   onPress?: () => void
 }) => (
   <View style={$stat}>
-    <PressableIcon icon={icon} onPress={onPress} color="#fff" size={size || 28} />
+    <PressableIcon icon={icon} onPress={onPress} color={color} size={size || 28} />
     <Text size="xs" style={$muted}>
       {label}
     </Text>

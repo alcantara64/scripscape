@@ -247,6 +247,7 @@ export const ScriptOverviewScreen: FC<ScriptOverviewScreenProps> = ({ route }) =
                 imageSource={{ uri: item.cover_image_url }}
                 commentsCount={item.comments_count}
                 writerStatus={item.writerStatus}
+                likedByMe={item.likedByMe}
                 onPress={() => {
                   gotoOverviewScreen(item.script_id)
                 }}
