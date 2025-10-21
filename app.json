@@ -61,6 +61,7 @@
     "expo-font",
     "expo-secure-store",
     "expo-apple-authentication",
+    "react-native-iap",
     [
       "expo-splash-screen",
       {
@@ -76,6 +77,14 @@
         "android": {
           "parentTheme": "Light",
           "enforceNavigationBarContrast": false
+        }
+      }
+    ],
+    [
+      "expo-build-properties",
+      {
+        "android": {
+          "kotlinVersion": "2.1.20"
         }
       }
     ]

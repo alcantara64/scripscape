@@ -1,7 +1,13 @@
-import { FC, memo, useState } from "react"
-import { ImageStyle, Pressable, TextStyle, View, ViewStyle } from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
+import { FC, useEffect, useMemo, useState, useCallback } from "react"
+import { Alert, Platform, Pressable, TextStyle, View, ViewStyle } from "react-native"
 import { useNavigation } from "@react-navigation/native"
+import {
+  useIAP,
+  ErrorCode,
+  SubscriptionAndroid,
+  Purchase,
+  RequestPurchaseParams,
+} from "react-native-iap"
 
 import { Icon, PressableIcon } from "@/components/Icon"
 import { ListView } from "@/components/ListView"
@@ -13,40 +19,39 @@ import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 
-interface SubscriptionScreenProps extends AppStackScreenProps<"Subscription"> {}
+type SubscriptionScreenProps = AppStackScreenProps<"Subscription">
+type Sku =
+  | "com.scripscape.pro.monthly"
+  | "com.scripscape.pro.semiannual"
+  | "com.scripscape.pro.annual"
 
-interface Plan {
-  id: string
-  title: string
-  subtitle: string
-  priceMain: string
-  priceSuffix: string
-  note?: string | null
-  badgeLeft?: string | null
-  badgeRight?: string | null
-}
+const SKUS: Sku[] = [
+  "com.scripscape.pro.monthly",
+  "com.scripscape.pro.semiannual",
+  "com.scripscape.pro.annual",
+]
 
 interface IPlan {
-  id: string
+  id: Sku
   title: string
   subtitle: string
-  priceMain: string
-  priceSuffix: string
+  priceMain?: string
+  priceSuffix?: string
   note?: string | null
   badgeLeft?: string | null
   badgeRight?: string | null
 }
 
-const PLANS: IPlan[] = [
+const BASE_PLANS: IPlan[] = [
   {
-    id: "monthly",
+    id: "com.scripscape.pro.monthly",
     title: "1 Month",
     subtitle: "Billed monthly",
     priceMain: "$5.99",
     priceSuffix: "/ Month",
   },
   {
-    id: "biannual",
+    id: "com.scripscape.pro.semiannual",
     title: "6 Months",
     subtitle: "Billed bi-annually",
     priceMain: "$24.99",
@@ -55,7 +60,7 @@ const PLANS: IPlan[] = [
     badgeLeft: "Save 30%",
   },
   {
-    id: "annual",
+    id: "com.scripscape.pro.annual",
     title: "1 Year",
     subtitle: "Billed annually",
     priceMain: "$39.99",
@@ -70,89 +75,182 @@ const ITEMS = [
   "Add voice to your characters",
   "Use multiple expressions per character",
   "Ad-Free experience",
-  "Unlock expanded upload limits for location images. character portraits, & embedded visuals",
+  "Unlock expanded upload limits for location images, character portraits, & embedded visuals",
 ]
 
+// --- backend verify (replace with your client) ---
+async function verifyWithBackend(purchase: Purchase) {
+  const payload =
+    Platform.OS === "ios"
+      ? {
+          platform: "ios",
+          productId: purchase.productId,
+          receipt: purchase.transactionReceipt,
+          // @ts-ignore (iOS only)
+          originalTransactionId: purchase.originalTransactionIdentifier,
+        }
+      : {
+          platform: "android",
+          productId: purchase.productId,
+          purchaseToken: purchase.purchaseToken,
+          orderId: purchase.orderId,
+        }
+
+  const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/iap/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "" }, // add Bearer
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(`Verify failed: ${res.status}`)
+  return res.json() as Promise<{ ok: true; pro: boolean; expiresAt?: string }>
+}
+
 export const SubscriptionScreen: FC<SubscriptionScreenProps> = () => {
-  // Pull in navigation via hook
   const navigation = useNavigation()
   const { themed, theme } = useAppTheme()
-  const [selectedId, setSelectedId] = useState("monthly")
+  const [selectedId, setSelectedId] = useState<Sku>("com.scripscape.pro.monthly")
+
+  const {
+    connected,
+    subscriptions,
+    fetchProducts,
+    requestPurchase,
+    finishTransaction,
+    getAvailablePurchases,
+    getActiveSubscriptions,
+    activeSubscriptions,
+  } = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      try {
+        const result = await verifyWithBackend(purchase)
+        await finishTransaction({ purchase, isConsumable: false })
+        if (result?.pro) {
+          Alert.alert("Success", "Your subscription is active. Enjoy Scripscape Pro!")
+          navigation.goBack()
+        } else {
+          Alert.alert("Received", "Purchase received; verifying status. Pull to refresh.")
+        }
+      } catch (e: any) {
+        Alert.alert("Verification failed", e?.message ?? "Please try again.")
+      }
+    },
+    onPurchaseError: (err) => {
+      if (err.code !== ErrorCode.UserCancelled) {
+        Alert.alert("Purchase error", err.message ?? "Something went wrong.")
+      }
+    },
+  })
+
+  // load subscriptions once connected
+  useEffect(() => {
+    if (!connected) return
+    fetchProducts({ skus: SKUS, type: "subs" }).catch((e) => console.warn("fetchProducts error", e))
+  }, [connected, fetchProducts])
+
+  // map store price to cards (fallback to static)
+  const plans: IPlan[] = useMemo(() => {
+    if (!subscriptions?.length) return BASE_PLANS
+    const priceById = new Map<string, string>()
+    subscriptions.forEach((s) => {
+      // iOS: s.localizedPrice; Android: formatted price inside offer pricing phases
+      const a = s as unknown as SubscriptionAndroid
+      const androidPrice =
+        a?.subscriptionOfferDetailsAndroid?.[0]?.pricingPhases?.pricingPhaseList?.[0]
+          ?.formattedPrice
+      priceById.set(s.id, s.price || androidPrice || "")
+    })
+    return BASE_PLANS.map((p) =>
+      priceById.get(p.id) ? { ...p, priceMain: priceById.get(p.id)! } : p,
+    )
+  }, [subscriptions])
+
+  const buy = useCallback(
+    async (sku: Sku) => {
+      try {
+        // Android: build subscriptionOffers (offerToken) if present
+        let subscriptionOffers:
+          | RequestPurchaseParams["request"]["android"]["subscriptionOffers"]
+          | undefined
+        const sub = subscriptions.find((s) => s.id === sku) as SubscriptionAndroid | undefined
+        const offerToken = sub?.subscriptionOfferDetailsAndroid?.[0]?.offerToken
+        if (offerToken) subscriptionOffers = [{ sku, offerToken }]
+
+        await requestPurchase({
+          request: {
+            ios: { sku },
+            android: { skus: [sku], ...(subscriptionOffers ? { subscriptionOffers } : {}) },
+          },
+          type: "subs",
+        })
+      } catch (e: any) {
+        if (e?.code !== ErrorCode.UserCancelled) {
+          Alert.alert("Purchase failed", e?.message ?? "Please try again.")
+        }
+      }
+    },
+    [subscriptions, requestPurchase],
+  )
+
+  const restore = useCallback(async () => {
+    try {
+      const [purchases] = await Promise.all([getAvailablePurchases(), getActiveSubscriptions()])
+      if (!purchases.length && !activeSubscriptions.length) {
+        Alert.alert("Nothing to restore", "No previous purchases found.")
+        return
+      }
+      // Optional: verify the most recent purchase with your backend
+      const latest = purchases.sort(
+        (a, b) => Number(b.transactionDate ?? 0) - Number(a.transactionDate ?? 0),
+      )[0]
+      if (latest) await verifyWithBackend(latest)
+      Alert.alert("Restored", "Your purchases were restored.")
+      navigation.goBack()
+    } catch (e: any) {
+      Alert.alert("Restore failed", e?.message ?? "Please try again.")
+    }
+  }, [getAvailablePurchases, getActiveSubscriptions, activeSubscriptions, navigation])
 
   const PlanCard = ({
     item,
     selected,
     onPress,
   }: {
-    item: Plan
+    item: IPlan
     selected: boolean
-    onPress: any
-  }) => {
-    const { themed } = useAppTheme()
-    return (
-      // <LinearGradient
-      //   colors={["#4CF08B", "#4CC9F0", "#F8BD00"]}
-      //   start={{ x: 0, y: 0 }}
-      //   end={{ x: 1, y: 0 }}
-      //   style={$gradientBorder}
-      // >
-      <Pressable
-        onPress={() => {
-          onPress(item.id)
-        }}
-        style={({ pressed }) => [
-          themed($card),
-          selected && $cardSelected,
-          pressed && { opacity: 0.95 },
-        ]}
-      >
-        <View style={$contentContainer}>
-          <View style={$billingInfoContainer}>
-            <View style={[$radio, selected && $radioSelected]}>
-              <Icon icon="check" size={10} color="black" />
-            </View>
-            <View>
-              <Text
-                preset="sectionHeader"
-                style={$monthText}
-                text={item.title}
-                adjustsFontSizeToFit
-              />
-              <Text preset="description" style={$detatilDescription} text={item.subtitle} />
-            </View>
+    onPress: (id: Sku) => void
+  }) => (
+    <Pressable
+      onPress={() => onPress(item.id)}
+      style={({ pressed }) => [
+        themed($card),
+        selected && $cardSelected,
+        pressed && { opacity: 0.95 },
+      ]}
+    >
+      <View style={$contentContainer}>
+        <View style={$billingInfoContainer}>
+          <View style={[$radio, selected && $radioSelected]}>
+            <Icon icon="check" size={10} color="black" />
           </View>
-
-          <View style={$pricngInfoContainer}>
-            <Text text={item.priceMain} style={themed($priceText)} />
-            <Text style={{ textAlign: "right", fontSize: 14 }}> {item.priceSuffix} </Text>
-            {item.note && <Text style={{ textAlign: "right" }}> {item.note} </Text>}
+          <View>
+            <Text
+              preset="sectionHeader"
+              style={$monthText}
+              text={item.title}
+              adjustsFontSizeToFit
+            />
+            <Text preset="description" style={$detatilDescription} text={item.subtitle} />
           </View>
         </View>
-        {/* <View style={$cardBody}>
-        <View style={$titleRow}>
-          <Text style={$title}>{item.title}</Text>
-          <View style={{ flexDirection: "row", gap: 8 }}></View>
+        <View style={$pricngInfoContainer}>
+          <Text text={item.priceMain ?? ""} style={themed($priceText)} />
+          <Text style={{ textAlign: "right", fontSize: 14 }}> {item.priceSuffix ?? ""} </Text>
+          {item.note && <Text style={{ textAlign: "right" }}> {item.note} </Text>}
         </View>
-        <Text style={$subtitle}>{item.subtitle}</Text>
       </View>
-
-      <View style={$priceBlock}>
-        <Text style={$priceMain}>{item.priceMain}</Text>
-        <Text style={$priceSuffix}>{item.priceSuffix}</Text>
-        {item.note ? <Text style={$priceNote}>{item.note}</Text> : null}
-      </View>
-
-      {selected && <View style={$glow} pointerEvents="none" />} */}
-      </Pressable>
-      // </LinearGradient>
-    )
-  }
-
-  const Pill = ({ text, kind = "save" }) => (
-    <View style={[$pill, kind === "info" ? $pillInfo : $pillSave]}>
-      <Text style={[$pillText, kind === "info" ? $pillTextInfo : $pillTextSave]}>{text}</Text>
-    </View>
+    </Pressable>
   )
+
   return (
     <Screen style={$root} preset="scroll" safeAreaEdges={["top"]}>
       <View style={$headerContainer}>
@@ -163,16 +261,15 @@ export const SubscriptionScreen: FC<SubscriptionScreenProps> = () => {
           color={theme.colors.palette.neutral100}
           style={{ marginBottom: 8 }}
         />
-
         <Text preset="sectionHeader" text="Upgrade Account" />
       </View>
+
       <View style={$logoContainer}>
-        <View>
-          <Icon icon="logo" size={28} color={theme.colors.palette.neutral100} />
-        </View>
+        <Icon icon="logo" size={28} color={theme.colors.palette.neutral100} />
         <Text text="Scripscape" style={themed($logoTextStyle)} />
         <ProBadge />
       </View>
+
       <View style={$detailContainer}>
         <Text preset="sectionHeader" text="Step Into The Spotlight" />
         <Text preset="description" style={$detatilDescription}>
@@ -181,6 +278,7 @@ export const SubscriptionScreen: FC<SubscriptionScreenProps> = () => {
           to show the community you’re a creator who supports the platform.
         </Text>
       </View>
+
       <View style={$enumeratedItemsContainer}>
         {ITEMS.map((text) => (
           <View key={text} style={$listItemContainer}>
@@ -191,38 +289,33 @@ export const SubscriptionScreen: FC<SubscriptionScreenProps> = () => {
           </View>
         ))}
       </View>
+
       <Text text="Choose your plan" preset="sectionHeader" />
+
       <ListView<IPlan>
-        data={PLANS}
+        data={plans}
         contentContainerStyle={{ paddingTop: 8 }}
         extraData={selectedId}
         estimatedItemSize={3}
-        ItemSeparatorComponent={Separator}
+        ItemSeparatorComponent={() => <View style={$separator} />}
         renderItem={({ item }) => (
-          <PlanCard
-            item={item}
-            selected={item.id === selectedId}
-            onPress={(id) => {
-              setSelectedId(id)
-            }}
-          />
+          <PlanCard item={item} selected={item.id === selectedId} onPress={setSelectedId} />
         )}
       />
-      <Pressable style={themed($cta)}>
+
+      <Pressable onPress={() => buy(selectedId)} style={themed($cta)}>
         <Text style={themed($ctaText)}>Upgrade</Text>
       </Pressable>
-      <Text style={themed($canceltAnytime)} text="Cancel anytime" />
+
+      <Pressable onPress={restore} style={{ marginTop: 12, alignSelf: "center" }}>
+        <Text style={themed($canceltAnytime)} text="Restore purchases · Cancel anytime" />
+      </Pressable>
     </Screen>
   )
 }
-const Separator = () => <View style={$separator} />
-const $root: ViewStyle = {
-  flex: 1,
-  paddingHorizontal: 12,
-}
-const $separator: ViewStyle = {
-  height: spacing.sm, // This is the gap
-}
+
+const $root: ViewStyle = { flex: 1, paddingHorizontal: 12 }
+const $separator: ViewStyle = { height: spacing.sm }
 const $headerContainer: ViewStyle = {
   flexDirection: "row",
   marginBottom: 8,
@@ -230,52 +323,32 @@ const $headerContainer: ViewStyle = {
   gap: 8,
   alignContent: "center",
 }
-
 const $logoContainer: ViewStyle = {
   display: "flex",
   flexDirection: "row",
   alignItems: "center",
   gap: 8,
 }
-
 const $logoTextStyle: ThemedStyle<TextStyle> = ({ colors, typography, spacing }) => ({
   color: colors.text,
   fontFamily: typography.fonts.Montserrat.bold,
   fontSize: spacing.lg,
 })
-const $detailContainer: ViewStyle = {
-  marginTop: spacing.sm,
-}
-const $detatilDescription: TextStyle = {
-  fontSize: 14,
-  lineHeight: 20,
-}
+const $detailContainer: ViewStyle = { marginTop: spacing.sm }
+const $detatilDescription: TextStyle = { fontSize: 14, lineHeight: 20 }
 const $spotlightText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: spacing.sm + 2,
   color: colors.text,
-  fontWeight: 600,
+  fontWeight: "600",
 })
-
-const $enumeratedItemsContainer: ViewStyle = {
-  marginTop: spacing.sm,
-}
-const $listItemContainer: ViewStyle = {
-  flexDirection: "row",
-  gap: 4,
-  paddingVertical: 4,
-}
-
+const $enumeratedItemsContainer: ViewStyle = { marginTop: spacing.sm }
+const $listItemContainer: ViewStyle = { flexDirection: "row", gap: 4, paddingVertical: 4 }
 const $card: ThemedStyle<ViewStyle> = ({ colors }) => ({
   borderRadius: 20,
   backgroundColor: colors.palette.primary500,
   paddingBottom: 8,
 })
-
-const $cardSelected: ViewStyle = {
-  borderWidth: 2,
-  borderColor: "#00E0B8",
-}
-
+const $cardSelected: ViewStyle = { borderWidth: 2, borderColor: "#00E0B8" }
 const $radio: ViewStyle = {
   width: 20,
   height: 20,
@@ -287,23 +360,7 @@ const $radio: ViewStyle = {
   justifyContent: "center",
   backgroundColor: "#BEB6D1",
 }
-
-const $radioSelected: ViewStyle = {
-  backgroundColor: "#0ED5C7",
-  borderColor: "#0ED5C7",
-}
-
-const $pill: ViewStyle = {
-  paddingHorizontal: 10,
-  paddingVertical: 4,
-  borderRadius: 8,
-}
-const $pillSave: ViewStyle = { backgroundColor: "#FFD167" }
-const $pillInfo = { backgroundColor: "#27C3FF" }
-const $pillText: TextStyle = { fontWeight: "800", fontSize: 12 }
-const $pillTextSave: TextStyle = { color: "#3A2B00" }
-const $pillTextInfo: TextStyle = { color: "#0B2430" }
-
+const $radioSelected: ViewStyle = { backgroundColor: "#0ED5C7", borderColor: "#0ED5C7" }
 const $contentContainer: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
@@ -311,27 +368,15 @@ const $contentContainer: ViewStyle = {
   padding: 20,
   flex: 1,
 }
-const $billingInfoContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-const $pricngInfoContainer: ViewStyle = {
-  gap: 0,
-  alignSelf: "flex-end",
-}
-
-const $monthText: TextStyle = {
-  fontSize: 16,
-  fontWeight: 600,
-  lineHeight: 16,
-}
-
+const $billingInfoContainer: ViewStyle = { flexDirection: "row", alignItems: "center" }
+const $pricngInfoContainer: ViewStyle = { gap: 0, alignSelf: "flex-end" }
+const $monthText: TextStyle = { fontSize: 16, fontWeight: "600", lineHeight: 16 }
 const $priceText: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontWeight: 700,
+  fontWeight: "700",
   lineHeight: 20,
-  colors: colors.palette.neutral300,
   fontSize: 22,
   textAlign: "right",
+  color: colors.palette.neutral100,
 })
 const $cta: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   height: 48,
@@ -346,10 +391,9 @@ const $ctaText: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
   fontSize: 16,
   color: colors.palette.neutral100,
 })
-
 const $canceltAnytime: ThemedStyle<TextStyle> = ({ colors }) => ({
   color: colors.palette.neutral300,
   textAlign: "center",
   fontSize: 12,
-  fontWeight: 500,
+  fontWeight: "500",
 })
