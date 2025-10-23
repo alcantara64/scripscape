@@ -22,14 +22,26 @@ export interface CommentCardProps {
   replyCount: number
   onPress: (comment: IComment) => void
   isReplyView?: boolean
+  onLike?: () => void
+  likes_count: number
 }
 
 /**
  * Describe your component here
  */
 export const CommentCard = (props: CommentCardProps) => {
-  const { style, profilePicture, name, createDate, comment, replyCount, onPress, isReplyView } =
-    props
+  const {
+    style,
+    profilePicture,
+    name,
+    createDate,
+    comment,
+    replyCount,
+    onPress,
+    isReplyView,
+    onLike,
+    likes_count,
+  } = props
   const $styles = [$container, style]
   const { themed } = useAppTheme()
 
@@ -57,8 +69,8 @@ export const CommentCard = (props: CommentCardProps) => {
             <Text style={themed($text)}>{comment?.trim()}</Text>
             <View style={$interactionsContainer}>
               <View style={$item}>
-                <PressableIcon icon="like" size={20} />
-                <Text preset="description" text={formatNumber(0)} />
+                <PressableIcon onPress={onLike} icon="like" size={20} />
+                <Text preset="description" text={formatNumber(likes_count || 0)} />
               </View>
               {!isReplyView && (
                 <View style={$item}>

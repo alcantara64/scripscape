@@ -7,6 +7,7 @@ import {
   Dialogue,
   EmbeddedImage,
   EmbeddedImageResponse,
+  IComment,
   IScript,
   Part,
   ScriptCharacter,
@@ -46,8 +47,12 @@ export class ScriptService {
   deleteScript(script_id: number): Promise<ApiResult<ScriptResponse>> {
     return this.httpClient.delete<ScriptResponse>(`/script/${script_id}`)
   }
-  getScript(scriptId: number): Promise<ApiResult<IScript>> {
-    return this.httpClient.get<IScript>(`/script/${scriptId}`)
+  getScript(
+    scriptId: number,
+  ): Promise<ApiResult<{ script: IScript; mostEngagedComment: IComment }>> {
+    return this.httpClient.get<{ script: IScript; mostEngagedComment: IComment }>(
+      `/script/${scriptId}`,
+    )
   }
   getScriptRecommendation(
     scriptId: number,

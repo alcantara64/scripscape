@@ -12,6 +12,7 @@ import { useNavigation } from "@react-navigation/native"
 import WebView from "react-native-webview"
 
 import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
+import { Button } from "@/components/Button"
 import { CommentCard } from "@/components/CommentCard"
 import { ConfirmAction } from "@/components/ConfirmAction"
 import { EmptyState } from "@/components/EmptyState"
@@ -23,7 +24,14 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { IComment } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
-import { useAddComment, useAddReply, useComments, useDeleteComment } from "@/querries/comment"
+import {
+  useAddComment,
+  useAddReply,
+  useComments,
+  useDeleteComment,
+  useLikeComment,
+  useUnlikeComment,
+} from "@/querries/comment"
 import { useDeleteScriptPart, useGetPartsById, useUpdateScriptPart } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
@@ -33,7 +41,6 @@ import { dialogueBridgeJS } from "@/utils/insertDialogueBubble"
 import { toast } from "@/utils/toast"
 
 import { editorContentStyle } from "./AddScripts/AddParts/editorConstant"
-import { Button } from "@/components/Button"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -62,6 +69,8 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
   const addReply = useAddReply(part_id, { take: 20, replyTake: 5 })
   const delComment = useDeleteComment(part_id, { take: 20, replyTake: 5 })
   const updateScriptPart = useUpdateScriptPart()
+  const likeComment = useLikeComment(part_id)
+  const unlikeComment = useUnlikeComment(part_id)
   const [selectedComment, setSelectedComment] = useState<IComment | null>(null)
   const pageHtml = useMemo(() => {
     const css = `
@@ -174,6 +183,13 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
   const Separator = () => <View style={$separator} />
   if (isLoading) {
     return <Text text="loading ..." />
+  }
+  const likeAndUnlikeComment = async (item: IComment) => {
+    if (item.likedByMe) {
+      await unlikeComment.mutateAsync(item.comment_id)
+    } else {
+      await likeComment.mutateAsync(item.comment_id)
+    }
   }
   return (
     <>
@@ -334,6 +350,10 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
                 comment={selectedComment.content}
                 replyCount={selectedComment.reply_count || 0}
                 isReplyView
+                likes_count={selectedComment.likes_count}
+                onLike={() => {
+                  likeAndUnlikeComment(selectedComment)
+                }}
               />
               <View style={$replyInput}>
                 <TextField
@@ -382,6 +402,10 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
                         comment={item.content}
                         replyCount={item.reply_count || 0}
                         isReplyView
+                        onLike={() => {
+                          likeAndUnlikeComment(item)
+                        }}
+                        likes_count={item.likes_count}
                       />
                     )
                   }}
@@ -431,7 +455,6 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
                   return (
                     <CommentCard
                       onPress={() => {
-                        console.log(item)
                         setSelectedComment(item)
                       }}
                       style={$commentCard}
@@ -440,6 +463,10 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
                       createDate={item.created_at}
                       comment={item.content}
                       replyCount={item.reply_count || 0}
+                      onLike={() => {
+                        likeAndUnlikeComment(item)
+                      }}
+                      likes_count={item.likes_count}
                     />
                   )
                 }}

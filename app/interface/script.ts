@@ -174,6 +174,8 @@ export interface IComment {
   reply_count?: number
   user?: Pick<User, "user_id" | "username" | "profile_picture_url" | "profile_picture_blurhash">
   replies: Array<IComment>
+  likes_count: number
+  likedByMe: boolean
 }
 
 export type CommentWithReplies = IComment & {

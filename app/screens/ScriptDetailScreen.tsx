@@ -36,7 +36,7 @@ import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
-import { formatDate, formatNumber } from "@/utils/formatDate"
+import { formatDate, formatNumber, timeAgo } from "@/utils/formatDate"
 import { toast } from "@/utils/toast"
 import { useQuota } from "@/utils/useQuota"
 
@@ -64,10 +64,10 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
 
   const sheetRef = useRef<BottomSheetController>(null)
 
-  const { isLoading, data: scriptData } = useGetScriptById(script_id)
+  const { isLoading, data: scriptResponse } = useGetScriptById(script_id)
   const [mode, setMode] = useState<Mode>("settings")
   const [snapPoints, setSnaPoints] = useState("34%")
-
+  const scriptData = scriptResponse?.script
   const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
   const [embeddedCurrentTab, setEmbeddedCurrentTab] = useState<TabKey>("last_used")
   const { data: embeddedImages } = useEmbeddedImagesByScript(script_id)
@@ -339,38 +339,58 @@ export const ScriptDetailScreen: FC<ScriptDetailScreenProps> = ({ route }) => {
           </View>
         )}
 
-        {!!scriptData?.comments_count && scriptData?.comments_count > 0 && (
-          <View style={$sectionContainer}>
-            <View style={$titleItemsContainer}>
-              <View style={$commentContainer}>
-                <Text preset="contentTitle" text="Comments" />
-                <View style={themed($commentCountContainer)}>
-                  <Text style={themed($statusText)} text="2.4k" />
+        {!!scriptData?.comments_count &&
+          scriptData?.comments_count > 0 &&
+          scriptResponse?.mostEngagedComment && (
+            <View style={$sectionContainer}>
+              <View style={$titleItemsContainer}>
+                <View style={$commentContainer}>
+                  <Text preset="contentTitle" text="Comments" />
+                  <View style={themed($commentCountContainer)}>
+                    <Text
+                      style={themed($statusText)}
+                      text={formatNumber(scriptData.comments_count)}
+                    />
+                  </View>
                 </View>
+                <Text
+                  preset="readMore"
+                  text="View more"
+                  onPress={() => {
+                    gotoPart(scriptResponse.mostEngagedComment.part_id)
+                  }}
+                />
               </View>
-              <Text preset="readMore" text="View more" />
-            </View>
-            <View style={$commentRow}>
-              <View style={$avatarLg} />
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Text weight="medium" size="sm">
-                    Oscar Halton
+              <View style={$commentRow}>
+                <View style={$avatarLg} />
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Text weight="medium" size="sm">
+                      {scriptResponse.mostEngagedComment.user?.username}
+                    </Text>
+                    <Text preset="description">
+                      {timeAgo(scriptResponse.mostEngagedComment.created_at)}
+                    </Text>
+                  </View>
+                  <Text preset="description" style={$commentText}>
+                    {scriptResponse.mostEngagedComment.content}
                   </Text>
-                  <Text preset="description">2 weeks ago</Text>
-                </View>
-                <Text preset="description" style={$commentText}>
-                  This script beautifully captures the emotional complexity of love that transcends
-                  distance, culture, and circumstance. ....
-                </Text>
-                <View style={$commentsStatsRow}>
-                  <Stat icon="like" label="45 likes" size={12} />
-                  <Stat icon="reply" label="5 Replies" size={12} />
+                  <View style={$commentsStatsRow}>
+                    <Stat
+                      icon="like"
+                      label={formatNumber(scriptResponse.mostEngagedComment.likes_count || 0)}
+                      size={12}
+                    />
+                    <Stat
+                      icon="reply"
+                      label={`${formatNumber(scriptResponse.mostEngagedComment.likes_count || 0)} Replies`}
+                      size={12}
+                    />
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
-        )}
+          )}
 
         {/* Parts list */}
         {scriptData?.parts && scriptData?.parts.length > 0 && (

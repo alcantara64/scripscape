@@ -151,3 +151,78 @@ export function useDeleteComment(partId: number, pg: Pagination = {}) {
     },
   })
 }
+
+function patchLikeInTree(
+  list: CommentWithReplies[],
+  commentId: number,
+  delta: 1 | -1,
+  liked: boolean,
+): CommentWithReplies[] {
+  const mapTop = (t: CommentWithReplies): CommentWithReplies => {
+    if (t.comment_id === commentId) {
+      const likes_count = Math.max(0, (t.likes_count ?? 0) + delta)
+      return { ...t, likes_count, likedByMe: liked }
+    }
+    // search replies
+    const replies =
+      t.replies?.map((r) => {
+        if (r.comment_id === commentId) {
+          const likes_count = Math.max(0, (r.likes_count ?? 0) + delta)
+          return { ...r, likes_count, likedByMe: liked }
+        }
+        return r
+      }) ?? []
+    return { ...t, replies }
+  }
+  return list.map(mapTop)
+}
+
+export function useLikeComment(
+  partId: number,
+  pg?: { take?: number; skip?: number; replyTake?: number },
+) {
+  const qc = useQueryClient()
+  const key = commentKeys.list(partId, pg)
+
+  return useMutation({
+    mutationFn: (commentId: number) => getOrThrow(commentService.like(commentId)),
+    onMutate: async (commentId) => {
+      await qc.cancelQueries({ queryKey: key })
+      const prev = qc.getQueryData<CommentWithReplies[]>(key) ?? []
+      const next = patchLikeInTree(prev, commentId, +1 as 1, true)
+      qc.setQueryData<CommentWithReplies[]>(key, next)
+      return { prev }
+    },
+    onError: (_e, _id, ctx) => {
+      if (ctx?.prev) qc.setQueryData<CommentWithReplies[]>(key, ctx.prev)
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: key })
+    },
+  })
+}
+
+export function useUnlikeComment(
+  partId: number,
+  pg?: { take?: number; skip?: number; replyTake?: number },
+) {
+  const qc = useQueryClient()
+  const key = commentKeys.list(partId, pg)
+
+  return useMutation({
+    mutationFn: (commentId: number) => getOrThrow(commentService.unlike(commentId)),
+    onMutate: async (commentId) => {
+      await qc.cancelQueries({ queryKey: key })
+      const prev = qc.getQueryData<CommentWithReplies[]>(key) ?? []
+      const next = patchLikeInTree(prev, commentId, -1 as -1, false)
+      qc.setQueryData<CommentWithReplies[]>(key, next)
+      return { prev }
+    },
+    onError: (_e, _id, ctx) => {
+      if (ctx?.prev) qc.setQueryData<CommentWithReplies[]>(key, ctx.prev)
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: key })
+    },
+  })
+}
