@@ -24,7 +24,7 @@ import { TextField } from "@/components/TextField"
 import { IComment } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAddComment, useAddReply, useComments, useDeleteComment } from "@/querries/comment"
-import { useDeleteScriptPart, useGetPartsById } from "@/querries/script"
+import { useDeleteScriptPart, useGetPartsById, useUpdateScriptPart } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
@@ -33,6 +33,7 @@ import { dialogueBridgeJS } from "@/utils/insertDialogueBubble"
 import { toast } from "@/utils/toast"
 
 import { editorContentStyle } from "./AddScripts/AddParts/editorConstant"
+import { Button } from "@/components/Button"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -60,6 +61,7 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
   const addComment = useAddComment(part_id, { take: 20, replyTake: 5 })
   const addReply = useAddReply(part_id, { take: 20, replyTake: 5 })
   const delComment = useDeleteComment(part_id, { take: 20, replyTake: 5 })
+  const updateScriptPart = useUpdateScriptPart()
   const [selectedComment, setSelectedComment] = useState<IComment | null>(null)
   const pageHtml = useMemo(() => {
     const css = `
@@ -255,6 +257,21 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
             mediaPlaybackRequiresUserAction // keep true; play() is user-initiated via click
             style={$webview}
           />
+          {partData?.permissions?.isOwner && (
+            <Button
+              text={partData.status === "published" ? "Unpublished" : "Publish"}
+              onPress={async () => {
+                await updateScriptPart.mutateAsync({
+                  part_id: partData.part_id,
+                  part: { status: partData.status === "published" ? "draft" : "published" },
+                })
+                toast.success(
+                  `${partData.status === "published" ? "Unpublished " : "Published"} Successfully`,
+                )
+              }}
+              style={themed($publishButton(partData.status))}
+            />
+          )}
         </View>
       </Screen>
       <AppBottomSheet
@@ -407,11 +424,8 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
                 estimatedItemSize={80}
                 keyExtractor={(data) => `${data.comment_id}`}
                 ListEmptyComponent={
-                  isLoadingComments ? (
-                    <ActivityIndicator />
-                  ) : (
-                    <EmptyState ImageProps={{ resizeMode: "contain" }} />
-                  )
+                  isLoadingComments ? <ActivityIndicator /> : null
+                  // <EmptyState ImageProps={{ resizeMode: "contain" }} />
                 }
                 renderItem={({ item }) => {
                   return (
@@ -522,3 +536,15 @@ const $commentCard: ViewStyle = {
 const $separator: ViewStyle = {
   height: spacing.lg, // This is the gap
 }
+
+export const $publishButton =
+  (status: "draft" | "published"): ThemedStyle<ViewStyle> =>
+  ({ colors }) => ({
+    padding: 20,
+    position: "absolute",
+    width: "80%",
+    bottom: 40,
+    minHeight: 54,
+    alignSelf: "center",
+    backgroundColor: status !== "draft" ? "#FFC773" : colors.buttonBackground,
+  })

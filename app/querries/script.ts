@@ -276,8 +276,9 @@ export const useUpdateScriptPart = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: updatePart,
-    onSuccess: (data) => {
+    onSuccess: (data, variable) => {
       qc.invalidateQueries({ queryKey: ["get-parts", `${data.script_id}`] })
+      qc.invalidateQueries({ queryKey: ["get-part-by-id", variable.part_id] })
     },
   })
 }

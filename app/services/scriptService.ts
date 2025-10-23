@@ -109,10 +109,11 @@ export class ScriptService {
     if (payload.content) {
       fd.append("content", payload.content)
     }
+    if (payload.status) {
+      fd.append("status", payload.status)
+    }
 
-    return this.httpClient.patch<Part>(`/script/parts/${part_id}`, fd, {
-      headers: { "Content-Type": "multipart/form-data" },
-    })
+    return this.httpClient.patch<Part>(`/script/parts/${part_id}`, fd)
   }
 
   deleteScriptPart(part_id: number): Promise<ApiResult<{}>> {

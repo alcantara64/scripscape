@@ -36,39 +36,46 @@ export const CommentCard = (props: CommentCardProps) => {
   return (
     <Pressable style={$styles} onPress={onPress}>
       <View style={$profileContainer}>
-        <SmartImage
-          imageStyle={themed($avatar)}
-          image={profilePicture ? { uri: profilePicture } : DEFAULT_PROFILE_IMAGE}
-        />
-        <View style={{ flexShrink: 1 }}>
-          <View style={$commentTimeAndNameContainer}>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <Text text={name} />
-              <Text preset="description" text={timeAgo(createDate)} />
-            </View>
-            <PressableIcon icon="ellipsis" />
-          </View>
-          <Text style={themed($text)}>{comment}</Text>
-          <View style={$interactionsContainer}>
-            <View style={$item}>
-              <PressableIcon icon="like" size={20} />
-              <Text preset="description" text={formatNumber(0)} />
-            </View>
-            {!isReplyView && (
-              <View style={$item}>
-                <PressableIcon icon="reply" size={20} />
-                {replyCount > 0 && (
-                  <Text preset="description" text={formatNumber(replyCount) + " replies"} />
-                )}
+        <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start", flexShrink: 1 }}>
+          <SmartImage
+            imageStyle={themed($avatar)}
+            image={profilePicture ? { uri: profilePicture } : DEFAULT_PROFILE_IMAGE}
+          />
+          <View style={{ flexShrink: 1 }}>
+            <View style={$commentTimeAndNameContainer}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <Text text={name} />
+                <Text preset="description" text={timeAgo(createDate)} />
               </View>
-            )}
+            </View>
+            <Text style={themed($text)}>{comment?.trim()}</Text>
+            <View style={$interactionsContainer}>
+              <View style={$item}>
+                <PressableIcon icon="like" size={20} />
+                <Text preset="description" text={formatNumber(0)} />
+              </View>
+              {!isReplyView && (
+                <View style={$item}>
+                  <PressableIcon icon="reply" size={20} />
+                  {replyCount > 0 && (
+                    <Text preset="description" text={formatNumber(replyCount) + " replies"} />
+                  )}
+                </View>
+              )}
+            </View>
           </View>
+        </View>
+        <View style={$ellipsisContainer}>
+          <PressableIcon icon="ellipsis" />
+          {/* <View style={themed($ellipsisItemsContainer)}>
+            <Text text="delete" />
+          </View> */}
         </View>
       </View>
     </Pressable>
@@ -92,6 +99,7 @@ const $avatar: ThemedStyle<ImageStyle> = ({ colors, spacing }) => ({
 const $profileContainer: ViewStyle = {
   flexDirection: "row",
   alignItems: "flex-start",
+  justifyContent: "space-between",
   gap: 8,
 }
 const $commentTimeAndNameContainer: ViewStyle = {
@@ -110,3 +118,9 @@ const $interactionsContainer: ViewStyle = {
   alignItems: "center",
   gap: 20,
 }
+const $ellipsisContainer: ViewStyle = {}
+const $ellipsisItemsContainer: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  position: "absolute",
+  top: 20,
+  flex: 1,
+})
