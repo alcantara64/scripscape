@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo, useRef, useState } from "react"
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ActivityIndicator,
   Linking,
@@ -12,27 +12,27 @@ import { useNavigation } from "@react-navigation/native"
 import WebView from "react-native-webview"
 
 import { AppBottomSheet, BottomSheetController } from "@/components/AppBottomSheet"
+import { CommentCard } from "@/components/CommentCard"
 import { ConfirmAction } from "@/components/ConfirmAction"
+import { EmptyState } from "@/components/EmptyState"
 import { Icon, PressableIcon } from "@/components/Icon"
+import { Line } from "@/components/Line"
+import { ListView } from "@/components/ListView"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import { TextField } from "@/components/TextField"
+import { IComment } from "@/interface/script"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { useAddComment, useAddReply, useComments, useDeleteComment } from "@/querries/comment"
 import { useDeleteScriptPart, useGetPartsById } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
+import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
+import { formatNumber } from "@/utils/formatDate"
 import { dialogueBridgeJS } from "@/utils/insertDialogueBubble"
 import { toast } from "@/utils/toast"
 
 import { editorContentStyle } from "./AddScripts/AddParts/editorConstant"
-import { formatNumber } from "@/utils/formatDate"
-import { TextField } from "@/components/TextField"
-import { Line } from "@/components/Line"
-import { CommentCard } from "@/components/CommentCard"
-import { ListView } from "@/components/ListView"
-import { useAddComment, useAddReply, useComments, useDeleteComment } from "@/querries/comment"
-import { IComment } from "@/interface/script"
-import { EmptyState } from "@/components/EmptyState"
-import { spacing } from "@/theme/spacing"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -60,6 +60,7 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
   const addComment = useAddComment(part_id, { take: 20, replyTake: 5 })
   const addReply = useAddReply(part_id, { take: 20, replyTake: 5 })
   const delComment = useDeleteComment(part_id, { take: 20, replyTake: 5 })
+  const [selectedComment, setSelectedComment] = useState<IComment | null>(null)
   const pageHtml = useMemo(() => {
     const css = `
       /* Base reset */
@@ -119,7 +120,15 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
     `
     return wrapped
   }, [colors, partData])
+  useEffect(() => {
+    if (selectedComment && commentsData) {
+      const updatedComment = commentsData?.find(
+        (item) => item.comment_id === selectedComment.comment_id,
+      )
 
+      setSelectedComment(updatedComment ?? null)
+    }
+  }, [commentsData, selectedComment])
   const scriptManipulators = useMemo(
     () => [
       {
@@ -278,7 +287,7 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
       </AppBottomSheet>
       <AppBottomSheet
         controllerRef={commentSheetRef}
-        snapPoints={["25%", "80%"]}
+        snapPoints={["25%", "90%"]}
         onChange={(index) => {
           if (index < 1) {
             // sheetRef.current?.collapse()
@@ -289,88 +298,140 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
       >
         <View style={$commentsContainer}>
           <View style={$commentHeaderContainer}>
-            <Text preset="titleHeading" text="Comments" />
-            <Text preset="description" text="234 Comments" />
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              {!!selectedComment && (
+                <PressableIcon icon="caretLeft" onPress={() => setSelectedComment("")} />
+              )}
+              <Text preset="titleHeading" text="Comments" />
+            </View>
+            <Text preset="description" text={`${partData?.script.comments_count} Comments`} />
           </View>
-          <Line />
-          <ListView<IComment>
-            extraData={part_id}
-            contentContainerStyle={{ width: "100%" }}
-            data={commentsData}
-            keyExtractor={(data) => `${data.comment_id}`}
-            ListEmptyComponent={
-              isLoadingComments ? (
-                <ActivityIndicator />
-              ) : (
-                <EmptyState ImageProps={{ resizeMode: "contain" }} />
-              )
-            }
-            renderItem={({ item }) => {
-              return (
-                <CommentCard
-                  style={$commentCard}
-                  profilePicture={item.user?.profile_picture_url}
-                  name={item.user?.username}
-                  createDate={item.created_at}
-                  comment={item.content}
-                  replyCount={item.reply_count || 0}
+          {/* <Line /> */}
+          {selectedComment && (
+            <View style={{ flex: 1 }}>
+              <CommentCard
+                style={$commentCard}
+                profilePicture={selectedComment.user?.profile_picture_url}
+                name={selectedComment.user?.username}
+                createDate={selectedComment.created_at}
+                comment={selectedComment.content}
+                replyCount={selectedComment.reply_count || 0}
+                isReplyView
+              />
+              <View style={$replyInput}>
+                <TextField
+                  value={comment}
+                  onChangeText={setComment}
+                  placeholder="Reply to  comment"
+                  multiline
+                  numberOfLines={2}
+                  style={{ alignItems: "center", paddingTop: 8 }}
+                  inputWrapperStyle={{
+                    borderWidth: 0,
+                    alignItems: "center",
+                    minHeight: 60,
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#fff",
+                  }}
+                  RightAccessory={() => (
+                    <PressableIcon
+                      icon="send"
+                      disabled={comment.length < 1}
+                      onPress={async () => {
+                        addReply.mutateAsync({
+                          parentId: selectedComment.comment_id,
+                          content: comment,
+                        })
+                        setComment("")
+                      }}
+                    />
+                  )}
                 />
-              )
-            }}
-          />
-          {/* <CommentCard
-            profilePicture={""}
-            name={"Oscar Halton"}
-            createDate="2 weeks ago"
-            style={$commentCard}
-            comment="This script beautifully captures the emotional complexity of love that transcends
-                      distance, culture, and circumstance. The pacing feels natural, allowing the relationship
-                      to unfold with authenticity, and the dialogue carries real emotional weight without
-                      becoming overly sentimental. I especially appreciated how the characters remained true
-                      to themselves while still evolving through their connection. It’s a heartfelt reminder
-                      that real love often requires courage, sacrifice, and trust—and that’s what makes it so
-                      powerful. Well done."
-          />
-          <CommentCard
-            profilePicture={""}
-            name={"Oscar Halton"}
-            createDate="2 weeks ago"
-            style={$commentCard}
-            comment="This script beautifully captures the emotional complexity of love that transcends
-                      distance, culture, and circumstance. The pacing feels natural, allowing the relationship
-                      to unfold with authenticity, and the dialogue carries real emotional weight without
-                      becoming overly sentimental. I especially appreciated how the characters remained true
-                      to themselves while still evolving through their connection. It’s a heartfelt reminder
-                      that real love often requires courage, sacrifice, and trust—and that’s what makes it so
-                      powerful. Well done."
-          /> */}
-          <View style={$commentsInput}>
-            <Line />
-
-            <TextField
-              value={comment}
-              onChangeText={setComment}
-              placeholder="Write your comment"
-              multiline
-              numberOfLines={2}
-              style={{ alignItems: "center", paddingTop: 8 }}
-              inputWrapperStyle={{
-                borderWidth: 0,
-                alignItems: "center",
-                minHeight: 60,
-                borderBottomWidth: 1,
-                borderBottomColor: "#fff",
-              }}
-              RightAccessory={() => (
-                <PressableIcon
-                  icon="send"
-                  onPress={() => {
-                    addComment.mutate(comment)
+              </View>
+              <View style={{ flex: 1, marginLeft: 40 }}>
+                <ListView<IComment>
+                  extraData={selectedComment.replies}
+                  data={selectedComment.replies}
+                  estimatedItemSize={104}
+                  keyExtractor={(data) => `${data.comment_id}`}
+                  ListEmptyComponent={isLoadingComments ? <ActivityIndicator /> : null}
+                  renderItem={({ item }) => {
+                    return (
+                      <CommentCard
+                        style={$commentCard}
+                        profilePicture={item.user?.profile_picture_url}
+                        name={item.user?.username}
+                        createDate={item.created_at}
+                        comment={item.content}
+                        replyCount={item.reply_count || 0}
+                        isReplyView
+                      />
+                    )
                   }}
                 />
-              )}
-            />
-          </View>
+              </View>
+            </View>
+          )}
+          {!selectedComment && (
+            <>
+              <View style={$commentsInput}>
+                <TextField
+                  value={comment}
+                  onChangeText={setComment}
+                  placeholder="Write your comment"
+                  multiline
+                  numberOfLines={2}
+                  style={{ alignItems: "center", paddingTop: 8 }}
+                  inputWrapperStyle={{
+                    borderWidth: 0,
+                    alignItems: "center",
+                    minHeight: 60,
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#fff",
+                  }}
+                  RightAccessory={() => (
+                    <PressableIcon
+                      icon="send"
+                      disabled={comment.length < 1}
+                      onPress={() => {
+                        addComment.mutate(comment)
+                      }}
+                    />
+                  )}
+                />
+              </View>
+              <ListView<IComment>
+                extraData={part_id}
+                data={commentsData}
+                style={{ flex: 1 }}
+                estimatedItemSize={80}
+                keyExtractor={(data) => `${data.comment_id}`}
+                ListEmptyComponent={
+                  isLoadingComments ? (
+                    <ActivityIndicator />
+                  ) : (
+                    <EmptyState ImageProps={{ resizeMode: "contain" }} />
+                  )
+                }
+                renderItem={({ item }) => {
+                  return (
+                    <CommentCard
+                      onPress={() => {
+                        console.log(item)
+                        setSelectedComment(item)
+                      }}
+                      style={$commentCard}
+                      profilePicture={item.user?.profile_picture_url}
+                      name={item.user?.username}
+                      createDate={item.created_at}
+                      comment={item.content}
+                      replyCount={item.reply_count || 0}
+                    />
+                  )
+                }}
+              />
+            </>
+          )}
         </View>
       </AppBottomSheet>
     </>
@@ -449,8 +510,10 @@ const $commentHeaderContainer: ViewStyle = {
   alignItems: "center",
 }
 const $commentsInput: ViewStyle = {
-  position: "relative",
-  bottom: 30,
+  marginTop: 0,
+}
+const $replyInput: ViewStyle = {
+  marginLeft: 40,
 }
 const $commentCard: ViewStyle = {
   marginVertical: 16,

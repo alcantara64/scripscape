@@ -96,7 +96,11 @@ export const AppBottomSheet = (props: AppBottomSheetProps) => {
         ref={bottomSheetRef}
         index={initialIndex}
         snapPoints={memoSnapPoints}
+        keyboardBehavior="interactive"
         enablePanDownToClose={enablePanDownToClose}
+        keyboardBlurBehavior="restore"
+        enableContentPanningGesture
+        android_keyboardInputMode="adjustResize"
         backdropComponent={(bsProps) => (
           <BottomSheetBackdrop
             {...bsProps}

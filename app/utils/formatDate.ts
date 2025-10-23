@@ -60,3 +60,37 @@ export function formatNumber(num: number): string {
     return num.toString()
   }
 }
+
+type Unit = "second" | "minute" | "hour" | "day" | "week" | "month" | "year"
+
+const DIVS: { amt: number; name: Unit }[] = [
+  { amt: 60, name: "second" },
+  { amt: 60, name: "minute" },
+  { amt: 24, name: "hour" },
+  { amt: 7, name: "day" },
+  { amt: 4.34524, name: "week" }, // approx weeks per month
+  { amt: 12, name: "month" },
+  { amt: Infinity, name: "year" },
+]
+
+export function timeAgo(input: string | number | Date) {
+  const date = input instanceof Date ? input : new Date(input)
+  let delta = Math.floor((date.getTime() - Date.now()) / 1000) // seconds; negative = past
+
+  if (Math.abs(delta) < 5) return "just now"
+
+  let unit: Unit = "second"
+  for (const d of DIVS) {
+    if (Math.abs(delta) < d.amt) {
+      unit = d.name
+      break
+    }
+    delta = Math.trunc(delta / d.amt)
+  }
+
+  const v = Math.trunc(delta)
+  const n = Math.abs(v)
+  const s = (w: string) => (n === 1 ? w : w + "s")
+
+  return v < 0 ? `${n} ${s(unit)} ago` : `in ${n} ${s(unit)}`
+}

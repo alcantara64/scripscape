@@ -1,13 +1,14 @@
-import { ImageStyle, StyleProp, TextStyle, View, ViewStyle } from "react-native"
+import { ImageStyle, Pressable, StyleProp, TextStyle, View, ViewStyle } from "react-native"
 
 import { Text } from "@/components/Text"
+import { IComment } from "@/interface/script"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { DEFAULT_PROFILE_IMAGE } from "@/utils/app.default"
+import { formatNumber, timeAgo } from "@/utils/formatDate"
 
+import { PressableIcon } from "./Icon"
 import { SmartImage } from "./SmartImage"
-import { Icon, PressableIcon } from "./Icon"
-import { formatNumber } from "@/utils/formatDate"
 
 export interface CommentCardProps {
   /**
@@ -19,18 +20,21 @@ export interface CommentCardProps {
   createDate: string
   comment: string
   replyCount: number
+  onPress: (comment: IComment) => void
+  isReplyView?: boolean
 }
 
 /**
  * Describe your component here
  */
 export const CommentCard = (props: CommentCardProps) => {
-  const { style, profilePicture, name, createDate, comment, replyCount } = props
+  const { style, profilePicture, name, createDate, comment, replyCount, onPress, isReplyView } =
+    props
   const $styles = [$container, style]
   const { themed } = useAppTheme()
 
   return (
-    <View style={$styles}>
+    <Pressable style={$styles} onPress={onPress}>
       <View style={$profileContainer}>
         <SmartImage
           imageStyle={themed($avatar)}
@@ -46,7 +50,7 @@ export const CommentCard = (props: CommentCardProps) => {
               }}
             >
               <Text text={name} />
-              <Text preset="description" text={createDate} />
+              <Text preset="description" text={timeAgo(createDate)} />
             </View>
             <PressableIcon icon="ellipsis" />
           </View>
@@ -54,18 +58,20 @@ export const CommentCard = (props: CommentCardProps) => {
           <View style={$interactionsContainer}>
             <View style={$item}>
               <PressableIcon icon="like" size={20} />
-              <Text preset="description" text={formatNumber(1)} />
+              <Text preset="description" text={formatNumber(0)} />
             </View>
-            <View style={$item}>
-              <PressableIcon icon="reply" size={20} />
-              {replyCount && (
-                <Text preset="description" text={formatNumber(replyCount) + " replies"} />
-              )}
-            </View>
+            {!isReplyView && (
+              <View style={$item}>
+                <PressableIcon icon="reply" size={20} />
+                {replyCount > 0 && (
+                  <Text preset="description" text={formatNumber(replyCount) + " replies"} />
+                )}
+              </View>
+            )}
           </View>
         </View>
       </View>
-    </View>
+    </Pressable>
   )
 }
 

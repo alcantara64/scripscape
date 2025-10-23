@@ -173,6 +173,7 @@ export interface IComment {
   parent_comment_id?: number | null
   reply_count?: number
   user?: Pick<User, "user_id" | "username" | "profile_picture_url" | "profile_picture_blurhash">
+  replies: Array<IComment>
 }
 
 export type CommentWithReplies = IComment & {
