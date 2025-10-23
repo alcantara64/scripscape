@@ -7565,6 +7565,11 @@ react-native-gesture-handler@~2.24.0:
     hoist-non-react-statics "^3.3.0"
     invariant "^2.2.4"
 
+react-native-iap@^14.4.23:
+  version "14.4.23"
+  resolved "https://registry.yarnpkg.com/react-native-iap/-/react-native-iap-14.4.23.tgz#82d1bf70f16ab277e7af73c01ae0c49450d2ad95"
+  integrity sha512-k9fiJyNBnVwOFU61bf1cxxU1XHPNykPlLZ2vp6leMXi8Ywzj4tgDTqEA0/IF3b0TWCG6c9Cm53R7p6CI71kwWg==
+
 react-native-is-edge-to-edge@1.1.7:
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/react-native-is-edge-to-edge/-/react-native-is-edge-to-edge-1.1.7.tgz#28947688f9fafd584e73a4f935ea9603bd9b1939"
@@ -7586,6 +7591,11 @@ react-native-mmkv@^3.2.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/react-native-mmkv/-/react-native-mmkv-3.3.0.tgz#a0816babdf68afd2bfd881a48e28c8815795286b"
   integrity sha512-2iPjIJ+IAODXN35wm53EN6nv+hR/0NXLLiLWOdPA/0gXDB2dYVrr6MqvoiFpxhLhdj0B8fkf5ARNVavJaSvuuQ==
+
+react-native-nitro-modules@^0.30.2:
+  version "0.30.2"
+  resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.30.2.tgz#0a13acbb0bc3032cfa0198059944ddd832bc2dc3"
+  integrity sha512-+/uVS7FQwOiKYZQERMIvBRv5/X3CVHrFG6Nr/kIhVfVxGeUimHnBz7cgA97lJKIn7AKDRWL+UjLedW8pGOt0dg==
 
 react-native-otp-entry@^1.8.5:
   version "1.8.5"
