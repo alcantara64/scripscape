@@ -1,5 +1,13 @@
 import { FC, useCallback, useMemo, useRef, useState } from "react"
-import { Linking, Platform, Pressable, TextStyle, View, ViewStyle } from "react-native"
+import {
+  ActivityIndicator,
+  Linking,
+  Platform,
+  Pressable,
+  TextStyle,
+  View,
+  ViewStyle,
+} from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import WebView from "react-native-webview"
 
@@ -16,6 +24,15 @@ import { dialogueBridgeJS } from "@/utils/insertDialogueBubble"
 import { toast } from "@/utils/toast"
 
 import { editorContentStyle } from "./AddScripts/AddParts/editorConstant"
+import { formatNumber } from "@/utils/formatDate"
+import { TextField } from "@/components/TextField"
+import { Line } from "@/components/Line"
+import { CommentCard } from "@/components/CommentCard"
+import { ListView } from "@/components/ListView"
+import { useAddComment, useAddReply, useComments, useDeleteComment } from "@/querries/comment"
+import { IComment } from "@/interface/script"
+import { EmptyState } from "@/components/EmptyState"
+import { spacing } from "@/theme/spacing"
 
 // import { useNavigation } from "@react-navigation/native"
 
@@ -33,11 +50,17 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
   const { mutateAsync } = useDeleteScriptPart()
   const { contentCSSText } = editorContentStyle(colors)
   const sheetRef = useRef<BottomSheetController>(null)
+  const commentSheetRef = useRef<BottomSheetController>(null)
   const [showDeleteDialogue, setShowDeleteDialogue] = useState(false)
+  const { data: commentsData, isLoading: isLoadingComments } = useComments(part_id, {
+    take: 20,
+    replyTake: 5,
+  })
+  const [comment, setComment] = useState("")
+  const addComment = useAddComment(part_id, { take: 20, replyTake: 5 })
+  const addReply = useAddReply(part_id, { take: 20, replyTake: 5 })
+  const delComment = useDeleteComment(part_id, { take: 20, replyTake: 5 })
   const pageHtml = useMemo(() => {
-    // Convert editorContentStyle(colors) into CSS. If your editorContentStyle
-    // returns a JS object, you likely already baked class names into the HTML.
-    // Add a few read-only guards here.
     const css = `
       /* Base reset */
       html, body { margin: 0; padding: 0; }
@@ -112,6 +135,9 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
   const openBottomSheet = () => {
     sheetRef.current?.open()
   }
+  const openCommentBottomSheet = () => {
+    commentSheetRef.current?.open()
+  }
   const deletePart = async () => {
     try {
       await mutateAsync({ part_id: partData?.part_id! })
@@ -134,6 +160,7 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
   const goBack = () => {
     navigation.goBack()
   }
+  const Separator = () => <View style={$separator} />
   if (isLoading) {
     return <Text text="loading ..." />
   }
@@ -170,6 +197,20 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
             <Text preset="subheading" weight="semiBold" numberOfLines={2}>
               {partData?.title || "Untitled"}
             </Text>
+            <View style={$interactionsContainer}>
+              <View style={$item}>
+                <PressableIcon icon="view" size={23} />
+                <Text text={formatNumber(partData?.script.views_count || 0)} />
+              </View>
+              <View style={$item}>
+                <PressableIcon icon="like" size={23} />
+                <Text text={formatNumber(partData?.script.likes_count || 0)} />
+              </View>
+              <View style={$item}>
+                <PressableIcon icon="comment" size={23} onPress={openCommentBottomSheet} />
+                <Text text={formatNumber(partData?.script.comments_count || 0)} />
+              </View>
+            </View>
           </View>
 
           {/* Read-only content */}
@@ -235,6 +276,103 @@ export const ScriptPartScreen: FC<ScriptPartScreenProps> = ({ route }) => {
           />
         )}
       </AppBottomSheet>
+      <AppBottomSheet
+        controllerRef={commentSheetRef}
+        snapPoints={["25%", "80%"]}
+        onChange={(index) => {
+          if (index < 1) {
+            // sheetRef.current?.collapse()
+            // sheetRef.current?.close()
+          }
+        }}
+        style={{ flex: 1, height: "100%" }}
+      >
+        <View style={$commentsContainer}>
+          <View style={$commentHeaderContainer}>
+            <Text preset="titleHeading" text="Comments" />
+            <Text preset="description" text="234 Comments" />
+          </View>
+          <Line />
+          <ListView<IComment>
+            extraData={part_id}
+            contentContainerStyle={{ width: "100%" }}
+            data={commentsData}
+            keyExtractor={(data) => `${data.comment_id}`}
+            ListEmptyComponent={
+              isLoadingComments ? (
+                <ActivityIndicator />
+              ) : (
+                <EmptyState ImageProps={{ resizeMode: "contain" }} />
+              )
+            }
+            renderItem={({ item }) => {
+              return (
+                <CommentCard
+                  style={$commentCard}
+                  profilePicture={item.user?.profile_picture_url}
+                  name={item.user?.username}
+                  createDate={item.created_at}
+                  comment={item.content}
+                  replyCount={item.reply_count || 0}
+                />
+              )
+            }}
+          />
+          {/* <CommentCard
+            profilePicture={""}
+            name={"Oscar Halton"}
+            createDate="2 weeks ago"
+            style={$commentCard}
+            comment="This script beautifully captures the emotional complexity of love that transcends
+                      distance, culture, and circumstance. The pacing feels natural, allowing the relationship
+                      to unfold with authenticity, and the dialogue carries real emotional weight without
+                      becoming overly sentimental. I especially appreciated how the characters remained true
+                      to themselves while still evolving through their connection. It’s a heartfelt reminder
+                      that real love often requires courage, sacrifice, and trust—and that’s what makes it so
+                      powerful. Well done."
+          />
+          <CommentCard
+            profilePicture={""}
+            name={"Oscar Halton"}
+            createDate="2 weeks ago"
+            style={$commentCard}
+            comment="This script beautifully captures the emotional complexity of love that transcends
+                      distance, culture, and circumstance. The pacing feels natural, allowing the relationship
+                      to unfold with authenticity, and the dialogue carries real emotional weight without
+                      becoming overly sentimental. I especially appreciated how the characters remained true
+                      to themselves while still evolving through their connection. It’s a heartfelt reminder
+                      that real love often requires courage, sacrifice, and trust—and that’s what makes it so
+                      powerful. Well done."
+          /> */}
+          <View style={$commentsInput}>
+            <Line />
+
+            <TextField
+              value={comment}
+              onChangeText={setComment}
+              placeholder="Write your comment"
+              multiline
+              numberOfLines={2}
+              style={{ alignItems: "center", paddingTop: 8 }}
+              inputWrapperStyle={{
+                borderWidth: 0,
+                alignItems: "center",
+                minHeight: 60,
+                borderBottomWidth: 1,
+                borderBottomColor: "#fff",
+              }}
+              RightAccessory={() => (
+                <PressableIcon
+                  icon="send"
+                  onPress={() => {
+                    addComment.mutate(comment)
+                  }}
+                />
+              )}
+            />
+          </View>
+        </View>
+      </AppBottomSheet>
     </>
   )
 }
@@ -290,4 +428,34 @@ const $navigationItem: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
   gap: 12,
+}
+const $interactionsContainer: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 20,
+}
+const $item: ViewStyle = {
+  flexDirection: "row",
+  gap: 8,
+}
+const $commentsContainer: ViewStyle = {
+  // position: "relative",
+  flex: 1,
+}
+const $commentHeaderContainer: ViewStyle = {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  marginBottom: 8,
+  alignItems: "center",
+}
+const $commentsInput: ViewStyle = {
+  position: "relative",
+  bottom: 30,
+}
+const $commentCard: ViewStyle = {
+  marginVertical: 16,
+}
+
+const $separator: ViewStyle = {
+  height: spacing.lg, // This is the gap
 }

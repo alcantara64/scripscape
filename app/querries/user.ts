@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { MeResponse, UpdateProfileInput, User } from "@/interface/auth"
+import { MeResponse, UpdateProfileInput } from "@/interface/auth"
 import { userService } from "@/services/api/userService"
 import { getOrThrow } from "@/utils/query"
 

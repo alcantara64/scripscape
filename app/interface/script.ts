@@ -66,6 +66,7 @@ export type Part = {
   }
   status: "draft" | "published"
   published_at: string
+  script: Pick<IScript, "comments_count" | "views_count" | "likes_count">
 }
 
 export type CreatePart = Pick<Part, "script_id" | "index" | "content" | "title">
@@ -161,4 +162,20 @@ export interface TrendingTodayResponse {
   items: Array<ITrendingTodayItems>
   category: Pick<Category, "slug"> & "all"
   limit: number
+}
+
+export interface IComment {
+  comment_id: number
+  part_id: number
+  user_id: number
+  content: string
+  created_at: string
+  parent_comment_id?: number | null
+  reply_count?: number
+  user?: Pick<User, "user_id" | "username" | "profile_picture_url" | "profile_picture_blurhash">
+}
+
+export type CommentWithReplies = IComment & {
+  replies: IComment[]
+  has_more_replies?: boolean
 }

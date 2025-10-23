@@ -169,6 +169,8 @@ export const iconRegistry = {
   write: require("@assets/icons/write.png"),
   circledEllipsis: require("@assets/icons/circle-ellipsis.png"),
   reply: require("@assets/icons/reply.png"),
+  send: require("@assets/icons/send.png"),
+  ellipsis: require("@assets/icons/ellipsis.png"),
 }
 
 const $imageStyleBase: ImageStyle = {

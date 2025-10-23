@@ -37,7 +37,7 @@ export const FollowersList = (props: FollowersListProps) => {
     <ListView<IFollowers>
       contentContainerStyle={themed([$container, $listContentContainer])}
       data={data}
-      extraData={data.length}
+      extraData={data}
       refreshing={refreshing}
       estimatedItemSize={data.length}
       ItemSeparatorComponent={Separator}
