@@ -3,6 +3,8 @@ import { View, Platform, KeyboardAvoidingView, StyleProp, ViewStyle, TextStyle }
 import * as DocumentPicker from "expo-document-picker"
 import { RichEditor } from "react-native-pell-rich-editor"
 
+import LimitReached from "@assets/images/limit-reached.svg"
+import ProLimitReached from "@assets/images/pro-limit-reached.svg"
 import IntroArt from "@assets/images/svgviewer-output.svg"
 
 import { AppBottomSheet, type BottomSheetController } from "@/components/AppBottomSheet"
@@ -17,7 +19,7 @@ import { UpgradeProPopup } from "@/components/UprogradePropPup"
 import { Dialogue, Part } from "@/interface/script"
 import { useEmbeddedImagesByScript } from "@/querries/embedded-images"
 import { useGetLocationImagesByScriptId } from "@/querries/location"
-import { useScriptCreateDialoguePart } from "@/querries/script"
+import { useScriptCreateDialoguePart, useUpdateScriptPart } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 import { bindDialogueClick, getBubbleData, insertDialogue } from "@/utils/insertDialogueBubble"
@@ -29,6 +31,7 @@ import { buildLocationHTML, editorContentStyle, type TabKey } from "./AddParts/e
 import { LocationSheet } from "./AddParts/locationSheet"
 import { useDialogue } from "./AddParts/useDialogue"
 import { useLocations } from "./AddParts/useLocation"
+import { toast } from "@/utils/toast"
 
 export interface AddPartProps {
   style?: StyleProp<ViewStyle>
@@ -38,6 +41,7 @@ export interface AddPartProps {
   script_id: number
   onUpdate: (id: number, payload: Omit<Part, "part_id">) => void | Promise<void>
   onSave: (draft: Omit<Part, "id" | "script_id">) => void | Promise<void>
+  onRefetch: () => void
 }
 type SheetMode = "location" | "character" | "upload-details" | "update-dialogue"
 
@@ -49,6 +53,7 @@ export default function AddPart({
   onSave,
   onUpdate,
   script_id,
+  onRefetch,
 }: AddPartProps) {
   const $styles = [$container, style, Platform.OS === "android" && { marginTop: 24 }]
   const {
@@ -59,6 +64,7 @@ export default function AddPart({
   const [sheetMode, setSheetMode] = useState<SheetMode>("location")
   const editorRef = useRef<RichEditor>(null)
   const sheetRef = useRef<BottomSheetController>(null)
+  const uploadDetailSheetRef = useRef<BottomSheetController>(null)
   const isPro = false
   const isEdit = !!selectedPart
   const createDialogue = useScriptCreateDialoguePart()
@@ -67,7 +73,7 @@ export default function AddPart({
   const [html, setHtml] = useState(selectedPart?.content || "")
   const [editorFocused, setEditorFocused] = useState(false)
   const [currentTab, setCurrentTab] = useState<TabKey>("last_used")
-  const [embeddedImageUsed, setEmbeddedImageUsed] = useState(0)
+  const [limitReached, setLimitReached] = useState(false)
   const [dialogueId, setDialogueId] = useState<number | null>(null)
   const [dialogueText, setDialogueText] = useState("")
   const { data: embeddedImages, isLoading: loadingEmbedded } = useEmbeddedImagesByScript(script_id)
@@ -89,6 +95,8 @@ export default function AddPart({
     onAddMoreImages,
   } = useDialogue({ scriptId: script_id })
 
+  const updateScriptPart = useUpdateScriptPart()
+
   const { quota, progress } = useQuota({
     isPro,
     used: {
@@ -108,16 +116,11 @@ export default function AddPart({
     ;(async () => {
       if (!isEdit) {
         await onSave({ title, content: html, order: nextPartNumber })
+        onRefetch()
       }
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => {
-    if (selectedPart?.part_id) {
-      onUpdate(selectedPart.part_id, { title: title.trim(), content: html, order: nextPartNumber })
-    }
-  }, [title, html])
 
   const focusEditor = useCallback(() => editorRef.current?.focusContentEditor?.(), [])
 
@@ -191,8 +194,8 @@ export default function AddPart({
       { label: "Character Images", key: "character" },
     ]
     return (
-      <View>
-        <View style={themed($headerRow)}>
+      <View style={themed($uploadDetailContainer)}>
+        <View style={themed($uploadDetailHeader)}>
           <View>
             <Text preset="sectionHeader" weight="semiBold">
               Uploads Remaining
@@ -203,18 +206,21 @@ export default function AddPart({
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
           {uploadItems.map((item) => (
             <View style={{ width: "48%" }} key={item.key}>
-              <Text text={item.label} />
-              <Text text={`${quota[item.key].used}/${quota[item.key].limit}`} />
+              <Text preset="description" text={item.label} />
+              <Text
+                preset="contentTitle"
+                text={`${quota[item.key].used}/${quota[item.key].limit}`}
+              />
             </View>
           ))}
         </View>
-        <Button>Upgrade to </Button>
+        {!isPro && <Button>Upgrade to Pro </Button>}
       </View>
     )
   }
 
   const showUPloadDetail = () => {
-    sheetRef.current?.expand()
+    uploadDetailSheetRef.current?.expand()
     setSheetMode("upload-details")
   }
   const onEditorReady = useCallback(() => {
@@ -274,21 +280,58 @@ export default function AddPart({
               mediaPlaybackRequiresUserAction: true,
             }}
           />
+          <View style={$buttonsContainer}>
+            <Button
+              text="Save Changes"
+              onPress={async () => {
+                if (selectedPart?.part_id) {
+                  await onUpdate(selectedPart.part_id, {
+                    title: title.trim(),
+                    content: html,
+                    order: nextPartNumber,
+                  })
+                  toast.success("Saved Successfully ")
+                }
+              }}
+              style={$buttonStyle}
+            />
+            {selectedPart && (
+              <Button
+                text={selectedPart.status === "published" ? "Unpublished" : "Publish"}
+                onPress={async () => {
+                  await updateScriptPart.mutateAsync({
+                    part_id: selectedPart.part_id,
+                    part: { status: selectedPart.status === "published" ? "draft" : "published" },
+                  })
+                  toast.success(
+                    `${selectedPart.status === "published" ? "Unpublished " : "Published"} Successfully`,
+                  )
+                }}
+                style={[themed($publishButton(selectedPart.status)), $buttonStyle]}
+              />
+            )}
+          </View>
           <UpgradeProPopup visible={false} onClose={() => {}} />
           <KeyboardToolbar
             editorRef={editorRef}
             visible={editorFocused}
             onLocation={openLocationSheet}
             onCharacter={openCharacterSheet}
-            embeddedImageUsed={embeddedImageUsed}
-            setEmbeddedImageUsed={setEmbeddedImageUsed}
+            embeddedImageUsed={embeddedImages?.items.length || 0}
             embeddedImageLimit={quota.embedded.limit}
-            onLimitReached={showUPloadDetail}
+            onLimitReached={() => setLimitReached(true)}
             scriptId={script_id}
           />
         </KeyboardAvoidingView>
       </View>
       {isEdit && <OneTimeModal testID="dialog" artwork={<IntroArt />} storageKey="dialog-modal" />}
+      {limitReached && isPro && (
+        <OneTimeModal testID="dialog" artwork={<ProLimitReached />} storageKey="dialog-modal-3" />
+      )}
+      {limitReached && !isPro && (
+        <OneTimeModal testID="dialog" artwork={<LimitReached />} storageKey="dialog-modal-4" />
+      )}
+
       {/* Location Sheet */}
       <AppBottomSheet
         controllerRef={sheetRef}
@@ -299,7 +342,6 @@ export default function AddPart({
         }}
         onClose={onSheetClose}
       >
-        {sheetMode === "upload-details" && <UploadDetail />}
         {sheetMode === "location" && (
           <LocationSheet
             script_id={selectedPart?.script_id as number}
@@ -315,7 +357,7 @@ export default function AddPart({
               resetForm()
             }}
             onConfirm={onConfirmLocation}
-            onLimitReached={showUPloadDetail}
+            onLimitReached={() => setLimitReached(true)}
             partId={selectedPart?.part_id as number}
             resetLocationForm={resetForm}
           />
@@ -340,7 +382,7 @@ export default function AddPart({
             form={characterForm}
             setCharacterImage={() => {}}
             setCharacterName={() => {}}
-            onLimitReached={showUPloadDetail}
+            onLimitReached={() => setLimitReached(true)}
           />
         )}
         {sheetMode === "update-dialogue" && dialogueId && (
@@ -351,6 +393,9 @@ export default function AddPart({
             editorRef={editorRef}
           />
         )}
+      </AppBottomSheet>
+      <AppBottomSheet controllerRef={uploadDetailSheetRef} snapPoints={["30%"]}>
+        <UploadDetail />
       </AppBottomSheet>
     </View>
   )
@@ -367,6 +412,17 @@ const $headerRow: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   gap: spacing.xs,
   paddingHorizontal: 24,
 })
+const $uploadDetailHeader: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 8,
+  gap: spacing.xs,
+})
+const $uploadDetailContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  marginBottom: 8,
+  gap: 20,
+})
 
 const $titleInput: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   // paddingHorizontal: spacing.md,
@@ -375,3 +431,23 @@ const $titleInput: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   // borderWidth: 0,
 })
 const $titleInputContainer: ViewStyle = { borderWidth: 0, paddingHorizontal: 24 }
+const $publishButton =
+  (status: "draft" | "published"): ThemedStyle<ViewStyle> =>
+  ({ colors }) => ({
+    padding: 20,
+    backgroundColor: status !== "draft" ? "#FFC773" : colors.buttonBackground,
+  })
+
+const $buttonsContainer: ViewStyle = {
+  flexDirection: "row",
+  position: "relative",
+  bottom: 40,
+  minHeight: 54,
+  width: "100%",
+  justifyContent: "space-between",
+  paddingHorizontal: 24,
+}
+const $buttonStyle: ViewStyle = {
+  minHeight: 54,
+  width: "48%",
+}

@@ -152,8 +152,12 @@ async function createPart(payload: CreatePart) {
 }
 
 export const useCreateScriptPart = () => {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: createPart,
+    onSuccess: (data, variables) => {
+      qc.invalidateQueries({ queryKey: ["get-parts", variables.script_id] })
+    },
   })
 }
 

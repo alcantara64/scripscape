@@ -5,6 +5,11 @@ export const TAB_ITEMS: Array<{ label: string; key: TabKey }> = [
   { label: "Z–A", key: "des" },
 ]
 
+export const EMBEDDED_CSS = `
+#embedded-image img{
+width: 100%
+}`
+
 export const DIALOGUE_CSS = `
   /* --- keep these --- */
 .ss-dialogue-wrap{

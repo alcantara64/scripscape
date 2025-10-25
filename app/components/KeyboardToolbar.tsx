@@ -1,20 +1,17 @@
 import { useRef, useState } from "react"
 import { Platform, Pressable, View, type ViewStyle } from "react-native"
-import * as FileSystem from "expo-file-system"
 import { actions, RichEditor, RichToolbar } from "react-native-pell-rich-editor"
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { Icon } from "@/components/Icon"
+import { useCreateScriptEmbeddedImages } from "@/querries/embedded-images"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
-import { compressImage, toRNFile } from "@/utils/image"
-import { insertDialogue } from "@/utils/insertDialogueBubble"
+import { compressImage } from "@/utils/image"
 import { useKeyboardHeight } from "@/utils/useKeyboardHeight"
 
 import { ImagePickerWithCropping } from "./ImagePickerWithCroping"
-import { useUpdateScriptPart } from "@/querries/script"
-import { useCreateScriptEmbeddedImages } from "@/querries/embedded-images"
 
 type Props = {
   editorRef: React.RefObject<RichEditor | null>
@@ -22,7 +19,6 @@ type Props = {
   onLocation: () => void
   onCharacter: () => void
   embeddedImageUsed: number
-  setEmbeddedImageUsed: (x: number) => void
   embeddedImageLimit: number
   onLimitReached: () => void
   scriptId: number
@@ -37,7 +33,6 @@ export function KeyboardToolbar({
   onCharacter,
   embeddedImageLimit,
   embeddedImageUsed,
-  setEmbeddedImageUsed,
   onLimitReached,
   scriptId,
 }: Props) {
@@ -74,7 +69,6 @@ export function KeyboardToolbar({
 
         {
           onSuccess: (response) => {
-            console.log({ response })
             editorRef.current?.focusContentEditor?.()
             editorRef.current?.insertHTML?.(`
     <figure style="margin:12px 0;" id="embedded-image${response.id}">
@@ -82,7 +76,6 @@ export function KeyboardToolbar({
            style="max-width:100%;max-height:204px;display:block;border-radius:4px;" />
     </figure>
   `)
-            setEmbeddedImageUsed(embeddedImageUsed + 1)
           },
         },
       )

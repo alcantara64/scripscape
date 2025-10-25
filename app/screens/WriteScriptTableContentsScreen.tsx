@@ -15,6 +15,7 @@ import {
 } from "@/querries/script"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { toast } from "@/utils/toast"
 
 import AddPart from "./AddScripts/AddPart"
 
@@ -37,7 +38,7 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
   const updateScriptPart = useUpdateScriptPart()
   const scriptId = route?.params?.scriptId
   const previousRoute = route.params.from
-  const { data: parts } = useGetPartsByScript(scriptId)
+  const { data: parts, refetch } = useGetPartsByScript(scriptId)
 
   const pendingParts = parts
 
@@ -59,15 +60,20 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
           if (data) {
             setSelectedPart(data)
           }
+          refetch()
         },
       },
     )
-    setShowAdd(true)
+
+    // setShowAdd(true)
   }
 
-  const handleUpdate = (part_id: number, patch: Omit<Part, "part_id">) => {
-    updateScriptPart.mutate({ part_id, part: patch })
-    setShowAdd(true)
+  const handleUpdate = async (part_id: number, patch: Omit<Part, "part_id">) => {
+    const response = await updateScriptPart.mutateAsync({ part_id, part: patch })
+    if (response) {
+      setSelectedPart(response)
+    }
+    refetch()
   }
 
   const renderItem = useCallback(
@@ -143,7 +149,14 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
               style={themed($addDashed)}
               onPress={() => {
                 setSelectedPart(null)
-                setShowAdd(true)
+                if (parts?.some((part) => part.status !== "published")) {
+                  toast.info(
+                    "You must publish the previous part before creating a new part ",
+                    "Publish Previous",
+                  )
+                } else {
+                  setShowAdd(true)
+                }
               }}
             >
               <Icon icon="plus" size={24} />
@@ -158,6 +171,7 @@ export const WriteScriptTableContentsScreen: FC<WriteScriptTableContentsScreenPr
             selectedPart={selectedPart}
             onSave={handleSave}
             onUpdate={handleUpdate}
+            onRefetch={refetch}
           />
         )}
       </View>
